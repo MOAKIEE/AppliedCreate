@@ -1,19 +1,14 @@
 package com.loliball.appliedcreate.gui
 
 import com.loliball.appliedcreate.AppliedCreate
-import com.loliball.appliedcreate.block.entity.MechanicalCraftEncoderBlockEntity
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.components.EditBox
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen
 import net.minecraft.network.chat.Component
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.player.Inventory
-import net.minecraft.client.gui.screens.MenuScreens
 import net.minecraftforge.api.distmarker.Dist
 import net.minecraftforge.api.distmarker.OnlyIn
-import net.minecraftforge.eventbus.api.SubscribeEvent
-import net.minecraftforge.fml.common.Mod
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent
 
 @OnlyIn(Dist.CLIENT)
 class MechanicalCraftEncoderScreen(
@@ -24,6 +19,8 @@ class MechanicalCraftEncoderScreen(
 
     companion object {
         val TEXTURE = ResourceLocation(AppliedCreate.MOD_ID, "textures/gui/mechanical_craft_encoder.png")
+        const val TEXTURE_WIDTH = 256
+        const val TEXTURE_HEIGHT = 512
     }
 
     private lateinit var widthField: EditBox
@@ -52,7 +49,7 @@ class MechanicalCraftEncoderScreen(
     }
 
     override fun renderBg(graphics: GuiGraphics, partialTick: Float, mouseX: Int, mouseY: Int) {
-        graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight)
+        graphics.blit(TEXTURE, leftPos, topPos, 0f, 0f, imageWidth, imageHeight, TEXTURE_WIDTH, TEXTURE_HEIGHT)
     }
 
     override fun render(graphics: GuiGraphics, mouseX: Int, mouseY: Int, partialTick: Float) {
@@ -70,16 +67,5 @@ class MechanicalCraftEncoderScreen(
             return widthField.keyPressed(keyCode, scanCode, modifiers)
         }
         return super.keyPressed(keyCode, scanCode, modifiers)
-    }
-}
-
-@Mod.EventBusSubscriber(modid = AppliedCreate.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = [Dist.CLIENT])
-object ScreenRegistration {
-    @SubscribeEvent
-    @JvmStatic
-    fun onClientSetup(event: FMLClientSetupEvent) {
-        event.enqueueWork {
-            MenuScreens.register(AppliedCreate.MECHANICAL_CRAFT_ENCODER_MENU.get(), ::MechanicalCraftEncoderScreen)
-        }
     }
 }

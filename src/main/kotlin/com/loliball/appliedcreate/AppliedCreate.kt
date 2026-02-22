@@ -14,6 +14,8 @@ import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraftforge.common.extensions.IForgeMenuType
 import net.minecraftforge.eventbus.api.IEventBus
 import net.minecraftforge.fml.common.Mod
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent
+import net.minecraftforge.fml.loading.FMLEnvironment
 import net.minecraftforge.registries.DeferredRegister
 import net.minecraftforge.registries.ForgeRegistries
 import net.minecraftforge.registries.RegistryObject
@@ -75,6 +77,10 @@ class AppliedCreate {
         BLOCK_ENTITY_TYPES.register(bus)
         MENU_TYPES.register(bus)
         CREATIVE_TABS.register(bus)
+
+        if (FMLEnvironment.dist.isClient) {
+            ClientSetup.register(bus)
+        }
 
         LOGGER.info("Applied Create loaded - Mechanical Craft Encoder standalone mod")
     }

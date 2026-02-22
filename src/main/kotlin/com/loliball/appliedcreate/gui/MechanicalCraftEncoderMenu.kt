@@ -39,7 +39,8 @@ class MechanicalCraftEncoderMenu : AbstractContainerMenu {
     constructor(windowId: Int, playerInventory: Inventory, buf: FriendlyByteBuf) : this(
         windowId,
         playerInventory,
-        playerInventory.player.level().getBlockEntity(buf.readBlockPos()) as MechanicalCraftEncoderBlockEntity
+        playerInventory.player.level().getBlockEntity(buf.readBlockPos()) as? MechanicalCraftEncoderBlockEntity
+            ?: throw IllegalStateException("Block entity not found or wrong type at position read from buffer")
     )
 
     constructor(windowId: Int, playerInventory: Inventory, be: MechanicalCraftEncoderBlockEntity) : super(

@@ -1,6 +1,8 @@
 {
-    "parent": "minecraft:block/cube_all",
+    "parent": "minecraft:block/cube_bottom_top",
     "textures": {
-        "all": "appliedcreate:block/mechanical_craft_encoder"
+        "bottom": "appliedcreate:block/mechanical_craft_encoder_bottom",
+        "side": "appliedcreate:block/mechanical_craft_encoder_side",
+        "top": "appliedcreate:block/mechanical_craft_encoder_top"
     }
 }

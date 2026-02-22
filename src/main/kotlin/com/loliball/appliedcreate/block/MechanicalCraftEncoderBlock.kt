@@ -1,5 +1,6 @@
 package com.loliball.appliedcreate.block
 
+import com.loliball.appliedcreate.AppliedCreate
 import com.loliball.appliedcreate.block.entity.MechanicalCraftEncoderBlockEntity
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
@@ -76,7 +77,10 @@ class MechanicalCraftEncoderBlock : Block(
         if (!level.isClientSide && player is ServerPlayer) {
             val blockEntity = level.getBlockEntity(pos)
             if (blockEntity is MechanicalCraftEncoderBlockEntity) {
+                AppliedCreate.LOGGER.debug("Opening Mechanical Craft Encoder GUI at {}", pos)
                 NetworkHooks.openScreen(player, blockEntity, pos)
+            } else {
+                AppliedCreate.LOGGER.warn("Block entity at {} is not MechanicalCraftEncoderBlockEntity: {}", pos, blockEntity)
             }
         }
         return InteractionResult.sidedSuccess(level.isClientSide)
