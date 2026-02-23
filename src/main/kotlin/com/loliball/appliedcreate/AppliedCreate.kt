@@ -1,5 +1,6 @@
 package com.loliball.appliedcreate
 
+import com.loliball.appliedcreate.ponder.AppliedCreatePonderPlugin
 import com.loliball.appliedcreate.block.AndesitePatternProviderBlock
 import com.loliball.appliedcreate.block.BrassPatternProviderBlock
 import com.loliball.appliedcreate.block.MechanicalCraftEncoderBlock
@@ -28,6 +29,7 @@ import net.minecraftforge.common.extensions.IForgeMenuType
 import net.minecraftforge.eventbus.api.IEventBus
 import net.minecraftforge.fml.common.Mod
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent
+import net.createmod.ponder.foundation.PonderIndex
 import net.minecraftforge.fml.loading.FMLEnvironment
 import net.minecraftforge.registries.DeferredRegister
 import net.minecraftforge.registries.ForgeRegistries
@@ -180,6 +182,7 @@ class AppliedCreate {
 
         if (FMLEnvironment.dist.isClient) {
             ClientSetup.register(bus)
+            PonderIndex.addPlugin(AppliedCreatePonderPlugin())
         }
 
         LOGGER.info("Applied Create loaded - Mechanical Craft Encoder standalone mod")

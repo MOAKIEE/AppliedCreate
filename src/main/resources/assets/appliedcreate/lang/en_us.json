@@ -5,5 +5,17 @@
     "item.appliedcreate.brass_pattern_provider_upgrade": "Brass Pattern Provider Upgrade",
     "item.appliedcreate.andesite_pattern_provider_part": "Andesite Pattern Provider",
     "item.appliedcreate.brass_pattern_provider_part": "Brass Pattern Provider",
-    "itemGroup.appliedcreate": "Applied Create"
+    "itemGroup.appliedcreate": "Applied Create",
+
+    "appliedcreate.ponder.tag.applied_create": "Applied Create",
+    "appliedcreate.ponder.tag.applied_create.description": "Blocks from the Applied Create mod",
+
+    "appliedcreate.ponder.andesite_pattern_provider": "Andesite Pattern Provider",
+    "appliedcreate.ponder.andesite_pattern_provider.header": "Using the Andesite Pattern Provider",
+
+    "appliedcreate.ponder.brass_pattern_provider": "Brass Pattern Provider",
+    "appliedcreate.ponder.brass_pattern_provider.header": "Using the Brass Pattern Provider",
+
+    "appliedcreate.ponder.mechanical_craft_encoder": "Mechanical Craft Encoder",
+    "appliedcreate.ponder.mechanical_craft_encoder.header": "Using the Mechanical Craft Encoder"
 }

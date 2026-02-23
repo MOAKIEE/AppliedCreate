@@ -23,6 +23,8 @@ minecraft {
             workingDirectory(project.file("run"))
             property("forge.logging.markers", "REGISTRIES")
             property("forge.logging.console.level", "debug")
+            property("guideDev.ae2guide.sources", file("src/main/resources/assets/appliedcreate/ae2guide").absolutePath)
+            property("guideDev.ae2guide.sourcesNamespace", "appliedcreate")
 
             mods {
                 create(modId) {
@@ -83,6 +85,8 @@ dependencies {
     compileOnly(fg.deobf("dev.engine-room.flywheel:flywheel-forge-${project.extra["minecraft_version"]}:1.0.0-beta-195"))
 
     compileOnly(fg.deobf("net.createmod.ponder:Ponder-Forge-${project.extra["minecraft_version"]}:${project.extra["ponder_version"]}"))
+
+    compileOnly(fg.deobf("net.createmod.catnip:Catnip-Forge-${project.extra["minecraft_version"]}:0.8.42"))
 
     compileOnly(fg.deobf("appeng:appliedenergistics2-forge:${project.extra["ae2_version"]}"))
 }
