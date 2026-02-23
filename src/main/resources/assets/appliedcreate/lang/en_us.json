@@ -7,6 +7,8 @@
     "item.appliedcreate.brass_pattern_provider_part": "Brass Pattern Provider",
     "itemGroup.appliedcreate": "Applied Create",
 
+    "gui.appliedcreate.patterns": "Patterns",
+
     "appliedcreate.ponder.tag.applied_create": "Applied Create",
     "appliedcreate.ponder.tag.applied_create.description": "Blocks from the Applied Create mod",
 

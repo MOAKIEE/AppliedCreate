@@ -19,8 +19,8 @@ class AndesitePatternProviderMenu : AbstractContainerMenu {
     companion object {
         const val PATTERN_SLOTS = 9
         const val SLOT_SIZE = 18
-        const val PATTERN_START_X = 62
-        const val PATTERN_START_Y = 17
+        const val PATTERN_START_X = 8
+        const val PATTERN_START_Y = 32
 
         const val PLAYER_INV_START_X = 8
         const val PLAYER_INV_START_Y = 84
@@ -43,17 +43,15 @@ class AndesitePatternProviderMenu : AbstractContainerMenu {
 
         val handler = be.logic.inventory
 
-        for (row in 0 until 3) {
-            for (col in 0 until 3) {
-                addSlot(
-                    SlotItemHandler(
-                        handler,
-                        col + row * 3,
-                        PATTERN_START_X + col * SLOT_SIZE,
-                        PATTERN_START_Y + row * SLOT_SIZE
-                    )
+        for (col in 0 until PATTERN_SLOTS) {
+            addSlot(
+                SlotItemHandler(
+                    handler,
+                    col,
+                    PATTERN_START_X + col * SLOT_SIZE,
+                    PATTERN_START_Y
                 )
-            }
+            )
         }
 
         for (row in 0 until 3) {

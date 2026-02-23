@@ -22,11 +22,11 @@ class BrassPatternProviderPartMenu : AbstractContainerMenu {
         const val ROWS = 4
         const val SLOT_SIZE = 18
         const val PATTERN_START_X = 8
-        const val PATTERN_START_Y = 18
+        const val PATTERN_START_Y = 32
 
         const val PLAYER_INV_START_X = 8
-        const val PLAYER_INV_START_Y = 104
-        const val PLAYER_HOTBAR_Y = 162
+        const val PLAYER_INV_START_Y = 126
+        const val PLAYER_HOTBAR_Y = 184
     }
 
     constructor(windowId: Int, playerInventory: Inventory, buf: FriendlyByteBuf) : this(

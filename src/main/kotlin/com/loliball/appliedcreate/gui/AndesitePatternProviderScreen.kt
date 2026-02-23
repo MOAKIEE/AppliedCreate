@@ -17,6 +17,12 @@ class AndesitePatternProviderScreen(
         private val TEXTURE = ResourceLocation(AppliedCreate.MOD_ID, "textures/gui/andesite_pattern_provider.png")
     }
 
+    init {
+        imageWidth = 176
+        imageHeight = 166
+        inventoryLabelY = imageHeight - 94
+    }
+
     override fun render(guiGraphics: GuiGraphics, mouseX: Int, mouseY: Int, partialTick: Float) {
         renderBackground(guiGraphics)
         super.render(guiGraphics, mouseX, mouseY, partialTick)
@@ -31,6 +37,7 @@ class AndesitePatternProviderScreen(
 
     override fun renderLabels(guiGraphics: GuiGraphics, mouseX: Int, mouseY: Int) {
         guiGraphics.drawString(font, title, titleLabelX, titleLabelY, 4210752, false)
+        guiGraphics.drawString(font, Component.translatable("gui.appliedcreate.patterns"), 8, 21, 4210752, false)
         guiGraphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 4210752, false)
     }
 }

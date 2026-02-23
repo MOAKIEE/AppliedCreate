@@ -19,7 +19,7 @@ class BrassPatternProviderScreen(
 
     init {
         imageWidth = 176
-        imageHeight = 186
+        imageHeight = 208
         inventoryLabelY = imageHeight - 94
     }
 
@@ -37,6 +37,7 @@ class BrassPatternProviderScreen(
 
     override fun renderLabels(guiGraphics: GuiGraphics, mouseX: Int, mouseY: Int) {
         guiGraphics.drawString(font, title, titleLabelX, titleLabelY, 4210752, false)
+        guiGraphics.drawString(font, Component.translatable("gui.appliedcreate.patterns"), 8, 21, 4210752, false)
         guiGraphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 4210752, false)
     }
 }
