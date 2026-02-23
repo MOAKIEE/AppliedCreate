@@ -139,6 +139,259 @@ src/main/resources/
 4. **占位纹理**：初始版本使用简单纹理，后续可替换为精美资源
 5. **AE2 可选**：合成配方中的分子装配室需要 AE2，但编码器本身不依赖 AE2 运行
 
+---
+
+## Phase 2 — 黄铜样板供应器（Brass Pattern Provider）
+
+### 概述
+
+新增**黄铜样板供应器**（Brass Pattern Provider）方块，作为 AE2 ME 网络与 Create 动力合成器阵列之间的桥梁。它接收 AE2 处理样板（processing pattern），根据样板的产物匹配 `create:mechanical_crafting` 配方，然后从 ME 网络提取原材料，按正确的配方网格布局直接插入到相邻的动力合成器阵列中。
+
+### 需求
+
+1. 使用 AE2 **处理样板**（processing pattern），AE2 作为必需依赖
+2. 玩家需要将多个动力合成器使用扳手链接成一个整体
+3. 黄铜样板供应器必须紧贴动力合成器阵列放置
+4. 原材料来自 AE 网络，与普通的 ME 样板供应器逻辑保持一致
+5. 遵循 AE 默认的自动请求材料获取
+6. 不输出包裹，直接将材料以正确的配方形式输出到紧贴着的动力合成器中
+7. 通过样板中的**产物信息**解决配方歧义（相同原料不同产物的配方）
+
+### AE2 API 分析
+
+通过反编译 AE2 Forge 15.4.10 的 jar 文件，确认以下关键接口和类：
+
+#### ICraftingProvider（核心接口）
+
+```java
+public interface ICraftingProvider extends IGridNodeService {
+    List<IPatternDetails> getAvailablePatterns();    // 向网络报告可用样板
+    default int getPatternPriority();                // 样板优先级
+    boolean pushPattern(IPatternDetails, KeyCounter[]); // 网络推送合成任务
+    boolean isBusy();                                // 是否繁忙（正在处理）
+    default Set<AEKey> getEmitableItems();           // 可发射的物品
+    static void requestUpdate(IManagedGridNode);     // 通知网络刷新样板
+}
+```
+
+#### IPatternDetails（样板详情）
+
+```java
+public interface IPatternDetails {
+    AEItemKey getDefinition();           // 样板物品本身
+    IInput[] getInputs();               // 输入材料列表
+    GenericStack getPrimaryOutput();     // 主要产物
+    GenericStack[] getOutputs();        // 所有产物
+    boolean supportsPushInputsToExternalInventory();
+    void pushInputsToExternalInventory(KeyCounter[], PatternInputSink);
+}
+```
+
+#### PatternProviderLogic（样板供应器逻辑 — 可复用）
+
+```java
+public class PatternProviderLogic implements InternalInventoryHost, ICraftingProvider {
+    public PatternProviderLogic(IManagedGridNode, PatternProviderLogicHost);
+    public PatternProviderLogic(IManagedGridNode, PatternProviderLogicHost, int numPatternSlots);
+    public List<IPatternDetails> getAvailablePatterns();
+    public boolean pushPattern(IPatternDetails, KeyCounter[]);
+    public boolean isBusy();
+    public InternalInventory getPatternInv();
+    // ... NBT, config, return inventory 等
+}
+```
+
+#### PatternProviderLogicHost（宿主接口）
+
+```java
+public interface PatternProviderLogicHost extends IConfigurableObject, IPriorityHost, PatternContainer {
+    PatternProviderLogic getLogic();
+    BlockEntity getBlockEntity();
+    EnumSet<Direction> getTargets();   // 输出方向
+    void saveChanges();
+    AEItemKey getTerminalIcon();
+    // ... 终端显示、菜单、优先级等
+}
+```
+
+#### AENetworkBlockEntity（基类）
+
+```java
+public class AENetworkBlockEntity extends AEBaseBlockEntity implements IGridConnectedBlockEntity {
+    public IManagedGridNode getMainNode();  // ME 网格节点
+    public void onReady();                 // 加入网格
+    // ... load/save NBT
+}
+```
+
+### Create 动力合成器 API 分析
+
+#### MechanicalCrafterBlockEntity
+
+```java
+public class MechanicalCrafterBlockEntity extends KineticBlockEntity {
+    public MechanicalCrafterBlockEntity.Inventory getInventory();    // 1 槽物品
+    public ConnectedInputHandler.ConnectedInput getInput();          // 链接信息
+    public <T> LazyOptional<T> getCapability(Capability<T>, Direction); // IItemHandler 能力
+}
+```
+
+#### ConnectedInput（链接组管理）
+
+```java
+public class ConnectedInputHandler.ConnectedInput {
+    public void attachTo(BlockPos controllerPos, BlockPos selfPos);
+    public IItemHandler getItemHandler(Level, BlockPos);              // 合并后的物品处理器
+    public List<Inventory> getInventories(Level, BlockPos);           // 按顺序的所有子库存
+}
+```
+
+#### 物品插入流程
+
+1. 获取相邻方块的 `MechanicalCrafterBlockEntity`
+2. 通过 `getInput()` 获取 `ConnectedInput`，找到控制器和所有链接成员
+3. 通过 `RecipeGridHandler.getAllCraftersOfChain()` 获取链中所有合成器
+4. 每个合成器的 `getInventory()` 返回 1 槽的 `SmartInventory`
+5. 通过 `insertItem()` 插入物品到对应位置
+6. 槽位排序：按 Y 降序、X 按朝向轴排序（与配方网格对应）
+
+### 实现方案
+
+#### 方案选择：自定义 ICraftingProvider + 直接插入
+
+**不复用** `PatternProviderLogic`，原因：
+- `PatternProviderLogic.pushPattern()` 内部通过 `PatternProviderTarget` 向相邻库存推送物品，使用 `insert(AEKey, long, Actionable)` 逐个推送
+- 我们需要将物品**按网格位置**插入到特定合成器的特定槽位，而非简单地逐个推送到相邻库存
+- 自定义实现允许我们精确控制物品的插入位置
+
+#### 核心流程
+
+```
+玩家放入处理样板 → 黄铜样板供应器注册到 ME 网络
+                → 网络发起合成请求
+                → pushPattern(pattern, inputs) 被调用
+                → 读取 pattern.getPrimaryOutput() 获取目标产物
+                → 遍历所有 create:mechanical_crafting 配方
+                → 找到产物匹配的配方
+                → 获取配方的网格布局（width × height + ingredients）
+                → 检测相邻的动力合成器阵列
+                → 获取阵列的网格尺寸和各位置的合成器
+                → 将 inputs 中的材料按配方网格布局插入到对应合成器
+                → 报告 isBusy() = true
+                → 等待合成完成（监听合成器状态变化或结果产物出现）
+                → 报告合成完成，将结果返回 ME 网络
+```
+
+#### 类结构
+
+```
+src/main/kotlin/com/loliball/appliedcreate/
+├── AppliedCreate.kt                             # 新增注册
+├── block/
+│   ├── MechanicalCraftEncoderBlock.kt           # （已有）
+│   ├── BrassPatternProviderBlock.kt             # 新增
+│   └── entity/
+│       ├── MechanicalCraftEncoderBlockEntity.kt # （已有）
+│       └── BrassPatternProviderBlockEntity.kt   # 新增 — 核心逻辑
+└── gui/
+    ├── MechanicalCraftEncoderMenu.kt            # （已有）
+    ├── MechanicalCraftEncoderScreen.kt          # （已有）
+    ├── BrassPatternProviderMenu.kt              # 新增
+    └── BrassPatternProviderScreen.kt            # 新增
+```
+
+#### BrassPatternProviderBlockEntity 核心设计
+
+```kotlin
+class BrassPatternProviderBlockEntity : AENetworkBlockEntity, ICraftingProvider {
+    // 9 个样板槽（与 AE2 标准样板供应器一致）
+    private val patternInventory: InternalInventory  // AE2 的 AppEngInternalInventory
+    private var patterns: List<IPatternDetails>       // 解码后的样板
+    private var busy: Boolean = false                 // 是否正在处理合成
+
+    // ICraftingProvider 实现
+    override fun getAvailablePatterns(): List<IPatternDetails> = patterns
+    override fun isBusy(): Boolean = busy
+
+    override fun pushPattern(pattern: IPatternDetails, inputs: Array<KeyCounter>): Boolean {
+        // 1. 获取样板产物
+        val output = pattern.primaryOutput ?: return false
+        val outputItem = (output.what() as? AEItemKey)?.toStack() ?: return false
+
+        // 2. 查找匹配的 mechanical_crafting 配方
+        val recipe = findMatchingRecipe(outputItem) ?: return false
+
+        // 3. 检测相邻动力合成器阵列
+        val crafterArray = detectAdjacentCrafterArray() ?: return false
+
+        // 4. 验证阵列尺寸与配方匹配
+        if (!validateGridSize(crafterArray, recipe)) return false
+
+        // 5. 将材料按网格布局插入合成器
+        insertIngredientsIntoCrafters(recipe, inputs, crafterArray)
+
+        busy = true
+        return true
+    }
+}
+```
+
+#### 配方歧义解决
+
+处理样板包含**产物信息**（`IPatternDetails.getPrimaryOutput()`），因此：
+
+1. 玩家在 AE2 终端中编码处理样板时，输入原料 + 输出产物
+2. 黄铜样板供应器收到合成请求时，通过 `pattern.getPrimaryOutput()` 获取目标产物 ItemStack
+3. 遍历所有 `create:mechanical_crafting` 配方时，用 `recipe.getResultItem()` 与目标产物比较
+4. 即使多个配方原料相同（如铁活板门和铁靴子都是 4 个铁），产物不同，可以唯一确定配方
+
+#### 合成完成检测
+
+两种可行策略：
+
+**策略 A — 轮询检测**（推荐，简单可靠）：
+- `pushPattern` 后标记 `busy = true`
+- 每 tick 检查相邻合成器阵列状态
+- 当所有合成器变为 IDLE 且结果出现在输出位置时，标记完成
+- 将产物返回 ME 网络（通过 `IStorageService` 插入）
+
+**策略 B — 事件监听**：
+- 监听合成器的状态变化事件
+- 更响应式但依赖 Create 内部 API 稳定性
+
+### 新增依赖
+
+```properties
+# gradle.properties
+ae2_version=15.4.10
+```
+
+```kotlin
+// build.gradle.kts
+compileOnly(fg.deobf("appeng:appliedenergistics2-forge:${project.extra["ae2_version"]}"))
+```
+
+```toml
+# mods.toml 新增
+[[dependencies.appliedcreate]]
+    modId="ae2"
+    mandatory=true
+    versionRange="[15.0,)"
+    ordering="AFTER"
+    side="BOTH"
+```
+
+### 资源文件
+
+- `blockstates/brass_pattern_provider.json` — 4 方向变体
+- `models/block/brass_pattern_provider.json` — cube_bottom_top（黄铜机壳风格）
+- `models/item/brass_pattern_provider.json` — 引用方块模型
+- `textures/block/brass_pattern_provider_{top,side,bottom}.png` — 使用齿轮盛宴纹理或黄铜风格
+- `textures/gui/brass_pattern_provider.png` — 9 个样板槽 + 状态指示
+- `lang/en_us.json` — "Brass Pattern Provider"
+- `lang/zh_cn.json` — "黄铜样板供应器"
+- `recipes/brass_pattern_provider.json` — 合成配方
+
 ## 构建与安装
 
 ```bash
@@ -152,5 +405,6 @@ build/libs/appliedcreate-1.0.0.jar
 安装步骤：
 1. 安装 Forge 1.20.1 (47.x)
 2. 安装 Kotlin for Forge 4.x
-3. 安装 Create 6.0.8
-4. 将 `appliedcreate-1.0.0.jar` 放入 `mods/` 文件夹
+3. 安装 Create 6.0.6+
+4. 安装 Applied Energistics 2 (15.x)
+5. 将 `appliedcreate-1.0.0.jar` 放入 `mods/` 文件夹

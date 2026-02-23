@@ -1,5 +1,7 @@
 package com.loliball.appliedcreate
 
+import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
+import com.loliball.appliedcreate.gui.BrassPatternProviderScreen
 import com.loliball.appliedcreate.gui.MechanicalCraftEncoderMenu
 import com.loliball.appliedcreate.gui.MechanicalCraftEncoderScreen
 import net.minecraft.client.gui.screens.MenuScreens
@@ -19,6 +21,9 @@ object ClientSetup {
         event.enqueueWork {
             MenuScreens.register(AppliedCreate.MECHANICAL_CRAFT_ENCODER_MENU.get()) { menu: MechanicalCraftEncoderMenu, inv, title ->
                 MechanicalCraftEncoderScreen(menu, inv, title)
+            }
+            MenuScreens.register(AppliedCreate.BRASS_PATTERN_PROVIDER_MENU.get()) { menu: BrassPatternProviderMenu, inv, title ->
+                BrassPatternProviderScreen(menu, inv, title)
             }
         }
         AppliedCreate.LOGGER.info("Applied Create client setup - screen registered")

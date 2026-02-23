@@ -33,3 +33,9 @@ description='''Mechanical Craft Encoder - encodes Create mechanical crafting rec
     versionRange="[4.0,)"
     ordering="NONE"
     side="BOTH"
+[[dependencies.appliedcreate]]
+    modId="ae2"
+    mandatory=true
+    versionRange="[15.0,)"
+    ordering="AFTER"
+    side="BOTH"

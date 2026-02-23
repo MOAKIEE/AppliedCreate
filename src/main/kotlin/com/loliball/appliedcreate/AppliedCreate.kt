@@ -1,7 +1,10 @@
 package com.loliball.appliedcreate
 
+import com.loliball.appliedcreate.block.BrassPatternProviderBlock
 import com.loliball.appliedcreate.block.MechanicalCraftEncoderBlock
+import com.loliball.appliedcreate.block.entity.BrassPatternProviderBlockEntity
 import com.loliball.appliedcreate.block.entity.MechanicalCraftEncoderBlockEntity
+import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
 import com.loliball.appliedcreate.gui.MechanicalCraftEncoderMenu
 import net.minecraft.core.registries.Registries
 import net.minecraft.network.chat.Component
@@ -59,12 +62,37 @@ class AppliedCreate {
                 }
             }
 
+        val BRASS_PATTERN_PROVIDER_BLOCK: RegistryObject<Block> = BLOCKS.register("brass_pattern_provider") {
+            BrassPatternProviderBlock()
+        }
+
+        val BRASS_PATTERN_PROVIDER_ITEM: RegistryObject<Item> = ITEMS.register("brass_pattern_provider") {
+            BlockItem(BRASS_PATTERN_PROVIDER_BLOCK.get(), Item.Properties())
+        }
+
+        @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
+        val BRASS_PATTERN_PROVIDER_BE: RegistryObject<BlockEntityType<BrassPatternProviderBlockEntity>> =
+            BLOCK_ENTITY_TYPES.register("brass_pattern_provider") {
+                BlockEntityType.Builder.of(
+                    ::BrassPatternProviderBlockEntity,
+                    BRASS_PATTERN_PROVIDER_BLOCK.get()
+                ).build(null)
+            }
+
+        val BRASS_PATTERN_PROVIDER_MENU: RegistryObject<MenuType<BrassPatternProviderMenu>> =
+            MENU_TYPES.register("brass_pattern_provider") {
+                IForgeMenuType.create { windowId, inv, data ->
+                    BrassPatternProviderMenu(windowId, inv, data)
+                }
+            }
+
         val CREATIVE_TAB: RegistryObject<CreativeModeTab> = CREATIVE_TABS.register("main") {
             CreativeModeTab.builder()
                 .title(Component.translatable("itemGroup.$MOD_ID"))
                 .icon { MECHANICAL_CRAFT_ENCODER_ITEM.get().defaultInstance }
                 .displayItems { _, output ->
                     output.accept(MECHANICAL_CRAFT_ENCODER_ITEM.get())
+                    output.accept(BRASS_PATTERN_PROVIDER_ITEM.get())
                 }
                 .build()
         }

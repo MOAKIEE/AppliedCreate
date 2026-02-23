@@ -67,6 +67,10 @@ repositories {
         name = "Create Mod Maven"
         url = uri("https://maven.createmod.net")
     }
+    maven {
+        name = "ModMaven"
+        url = uri("https://modmaven.dev")
+    }
 }
 
 dependencies {
@@ -77,6 +81,10 @@ dependencies {
     compileOnly(fg.deobf("com.simibubi.create:create-${project.extra["minecraft_version"]}:${project.extra["create_version"]}:slim"))
 
     compileOnly(fg.deobf("dev.engine-room.flywheel:flywheel-forge-${project.extra["minecraft_version"]}:1.0.0-beta-195"))
+
+    compileOnly(fg.deobf("net.createmod.ponder:Ponder-Forge-${project.extra["minecraft_version"]}:${project.extra["ponder_version"]}"))
+
+    compileOnly(fg.deobf("appeng:appliedenergistics2-forge:${project.extra["ae2_version"]}"))
 }
 
 tasks.named<Jar>("jar") {
