@@ -24,6 +24,7 @@ import net.minecraftforge.common.capabilities.ForgeCapabilities
 import net.minecraftforge.common.util.LazyOptional
 import net.minecraftforge.items.ItemStackHandler
 import kotlin.math.abs
+import kotlin.math.max
 
 class MechanicalCraftEncoderBlockEntity(
     pos: BlockPos,
@@ -109,7 +110,7 @@ class MechanicalCraftEncoderBlockEntity(
 
         val recipe = sortedRecipes.firstOrNull() ?: return
 
-        consumeAndOutput(recipe, level)
+        consumeAndOutput(recipe)
     }
 
     private fun canCraftRecipe(recipe: MechanicalCraftingRecipe): Boolean {
@@ -138,48 +139,56 @@ class MechanicalCraftEncoderBlockEntity(
         }
     }
 
-    private fun consumeAndOutput(recipe: MechanicalCraftingRecipe, level: Level) {
+    private fun consumeAndOutput(recipe: MechanicalCraftingRecipe) {
         val ingredients = recipe.ingredients
-        for (ingredient in ingredients) {
-            if (ingredient.isEmpty) continue
-            for (slot in 0 until INPUT_SLOTS) {
-                val stack = inventory.getStackInSlot(slot)
-                if (!stack.isEmpty && ingredient.test(stack)) {
-                    inventory.extractItem(slot, 1, false)
-                    break
-                }
-            }
-        }
-
         val width = recipe.width
         val height = recipe.height
+        val gridWidth = max(minWidth, width)
+
         val craftingIngredients = mutableListOf<BigItemStack>()
+        val resultItemHandler = ItemStackHandler(INPUT_SLOTS)
 
         for (row in 0 until height) {
-            for (col in 0 until width) {
-                val idx = row * width + col
-                if (idx < ingredients.size) {
-                    val ingredient = ingredients[idx]
-                    if (!ingredient.isEmpty) {
-                        val matchingItems = ingredient.items
-                        if (matchingItems.isNotEmpty()) {
-                            craftingIngredients.add(BigItemStack(matchingItems[0].copy()))
-                        } else {
+            for (col in 0 until gridWidth) {
+                if (col < width) {
+                    val idx = row * width + col
+                    val ingredient = if (idx < ingredients.size) ingredients[idx] else null
+
+                    if (ingredient != null && !ingredient.isEmpty) {
+                        var matched = false
+                        for (slot in 0 until INPUT_SLOTS) {
+                            val inputStack = inventory.getStackInSlot(slot)
+                            if (!inputStack.isEmpty && ingredient.test(inputStack)) {
+                                val consumed = inputStack.copyWithCount(1)
+                                resultItemHandler.insertItem(slot, consumed, false)
+                                inputStack.shrink(1)
+                                if (inputStack.isEmpty) {
+                                    inventory.setStackInSlot(slot, ItemStack.EMPTY)
+                                }
+                                craftingIngredients.add(BigItemStack(consumed))
+                                matched = true
+                                break
+                            }
+                        }
+                        if (!matched) {
                             craftingIngredients.add(BigItemStack(ItemStack.EMPTY))
                         }
                     } else {
                         craftingIngredients.add(BigItemStack(ItemStack.EMPTY))
                     }
+                } else {
+                    craftingIngredients.add(BigItemStack(ItemStack.EMPTY))
                 }
             }
         }
 
-        val order = PackageOrderWithCrafts.singleRecipe(craftingIngredients)
-        val resultHandler = ItemStackHandler(1)
-        val resultItem = recipe.getResultItem(level.registryAccess()).copy()
-        resultHandler.setStackInSlot(0, resultItem)
+        while (craftingIngredients.size < 9) {
+            craftingIngredients.add(BigItemStack(ItemStack.EMPTY))
+        }
 
-        val packageStack = PackageItem.containing(resultHandler)
+        val order = PackageOrderWithCrafts.singleRecipe(craftingIngredients)
+
+        val packageStack = PackageItem.containing(resultItemHandler)
         val tag = packageStack.getOrCreateTag()
         val fragmentTag = CompoundTag()
         fragmentTag.put("OrderContext", order.write())
