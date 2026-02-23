@@ -1,6 +1,12 @@
 package com.loliball.appliedcreate
 
+import com.loliball.appliedcreate.gui.AndesitePatternProviderMenu
+import com.loliball.appliedcreate.gui.AndesitePatternProviderPartMenu
+import com.loliball.appliedcreate.gui.AndesitePatternProviderPartScreen
+import com.loliball.appliedcreate.gui.AndesitePatternProviderScreen
 import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
+import com.loliball.appliedcreate.gui.BrassPatternProviderPartMenu
+import com.loliball.appliedcreate.gui.BrassPatternProviderPartScreen
 import com.loliball.appliedcreate.gui.BrassPatternProviderScreen
 import com.loliball.appliedcreate.gui.MechanicalCraftEncoderMenu
 import com.loliball.appliedcreate.gui.MechanicalCraftEncoderScreen
@@ -25,7 +31,16 @@ object ClientSetup {
             MenuScreens.register(AppliedCreate.BRASS_PATTERN_PROVIDER_MENU.get()) { menu: BrassPatternProviderMenu, inv, title ->
                 BrassPatternProviderScreen(menu, inv, title)
             }
+            MenuScreens.register(AppliedCreate.ANDESITE_PATTERN_PROVIDER_MENU.get()) { menu: AndesitePatternProviderMenu, inv, title ->
+                AndesitePatternProviderScreen(menu, inv, title)
+            }
+            MenuScreens.register(AppliedCreate.ANDESITE_PATTERN_PROVIDER_PART_MENU.get()) { menu: AndesitePatternProviderPartMenu, inv, title ->
+                AndesitePatternProviderPartScreen(menu, inv, title)
+            }
+            MenuScreens.register(AppliedCreate.BRASS_PATTERN_PROVIDER_PART_MENU.get()) { menu: BrassPatternProviderPartMenu, inv, title ->
+                BrassPatternProviderPartScreen(menu, inv, title)
+            }
         }
-        AppliedCreate.LOGGER.info("Applied Create client setup - screen registered")
+        AppliedCreate.LOGGER.info("Applied Create client setup - screens registered")
     }
 }

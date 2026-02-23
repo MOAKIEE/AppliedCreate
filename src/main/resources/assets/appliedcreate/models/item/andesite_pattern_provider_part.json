@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "appliedcreate:item/andesite_pattern_provider_part"
+  }
+}

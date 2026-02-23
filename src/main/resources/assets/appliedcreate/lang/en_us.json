@@ -1,5 +1,9 @@
 {
     "block.appliedcreate.mechanical_craft_encoder": "Mechanical Craft Encoder",
+    "block.appliedcreate.andesite_pattern_provider": "Andesite Pattern Provider",
     "block.appliedcreate.brass_pattern_provider": "Brass Pattern Provider",
+    "item.appliedcreate.brass_pattern_provider_upgrade": "Brass Pattern Provider Upgrade",
+    "item.appliedcreate.andesite_pattern_provider_part": "Andesite Pattern Provider",
+    "item.appliedcreate.brass_pattern_provider_part": "Brass Pattern Provider",
     "itemGroup.appliedcreate": "Applied Create"
 }

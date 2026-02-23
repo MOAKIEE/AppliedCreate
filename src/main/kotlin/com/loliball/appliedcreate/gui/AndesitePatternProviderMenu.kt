@@ -1,7 +1,7 @@
 package com.loliball.appliedcreate.gui
 
 import com.loliball.appliedcreate.AppliedCreate
-import com.loliball.appliedcreate.block.entity.BrassPatternProviderBlockEntity
+import com.loliball.appliedcreate.block.entity.AndesitePatternProviderBlockEntity
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.entity.player.Player
@@ -11,33 +11,31 @@ import net.minecraft.world.inventory.Slot
 import net.minecraft.world.item.ItemStack
 import net.minecraftforge.items.SlotItemHandler
 
-class BrassPatternProviderMenu : AbstractContainerMenu {
+class AndesitePatternProviderMenu : AbstractContainerMenu {
 
-    val blockEntity: BrassPatternProviderBlockEntity
+    val blockEntity: AndesitePatternProviderBlockEntity
     private val levelAccess: ContainerLevelAccess
 
     companion object {
-        const val PATTERN_SLOTS = 36
-        const val COLS = 9
-        const val ROWS = 4
+        const val PATTERN_SLOTS = 9
         const val SLOT_SIZE = 18
-        const val PATTERN_START_X = 8
-        const val PATTERN_START_Y = 18
+        const val PATTERN_START_X = 62
+        const val PATTERN_START_Y = 17
 
         const val PLAYER_INV_START_X = 8
-        const val PLAYER_INV_START_Y = 104
-        const val PLAYER_HOTBAR_Y = 162
+        const val PLAYER_INV_START_Y = 84
+        const val PLAYER_HOTBAR_Y = 142
     }
 
     constructor(windowId: Int, playerInventory: Inventory, buf: FriendlyByteBuf) : this(
         windowId,
         playerInventory,
-        playerInventory.player.level().getBlockEntity(buf.readBlockPos()) as? BrassPatternProviderBlockEntity
+        playerInventory.player.level().getBlockEntity(buf.readBlockPos()) as? AndesitePatternProviderBlockEntity
             ?: throw IllegalStateException("Block entity not found")
     )
 
-    constructor(windowId: Int, playerInventory: Inventory, be: BrassPatternProviderBlockEntity) : super(
-        AppliedCreate.BRASS_PATTERN_PROVIDER_MENU.get(),
+    constructor(windowId: Int, playerInventory: Inventory, be: AndesitePatternProviderBlockEntity) : super(
+        AppliedCreate.ANDESITE_PATTERN_PROVIDER_MENU.get(),
         windowId
     ) {
         this.blockEntity = be
@@ -45,12 +43,12 @@ class BrassPatternProviderMenu : AbstractContainerMenu {
 
         val handler = be.logic.inventory
 
-        for (row in 0 until ROWS) {
-            for (col in 0 until COLS) {
+        for (row in 0 until 3) {
+            for (col in 0 until 3) {
                 addSlot(
                     SlotItemHandler(
                         handler,
-                        col + row * COLS,
+                        col + row * 3,
                         PATTERN_START_X + col * SLOT_SIZE,
                         PATTERN_START_Y + row * SLOT_SIZE
                     )
@@ -97,6 +95,6 @@ class BrassPatternProviderMenu : AbstractContainerMenu {
     }
 
     override fun stillValid(player: Player): Boolean {
-        return stillValid(levelAccess, player, AppliedCreate.BRASS_PATTERN_PROVIDER_BLOCK.get())
+        return stillValid(levelAccess, player, AppliedCreate.ANDESITE_PATTERN_PROVIDER_BLOCK.get())
     }
 }

@@ -1,7 +1,7 @@
 package com.loliball.appliedcreate.block
 
 import com.loliball.appliedcreate.AppliedCreate
-import com.loliball.appliedcreate.block.entity.BrassPatternProviderBlockEntity
+import com.loliball.appliedcreate.block.entity.AndesitePatternProviderBlockEntity
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.server.level.ServerPlayer
@@ -24,11 +24,11 @@ import net.minecraft.world.level.material.MapColor
 import net.minecraft.world.phys.BlockHitResult
 import net.minecraftforge.network.NetworkHooks
 
-class BrassPatternProviderBlock : Block(
+class AndesitePatternProviderBlock : Block(
     Properties.of()
-        .mapColor(MapColor.METAL)
+        .mapColor(MapColor.STONE)
         .strength(1.5f, 6.0f)
-        .sound(SoundType.METAL)
+        .sound(SoundType.STONE)
         .requiresCorrectToolForDrops()
 ), EntityBlock {
 
@@ -49,7 +49,7 @@ class BrassPatternProviderBlock : Block(
     }
 
     override fun newBlockEntity(pos: BlockPos, state: BlockState): BlockEntity {
-        return BrassPatternProviderBlockEntity(pos, state)
+        return AndesitePatternProviderBlockEntity(pos, state)
     }
 
     override fun <T : BlockEntity> getTicker(
@@ -59,7 +59,7 @@ class BrassPatternProviderBlock : Block(
     ): BlockEntityTicker<T>? {
         if (level.isClientSide) return null
         return BlockEntityTicker { tickLevel, tickPos, tickState, blockEntity ->
-            if (blockEntity is BrassPatternProviderBlockEntity) {
+            if (blockEntity is AndesitePatternProviderBlockEntity) {
                 blockEntity.serverTick(tickLevel, tickPos, tickState)
             }
         }
@@ -76,7 +76,7 @@ class BrassPatternProviderBlock : Block(
     ): InteractionResult {
         if (!level.isClientSide && player is ServerPlayer) {
             val blockEntity = level.getBlockEntity(pos)
-            if (blockEntity is BrassPatternProviderBlockEntity) {
+            if (blockEntity is AndesitePatternProviderBlockEntity) {
                 NetworkHooks.openScreen(player, blockEntity, pos)
             }
         }
@@ -87,7 +87,7 @@ class BrassPatternProviderBlock : Block(
     override fun onRemove(state: BlockState, level: Level, pos: BlockPos, newState: BlockState, moving: Boolean) {
         if (!state.`is`(newState.block)) {
             val blockEntity = level.getBlockEntity(pos)
-            if (blockEntity is BrassPatternProviderBlockEntity) {
+            if (blockEntity is AndesitePatternProviderBlockEntity) {
                 blockEntity.dropContents(level, pos)
             }
             super.onRemove(state, level, pos, newState, moving)

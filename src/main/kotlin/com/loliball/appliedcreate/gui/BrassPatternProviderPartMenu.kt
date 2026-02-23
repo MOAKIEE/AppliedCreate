@@ -1,20 +1,20 @@
 package com.loliball.appliedcreate.gui
 
+import appeng.api.parts.IPartHost
 import com.loliball.appliedcreate.AppliedCreate
-import com.loliball.appliedcreate.block.entity.BrassPatternProviderBlockEntity
+import com.loliball.appliedcreate.part.BrassPatternProviderPart
+import net.minecraft.core.Direction
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.inventory.AbstractContainerMenu
-import net.minecraft.world.inventory.ContainerLevelAccess
 import net.minecraft.world.inventory.Slot
 import net.minecraft.world.item.ItemStack
 import net.minecraftforge.items.SlotItemHandler
 
-class BrassPatternProviderMenu : AbstractContainerMenu {
+class BrassPatternProviderPartMenu : AbstractContainerMenu {
 
-    val blockEntity: BrassPatternProviderBlockEntity
-    private val levelAccess: ContainerLevelAccess
+    val part: BrassPatternProviderPart
 
     companion object {
         const val PATTERN_SLOTS = 36
@@ -32,18 +32,16 @@ class BrassPatternProviderMenu : AbstractContainerMenu {
     constructor(windowId: Int, playerInventory: Inventory, buf: FriendlyByteBuf) : this(
         windowId,
         playerInventory,
-        playerInventory.player.level().getBlockEntity(buf.readBlockPos()) as? BrassPatternProviderBlockEntity
-            ?: throw IllegalStateException("Block entity not found")
+        findPart(playerInventory, buf)
     )
 
-    constructor(windowId: Int, playerInventory: Inventory, be: BrassPatternProviderBlockEntity) : super(
-        AppliedCreate.BRASS_PATTERN_PROVIDER_MENU.get(),
+    constructor(windowId: Int, playerInventory: Inventory, part: BrassPatternProviderPart) : super(
+        AppliedCreate.BRASS_PATTERN_PROVIDER_PART_MENU.get(),
         windowId
     ) {
-        this.blockEntity = be
-        this.levelAccess = ContainerLevelAccess.create(be.level!!, be.blockPos)
+        this.part = part
 
-        val handler = be.logic.inventory
+        val handler = part.logic.inventory
 
         for (row in 0 until ROWS) {
             for (col in 0 until COLS) {
@@ -97,6 +95,25 @@ class BrassPatternProviderMenu : AbstractContainerMenu {
     }
 
     override fun stillValid(player: Player): Boolean {
-        return stillValid(levelAccess, player, AppliedCreate.BRASS_PATTERN_PROVIDER_BLOCK.get())
+        val be = part.blockEntity ?: return false
+        return player.distanceToSqr(
+            be.blockPos.x + 0.5,
+            be.blockPos.y + 0.5,
+            be.blockPos.z + 0.5
+        ) <= 64.0
     }
+}
+
+private fun findPart(playerInventory: Inventory, buf: FriendlyByteBuf): BrassPatternProviderPart {
+    val pos = buf.readBlockPos()
+    val side = buf.readEnum(Direction::class.java)
+    val level = playerInventory.player.level()
+    val be = level.getBlockEntity(pos)
+    if (be is IPartHost) {
+        val part = be.getPart(side)
+        if (part is BrassPatternProviderPart) {
+            return part
+        }
+    }
+    throw IllegalStateException("Brass Pattern Provider Part not found at $pos side $side")
 }

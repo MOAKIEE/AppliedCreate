@@ -7,20 +7,14 @@ import net.minecraft.network.chat.Component
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.player.Inventory
 
-class BrassPatternProviderScreen(
-    menu: BrassPatternProviderMenu,
+class AndesitePatternProviderPartScreen(
+    menu: AndesitePatternProviderPartMenu,
     playerInventory: Inventory,
     title: Component
-) : AbstractContainerScreen<BrassPatternProviderMenu>(menu, playerInventory, title) {
+) : AbstractContainerScreen<AndesitePatternProviderPartMenu>(menu, playerInventory, title) {
 
     companion object {
-        private val TEXTURE = ResourceLocation(AppliedCreate.MOD_ID, "textures/gui/brass_pattern_provider.png")
-    }
-
-    init {
-        imageWidth = 176
-        imageHeight = 186
-        inventoryLabelY = imageHeight - 94
+        private val TEXTURE = ResourceLocation(AppliedCreate.MOD_ID, "textures/gui/andesite_pattern_provider.png")
     }
 
     override fun render(guiGraphics: GuiGraphics, mouseX: Int, mouseY: Int, partialTick: Float) {

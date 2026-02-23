@@ -1,11 +1,21 @@
 package com.loliball.appliedcreate
 
+import com.loliball.appliedcreate.block.AndesitePatternProviderBlock
 import com.loliball.appliedcreate.block.BrassPatternProviderBlock
 import com.loliball.appliedcreate.block.MechanicalCraftEncoderBlock
+import com.loliball.appliedcreate.block.entity.AndesitePatternProviderBlockEntity
 import com.loliball.appliedcreate.block.entity.BrassPatternProviderBlockEntity
 import com.loliball.appliedcreate.block.entity.MechanicalCraftEncoderBlockEntity
+import com.loliball.appliedcreate.gui.AndesitePatternProviderMenu
 import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
 import com.loliball.appliedcreate.gui.MechanicalCraftEncoderMenu
+import com.loliball.appliedcreate.gui.AndesitePatternProviderPartMenu
+import com.loliball.appliedcreate.gui.BrassPatternProviderPartMenu
+import com.loliball.appliedcreate.item.BrassPatternProviderUpgradeItem
+import com.loliball.appliedcreate.item.MechanicalCraftingPartItem
+import com.loliball.appliedcreate.part.AndesitePatternProviderPart
+import com.loliball.appliedcreate.part.BrassPatternProviderPart
+import appeng.api.parts.PartModels
 import net.minecraft.core.registries.Registries
 import net.minecraft.network.chat.Component
 import net.minecraft.world.inventory.MenuType
@@ -86,13 +96,73 @@ class AppliedCreate {
                 }
             }
 
+        val ANDESITE_PATTERN_PROVIDER_BLOCK: RegistryObject<Block> = BLOCKS.register("andesite_pattern_provider") {
+            AndesitePatternProviderBlock()
+        }
+
+        val ANDESITE_PATTERN_PROVIDER_ITEM: RegistryObject<Item> = ITEMS.register("andesite_pattern_provider") {
+            BlockItem(ANDESITE_PATTERN_PROVIDER_BLOCK.get(), Item.Properties())
+        }
+
+        @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
+        val ANDESITE_PATTERN_PROVIDER_BE: RegistryObject<BlockEntityType<AndesitePatternProviderBlockEntity>> =
+            BLOCK_ENTITY_TYPES.register("andesite_pattern_provider") {
+                BlockEntityType.Builder.of(
+                    ::AndesitePatternProviderBlockEntity,
+                    ANDESITE_PATTERN_PROVIDER_BLOCK.get()
+                ).build(null)
+            }
+
+        val ANDESITE_PATTERN_PROVIDER_MENU: RegistryObject<MenuType<AndesitePatternProviderMenu>> =
+            MENU_TYPES.register("andesite_pattern_provider") {
+                IForgeMenuType.create { windowId, inv, data ->
+                    AndesitePatternProviderMenu(windowId, inv, data)
+                }
+            }
+
+        val BRASS_PATTERN_PROVIDER_UPGRADE_ITEM: RegistryObject<Item> = ITEMS.register("brass_pattern_provider_upgrade") {
+            BrassPatternProviderUpgradeItem()
+        }
+
+        val ANDESITE_PATTERN_PROVIDER_PART_ITEM: RegistryObject<Item> = ITEMS.register("andesite_pattern_provider_part") {
+            MechanicalCraftingPartItem(
+                Item.Properties(),
+                AndesitePatternProviderPart::class.java
+            ) { partItem -> AndesitePatternProviderPart(partItem) }
+        }
+
+        val BRASS_PATTERN_PROVIDER_PART_ITEM: RegistryObject<Item> = ITEMS.register("brass_pattern_provider_part") {
+            MechanicalCraftingPartItem(
+                Item.Properties(),
+                BrassPatternProviderPart::class.java
+            ) { partItem -> BrassPatternProviderPart(partItem) }
+        }
+
+        val ANDESITE_PATTERN_PROVIDER_PART_MENU: RegistryObject<MenuType<AndesitePatternProviderPartMenu>> =
+            MENU_TYPES.register("andesite_pattern_provider_part") {
+                IForgeMenuType.create { windowId, inv, data ->
+                    AndesitePatternProviderPartMenu(windowId, inv, data)
+                }
+            }
+
+        val BRASS_PATTERN_PROVIDER_PART_MENU: RegistryObject<MenuType<BrassPatternProviderPartMenu>> =
+            MENU_TYPES.register("brass_pattern_provider_part") {
+                IForgeMenuType.create { windowId, inv, data ->
+                    BrassPatternProviderPartMenu(windowId, inv, data)
+                }
+            }
+
         val CREATIVE_TAB: RegistryObject<CreativeModeTab> = CREATIVE_TABS.register("main") {
             CreativeModeTab.builder()
                 .title(Component.translatable("itemGroup.$MOD_ID"))
                 .icon { MECHANICAL_CRAFT_ENCODER_ITEM.get().defaultInstance }
                 .displayItems { _, output ->
                     output.accept(MECHANICAL_CRAFT_ENCODER_ITEM.get())
+                    output.accept(ANDESITE_PATTERN_PROVIDER_ITEM.get())
                     output.accept(BRASS_PATTERN_PROVIDER_ITEM.get())
+                    output.accept(ANDESITE_PATTERN_PROVIDER_PART_ITEM.get())
+                    output.accept(BRASS_PATTERN_PROVIDER_PART_ITEM.get())
+                    output.accept(BRASS_PATTERN_PROVIDER_UPGRADE_ITEM.get())
                 }
                 .build()
         }
@@ -105,6 +175,8 @@ class AppliedCreate {
         BLOCK_ENTITY_TYPES.register(bus)
         MENU_TYPES.register(bus)
         CREATIVE_TABS.register(bus)
+
+        PartModels.registerModels(AndesitePatternProviderPart.getModels())
 
         if (FMLEnvironment.dist.isClient) {
             ClientSetup.register(bus)

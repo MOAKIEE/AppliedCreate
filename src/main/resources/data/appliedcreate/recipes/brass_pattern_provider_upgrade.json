@@ -1,0 +1,16 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        " B ",
+        "BAB",
+        " B "
+    ],
+    "key": {
+        "A": { "item": "create:andesite_casing" },
+        "B": { "item": "create:brass_sheet" }
+    },
+    "result": {
+        "item": "appliedcreate:brass_pattern_provider_upgrade",
+        "count": 1
+    }
+}

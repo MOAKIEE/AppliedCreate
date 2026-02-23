@@ -7,11 +7,11 @@ import net.minecraft.network.chat.Component
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.player.Inventory
 
-class BrassPatternProviderScreen(
-    menu: BrassPatternProviderMenu,
+class BrassPatternProviderPartScreen(
+    menu: BrassPatternProviderPartMenu,
     playerInventory: Inventory,
     title: Component
-) : AbstractContainerScreen<BrassPatternProviderMenu>(menu, playerInventory, title) {
+) : AbstractContainerScreen<BrassPatternProviderPartMenu>(menu, playerInventory, title) {
 
     companion object {
         private val TEXTURE = ResourceLocation(AppliedCreate.MOD_ID, "textures/gui/brass_pattern_provider.png")
