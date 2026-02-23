@@ -3,26 +3,18 @@ package com.loliball.appliedcreate.block
 import com.loliball.appliedcreate.AppliedCreate
 import com.loliball.appliedcreate.block.entity.BrassPatternProviderBlockEntity
 import net.minecraft.core.BlockPos
-import net.minecraft.core.Direction
-import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.player.Player
-import net.minecraft.world.item.context.BlockPlaceContext
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.EntityBlock
 import net.minecraft.world.level.block.SoundType
 import net.minecraft.world.level.block.entity.BlockEntity
-import net.minecraft.world.level.block.entity.BlockEntityTicker
-import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
-import net.minecraft.world.level.block.state.StateDefinition
-import net.minecraft.world.level.block.state.properties.BlockStateProperties
-import net.minecraft.world.level.block.state.properties.DirectionProperty
 import net.minecraft.world.level.material.MapColor
 import net.minecraft.world.phys.BlockHitResult
-import net.minecraftforge.network.NetworkHooks
+import appeng.menu.locator.MenuLocators
 
 class BrassPatternProviderBlock : Block(
     Properties.of()
@@ -32,37 +24,8 @@ class BrassPatternProviderBlock : Block(
         .requiresCorrectToolForDrops()
 ), EntityBlock {
 
-    companion object {
-        val FACING: DirectionProperty = BlockStateProperties.HORIZONTAL_FACING
-    }
-
-    init {
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH))
-    }
-
-    override fun createBlockStateDefinition(builder: StateDefinition.Builder<Block, BlockState>) {
-        builder.add(FACING)
-    }
-
-    override fun getStateForPlacement(context: BlockPlaceContext): BlockState {
-        return defaultBlockState().setValue(FACING, context.horizontalDirection.opposite)
-    }
-
     override fun newBlockEntity(pos: BlockPos, state: BlockState): BlockEntity {
         return BrassPatternProviderBlockEntity(pos, state)
-    }
-
-    override fun <T : BlockEntity> getTicker(
-        level: Level,
-        state: BlockState,
-        type: BlockEntityType<T>
-    ): BlockEntityTicker<T>? {
-        if (level.isClientSide) return null
-        return BlockEntityTicker { tickLevel, tickPos, tickState, blockEntity ->
-            if (blockEntity is BrassPatternProviderBlockEntity) {
-                blockEntity.serverTick(tickLevel, tickPos, tickState)
-            }
-        }
     }
 
     @Suppress("DEPRECATION")
@@ -74,10 +37,10 @@ class BrassPatternProviderBlock : Block(
         hand: InteractionHand,
         hit: BlockHitResult
     ): InteractionResult {
-        if (!level.isClientSide && player is ServerPlayer) {
+        if (!level.isClientSide) {
             val blockEntity = level.getBlockEntity(pos)
             if (blockEntity is BrassPatternProviderBlockEntity) {
-                NetworkHooks.openScreen(player, blockEntity, pos)
+                blockEntity.openMenu(player, MenuLocators.forBlockEntity(blockEntity))
             }
         }
         return InteractionResult.sidedSuccess(level.isClientSide)
@@ -88,7 +51,9 @@ class BrassPatternProviderBlock : Block(
         if (!state.`is`(newState.block)) {
             val blockEntity = level.getBlockEntity(pos)
             if (blockEntity is BrassPatternProviderBlockEntity) {
-                blockEntity.dropContents(level, pos)
+                val drops = mutableListOf<net.minecraft.world.item.ItemStack>()
+                blockEntity.addAdditionalDrops(level, pos, drops)
+                drops.forEach { net.minecraft.world.Containers.dropItemStack(level, pos.x.toDouble(), pos.y.toDouble(), pos.z.toDouble(), it) }
             }
             super.onRemove(state, level, pos, newState, moving)
         }

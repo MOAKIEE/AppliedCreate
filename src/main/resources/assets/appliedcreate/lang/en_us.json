@@ -8,6 +8,8 @@
     "itemGroup.appliedcreate": "Applied Create",
 
     "gui.appliedcreate.patterns": "Patterns",
+    "gui.appliedcreate.AndesitePatternProvider": "Andesite Pattern Provider",
+    "gui.appliedcreate.BrassPatternProvider": "Brass Pattern Provider",
 
     "appliedcreate.ponder.tag.applied_create": "Applied Create",
     "appliedcreate.ponder.tag.applied_create.description": "Blocks from the Applied Create mod",

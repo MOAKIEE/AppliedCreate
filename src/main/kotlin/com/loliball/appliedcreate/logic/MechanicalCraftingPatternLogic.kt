@@ -1,173 +1,200 @@
 package com.loliball.appliedcreate.logic
 
+import appeng.api.config.LockCraftingMode
 import appeng.api.crafting.IPatternDetails
-import appeng.api.crafting.PatternDetailsHelper
 import appeng.api.networking.IManagedGridNode
-import appeng.api.networking.crafting.ICraftingProvider
 import appeng.api.stacks.AEItemKey
-import appeng.api.stacks.AEKey
 import appeng.api.stacks.KeyCounter
+import appeng.helpers.patternprovider.PatternProviderLogic
+import appeng.helpers.patternprovider.PatternProviderLogicHost
 import com.simibubi.create.content.kinetics.crafter.MechanicalCrafterBlockEntity
 import com.simibubi.create.content.kinetics.crafter.MechanicalCraftingRecipe
 import com.simibubi.create.content.kinetics.crafter.RecipeGridHandler
-import net.minecraft.core.BlockPos
-import net.minecraft.core.Direction
 import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.crafting.RecipeType
-import net.minecraft.world.level.Level
-import net.minecraft.world.level.block.entity.BlockEntity
-import net.minecraftforge.items.ItemStackHandler
+import java.lang.reflect.Method
 
+/**
+ * Extends AE2's PatternProviderLogic to add Create mechanical crafter support.
+ *
+ * When pushPattern is called, this logic first attempts to push items into
+ * adjacent Create Mechanical Crafter chains. If no suitable crafter chain is
+ * found, it falls back to the standard AE2 pattern provider behavior (generic
+ * inventories, blocking mode, round-robin, etc.).
+ */
 class MechanicalCraftingPatternLogic(
-    val patternSlots: Int,
-    private val host: Host
-) : ICraftingProvider {
+    mainNode: IManagedGridNode,
+    host: PatternProviderLogicHost,
+    patternInventorySize: Int
+) : PatternProviderLogic(mainNode, host, patternInventorySize) {
 
-    interface Host {
-        val mainNode: IManagedGridNode
-        val blockEntity: BlockEntity
-        val level: Level?
-        val worldPosition: BlockPos
-        fun setChanged()
-        fun getTargetDirections(): Set<Direction>
-    }
+    private val hostRef: PatternProviderLogicHost = host
 
-    val inventory = object : ItemStackHandler(patternSlots) {
-        override fun onContentsChanged(slot: Int) {
-            host.setChanged()
-            ICraftingProvider.requestUpdate(host.mainNode)
-        }
-    }
-
-    private var isBusy = false
-
-    override fun getAvailablePatterns(): List<IPatternDetails> {
-        val level = host.level ?: return emptyList()
-        val patterns = ArrayList<IPatternDetails>()
-        for (i in 0 until inventory.slots) {
-            val stack = inventory.getStackInSlot(i)
-            if (!stack.isEmpty) {
-                val details = PatternDetailsHelper.decodePattern(stack, level)
-                if (details != null) {
-                    patterns.add(details)
-                }
+    companion object {
+        private val onPushPatternSuccessMethod: Method? by lazy {
+            try {
+                PatternProviderLogic::class.java
+                    .getDeclaredMethod("onPushPatternSuccess", IPatternDetails::class.java)
+                    .also { it.isAccessible = true }
+            } catch (e: Exception) {
+                null
             }
         }
-        return patterns
+
+        private val mainNodeField by lazy {
+            try {
+                PatternProviderLogic::class.java
+                    .getDeclaredField("mainNode")
+                    .also { it.isAccessible = true }
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+        private val sendListField by lazy {
+            try {
+                PatternProviderLogic::class.java
+                    .getDeclaredField("sendList")
+                    .also { it.isAccessible = true }
+            } catch (e: Exception) {
+                null
+            }
+        }
     }
 
-    override fun pushPattern(patternDetails: IPatternDetails, inputs: Array<KeyCounter>): Boolean {
-        if (isBusy) return false
+    override fun pushPattern(patternDetails: IPatternDetails, inputHolder: Array<KeyCounter>): Boolean {
+        // Check sendList is empty (parent checks this too)
+        val sendList = try {
+            sendListField?.get(this) as? List<*>
+        } catch (e: Exception) {
+            null
+        }
+        if (sendList != null && sendList.isNotEmpty()) {
+            return false
+        }
 
-        val level = host.level ?: return false
-        val outputKey = patternDetails.primaryOutput?.what as? AEItemKey ?: return false
-        val outputStack = outputKey.toStack()
+        // Check mainNode is active
+        val mainNode = try {
+            mainNodeField?.get(this) as? IManagedGridNode
+        } catch (e: Exception) {
+            null
+        }
+        if (mainNode != null && !mainNode.isActive) {
+            return false
+        }
 
-        @Suppress("UNCHECKED_CAST")
-        val recipeType = BuiltInRegistries.RECIPE_TYPE
-            .get(ResourceLocation("create", "mechanical_crafting"))
-                as? RecipeType<MechanicalCraftingRecipe> ?: return false
-        val recipes = level.recipeManager.getAllRecipesFor(recipeType)
+        // Check pattern is known
+        if (!this.availablePatterns.contains(patternDetails)) {
+            return false
+        }
 
-        val recipe = recipes.firstOrNull {
-            ItemStack.isSameItemSameTags(it.getResultItem(level.registryAccess()), outputStack)
-        } ?: return false
+        if (getCraftingLockedReason() != LockCraftingMode.NONE) {
+            return false
+        }
 
-        for (direction in host.getTargetDirections()) {
-            val neighborPos = host.worldPosition.relative(direction)
-            val neighbor = level.getBlockEntity(neighborPos)
-            if (neighbor is MechanicalCrafterBlockEntity) {
-                val crafters = RecipeGridHandler.getAllCraftersOfChain(neighbor)
-                if (crafters.isEmpty()) continue
+        // Try to push to mechanical crafters first
+        val be = hostRef.blockEntity
+        val level = be.level ?: return super.pushPattern(patternDetails, inputHolder)
 
-                val recipeWidth = recipe.width
-                val recipeHeight = recipe.height
+        val outputKey = patternDetails.primaryOutput?.what as? AEItemKey
+        if (outputKey != null) {
+            val outputStack = outputKey.toStack()
 
-                if (crafters.size < recipeWidth * recipeHeight) continue
+            @Suppress("UNCHECKED_CAST")
+            val recipeType = BuiltInRegistries.RECIPE_TYPE
+                .get(ResourceLocation("create", "mechanical_crafting"))
+                    as? RecipeType<MechanicalCraftingRecipe>
 
-                val inputStacks = ArrayList<ItemStack>()
-                for (input in inputs) {
-                    for (entry in input) {
-                        val key = entry.key
-                        if (key is AEItemKey) {
-                            inputStacks.add(key.toStack(entry.longValue.toInt()))
-                        }
-                    }
+            if (recipeType != null) {
+                val recipes = level.recipeManager.getAllRecipesFor(recipeType)
+                val recipe = recipes.firstOrNull {
+                    ItemStack.isSameItemSameTags(it.getResultItem(level.registryAccess()), outputStack)
                 }
 
-                for (i in 0 until recipeWidth * recipeHeight) {
-                    if (i >= crafters.size) break
+                if (recipe != null) {
+                    val targets = hostRef.targets
+                    for (direction in targets) {
+                        val neighborPos = be.blockPos.relative(direction)
+                        val neighbor = level.getBlockEntity(neighborPos)
+                        if (neighbor is MechanicalCrafterBlockEntity) {
+                            val crafters = RecipeGridHandler.getAllCraftersOfChain(neighbor)
+                            if (crafters.isEmpty()) continue
 
-                    val ingredient = recipe.ingredients.getOrNull(i)
-                    if (ingredient != null && !ingredient.isEmpty) {
-                        val matchIndex = inputStacks.indexOfFirst { ingredient.test(it) }
-                        if (matchIndex != -1) {
-                            val stackToInsert = inputStacks[matchIndex]
-                            val inserted = crafters[i].inventory.insertItem(0, stackToInsert.copy(), false)
-                            if (inserted.isEmpty) {
-                                inputStacks.removeAt(matchIndex)
+                            val recipeWidth = recipe.width
+                            val recipeHeight = recipe.height
+                            if (crafters.size < recipeWidth * recipeHeight) continue
+
+                            // Collect input stacks
+                            val inputStacks = ArrayList<ItemStack>()
+                            for (input in inputHolder) {
+                                for (entry in input) {
+                                    val key = entry.key
+                                    if (key is AEItemKey) {
+                                        inputStacks.add(key.toStack(entry.longValue.toInt()))
+                                    }
+                                }
                             }
+
+                            // Simulation pass: verify all slots can accept items
+                            val slotAssignments = ArrayList<Pair<Int, ItemStack>>()
+                            val tempInputs = ArrayList(inputStacks)
+                            var canFit = true
+
+                            for (i in 0 until recipeWidth * recipeHeight) {
+                                if (i >= crafters.size) {
+                                    canFit = false
+                                    break
+                                }
+
+                                val ingredient = recipe.ingredients.getOrNull(i)
+                                if (ingredient != null && !ingredient.isEmpty) {
+                                    val matchIndex = tempInputs.indexOfFirst { ingredient.test(it) }
+                                    if (matchIndex == -1) {
+                                        canFit = false
+                                        break
+                                    }
+
+                                    // Simulate insertion
+                                    val stackToInsert = tempInputs[matchIndex]
+                                    val remainder = crafters[i].inventory.insertItem(0, stackToInsert.copy(), true)
+                                    if (!remainder.isEmpty) {
+                                        canFit = false
+                                        break
+                                    }
+
+                                    slotAssignments.add(i to stackToInsert.copy())
+                                    tempInputs.removeAt(matchIndex)
+                                }
+                            }
+
+                            if (!canFit) continue
+
+                            // Actual insertion pass (atomic: we verified all slots above)
+                            for ((crafterIndex, stack) in slotAssignments) {
+                                val singleStack = stack.copy()
+                                singleStack.count = 1
+                                crafters[crafterIndex].inventory.insertItem(0, singleStack, false)
+                            }
+
+                            // Call onPushPatternSuccess via reflection to handle lock crafting
+                            try {
+                                onPushPatternSuccessMethod?.invoke(this, patternDetails)
+                            } catch (e: Exception) {
+                                // If reflection fails, at least reset the lock manually
+                                resetCraftingLock()
+                            }
+
+                            return true
                         }
                     }
                 }
-
-                isBusy = true
-                return true
             }
         }
 
-        return false
-    }
-
-    override fun isBusy(): Boolean = isBusy
-
-    override fun getPatternPriority(): Int = 0
-
-    override fun getEmitableItems(): Set<AEKey> = emptySet()
-
-    fun serverTick(level: Level, pos: BlockPos) {
-        if (!isBusy) return
-
-        var active = false
-        for (direction in host.getTargetDirections()) {
-            val neighbor = level.getBlockEntity(pos.relative(direction))
-            if (neighbor is MechanicalCrafterBlockEntity) {
-                val crafters = RecipeGridHandler.getAllCraftersOfChain(neighbor)
-                if (crafters.any { !it.inventory.getStackInSlot(0).isEmpty }) {
-                    active = true
-                    break
-                }
-            }
-        }
-
-        if (!active) {
-            isBusy = false
-        }
-    }
-
-    fun loadTag(tag: CompoundTag) {
-        if (tag.contains("Inventory")) {
-            inventory.deserializeNBT(tag.getCompound("Inventory"))
-        }
-        isBusy = tag.getBoolean("IsBusy")
-    }
-
-    fun saveAdditional(tag: CompoundTag) {
-        tag.put("Inventory", inventory.serializeNBT())
-        tag.putBoolean("IsBusy", isBusy)
-    }
-
-    fun dropContents(): List<ItemStack> {
-        val drops = ArrayList<ItemStack>()
-        for (i in 0 until inventory.slots) {
-            val stack = inventory.getStackInSlot(i)
-            if (!stack.isEmpty) {
-                drops.add(stack)
-            }
-        }
-        return drops
+        // Fall back to standard AE2 pattern provider behavior
+        // (handles generic inventories, blocking mode, round-robin, etc.)
+        return super.pushPattern(patternDetails, inputHolder)
     }
 }

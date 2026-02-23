@@ -27,16 +27,10 @@ class BrassPatternProviderUpgradeItem : Item(Properties().stacksTo(16)) {
         val savedTag = CompoundTag()
         blockEntity.saveAdditional(savedTag)
 
-        val blockState = level.getBlockState(pos)
-        val facing = blockState.getValue(
-            com.loliball.appliedcreate.block.AndesitePatternProviderBlock.FACING
-        )
-
         level.removeBlockEntity(pos)
         level.setBlock(
             pos,
-            AppliedCreate.BRASS_PATTERN_PROVIDER_BLOCK.get().defaultBlockState()
-                .setValue(com.loliball.appliedcreate.block.BrassPatternProviderBlock.FACING, facing),
+            AppliedCreate.BRASS_PATTERN_PROVIDER_BLOCK.get().defaultBlockState(),
             3
         )
 

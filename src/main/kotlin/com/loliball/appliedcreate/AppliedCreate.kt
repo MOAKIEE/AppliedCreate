@@ -10,15 +10,19 @@ import com.loliball.appliedcreate.block.entity.MechanicalCraftEncoderBlockEntity
 import com.loliball.appliedcreate.gui.AndesitePatternProviderMenu
 import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
 import com.loliball.appliedcreate.gui.MechanicalCraftEncoderMenu
-import com.loliball.appliedcreate.gui.AndesitePatternProviderPartMenu
-import com.loliball.appliedcreate.gui.BrassPatternProviderPartMenu
 import com.loliball.appliedcreate.item.BrassPatternProviderUpgradeItem
 import com.loliball.appliedcreate.item.MechanicalCraftingPartItem
 import com.loliball.appliedcreate.part.AndesitePatternProviderPart
 import com.loliball.appliedcreate.part.BrassPatternProviderPart
-import appeng.api.parts.PartModels
+import appeng.helpers.patternprovider.PatternProviderLogicHost
+import appeng.menu.MenuOpener
+import appeng.menu.locator.MenuLocator
+import appeng.menu.locator.MenuLocators
 import net.minecraft.core.registries.Registries
 import net.minecraft.network.chat.Component
+import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.SimpleMenuProvider
+import net.minecraft.world.entity.player.Player
 import net.minecraft.world.inventory.MenuType
 import net.minecraft.world.item.BlockItem
 import net.minecraft.world.item.CreativeModeTab
@@ -28,12 +32,13 @@ import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraftforge.common.extensions.IForgeMenuType
 import net.minecraftforge.eventbus.api.IEventBus
 import net.minecraftforge.fml.common.Mod
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent
-import net.createmod.ponder.foundation.PonderIndex
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent
 import net.minecraftforge.fml.loading.FMLEnvironment
+import net.minecraftforge.network.NetworkHooks
 import net.minecraftforge.registries.DeferredRegister
 import net.minecraftforge.registries.ForgeRegistries
 import net.minecraftforge.registries.RegistryObject
+import net.createmod.ponder.foundation.PonderIndex
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import thedarkcolour.kotlinforforge.forge.MOD_BUS
@@ -50,6 +55,7 @@ class AppliedCreate {
         val MENU_TYPES: DeferredRegister<MenuType<*>> = DeferredRegister.create(ForgeRegistries.MENU_TYPES, MOD_ID)
         val CREATIVE_TABS: DeferredRegister<CreativeModeTab> = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MOD_ID)
 
+        // ── Mechanical Craft Encoder ──
         val MECHANICAL_CRAFT_ENCODER_BLOCK: RegistryObject<Block> = BLOCKS.register("mechanical_craft_encoder") {
             MechanicalCraftEncoderBlock()
         }
@@ -74,30 +80,7 @@ class AppliedCreate {
                 }
             }
 
-        val BRASS_PATTERN_PROVIDER_BLOCK: RegistryObject<Block> = BLOCKS.register("brass_pattern_provider") {
-            BrassPatternProviderBlock()
-        }
-
-        val BRASS_PATTERN_PROVIDER_ITEM: RegistryObject<Item> = ITEMS.register("brass_pattern_provider") {
-            BlockItem(BRASS_PATTERN_PROVIDER_BLOCK.get(), Item.Properties())
-        }
-
-        @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-        val BRASS_PATTERN_PROVIDER_BE: RegistryObject<BlockEntityType<BrassPatternProviderBlockEntity>> =
-            BLOCK_ENTITY_TYPES.register("brass_pattern_provider") {
-                BlockEntityType.Builder.of(
-                    ::BrassPatternProviderBlockEntity,
-                    BRASS_PATTERN_PROVIDER_BLOCK.get()
-                ).build(null)
-            }
-
-        val BRASS_PATTERN_PROVIDER_MENU: RegistryObject<MenuType<BrassPatternProviderMenu>> =
-            MENU_TYPES.register("brass_pattern_provider") {
-                IForgeMenuType.create { windowId, inv, data ->
-                    BrassPatternProviderMenu(windowId, inv, data)
-                }
-            }
-
+        // ── Andesite Pattern Provider ──
         val ANDESITE_PATTERN_PROVIDER_BLOCK: RegistryObject<Block> = BLOCKS.register("andesite_pattern_provider") {
             AndesitePatternProviderBlock()
         }
@@ -117,11 +100,37 @@ class AppliedCreate {
 
         val ANDESITE_PATTERN_PROVIDER_MENU: RegistryObject<MenuType<AndesitePatternProviderMenu>> =
             MENU_TYPES.register("andesite_pattern_provider") {
-                IForgeMenuType.create { windowId, inv, data ->
-                    AndesitePatternProviderMenu(windowId, inv, data)
+                createPatternProviderMenuType { menuType, windowId, inv, host ->
+                    AndesitePatternProviderMenu(menuType, windowId, inv, host)
                 }
             }
 
+        // ── Brass Pattern Provider ──
+        val BRASS_PATTERN_PROVIDER_BLOCK: RegistryObject<Block> = BLOCKS.register("brass_pattern_provider") {
+            BrassPatternProviderBlock()
+        }
+
+        val BRASS_PATTERN_PROVIDER_ITEM: RegistryObject<Item> = ITEMS.register("brass_pattern_provider") {
+            BlockItem(BRASS_PATTERN_PROVIDER_BLOCK.get(), Item.Properties())
+        }
+
+        @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
+        val BRASS_PATTERN_PROVIDER_BE: RegistryObject<BlockEntityType<BrassPatternProviderBlockEntity>> =
+            BLOCK_ENTITY_TYPES.register("brass_pattern_provider") {
+                BlockEntityType.Builder.of(
+                    ::BrassPatternProviderBlockEntity,
+                    BRASS_PATTERN_PROVIDER_BLOCK.get()
+                ).build(null)
+            }
+
+        val BRASS_PATTERN_PROVIDER_MENU: RegistryObject<MenuType<BrassPatternProviderMenu>> =
+            MENU_TYPES.register("brass_pattern_provider") {
+                createPatternProviderMenuType { menuType, windowId, inv, host ->
+                    BrassPatternProviderMenu(menuType, windowId, inv, host)
+                }
+            }
+
+        // ── Items ──
         val BRASS_PATTERN_PROVIDER_UPGRADE_ITEM: RegistryObject<Item> = ITEMS.register("brass_pattern_provider_upgrade") {
             BrassPatternProviderUpgradeItem()
         }
@@ -140,20 +149,7 @@ class AppliedCreate {
             ) { partItem -> BrassPatternProviderPart(partItem) }
         }
 
-        val ANDESITE_PATTERN_PROVIDER_PART_MENU: RegistryObject<MenuType<AndesitePatternProviderPartMenu>> =
-            MENU_TYPES.register("andesite_pattern_provider_part") {
-                IForgeMenuType.create { windowId, inv, data ->
-                    AndesitePatternProviderPartMenu(windowId, inv, data)
-                }
-            }
-
-        val BRASS_PATTERN_PROVIDER_PART_MENU: RegistryObject<MenuType<BrassPatternProviderPartMenu>> =
-            MENU_TYPES.register("brass_pattern_provider_part") {
-                IForgeMenuType.create { windowId, inv, data ->
-                    BrassPatternProviderPartMenu(windowId, inv, data)
-                }
-            }
-
+        // ── Creative Tab ──
         val CREATIVE_TAB: RegistryObject<CreativeModeTab> = CREATIVE_TABS.register("main") {
             CreativeModeTab.builder()
                 .title(Component.translatable("itemGroup.$MOD_ID"))
@@ -168,6 +164,44 @@ class AppliedCreate {
                 }
                 .build()
         }
+
+        @Suppress("UNCHECKED_CAST")
+        private fun <T : appeng.menu.AEBaseMenu> createPatternProviderMenuType(
+            factory: (MenuType<T>, Int, net.minecraft.world.entity.player.Inventory, PatternProviderLogicHost) -> T
+        ): MenuType<T> {
+            var menuTypeHolder: MenuType<T>? = null
+            val menuType = IForgeMenuType.create { windowId, inv, buf ->
+                val locator = MenuLocators.readFromPacket(buf)
+                val host = locator.locate(inv.player, PatternProviderLogicHost::class.java)
+                    ?: throw IllegalStateException("Could not find PatternProviderLogicHost")
+                val menu = factory(menuTypeHolder!!, windowId, inv, host)
+                menu.setReturnedFromSubScreen(buf.readBoolean())
+                menu
+            }
+            menuTypeHolder = menuType as MenuType<T>
+            return menuType
+        }
+
+        private fun <T : appeng.menu.AEBaseMenu> registerPatternProviderOpener(
+            menuType: MenuType<T>,
+            menuFactory: (Int, net.minecraft.world.entity.player.Inventory, PatternProviderLogicHost) -> T
+        ) {
+            MenuOpener.addOpener(menuType) { player: Player, locator: MenuLocator, fromSubMenu: Boolean ->
+                if (player !is ServerPlayer) return@addOpener false
+                val host = locator.locate(player, PatternProviderLogicHost::class.java) ?: return@addOpener false
+                val title = Component.empty()
+                val menuProvider = SimpleMenuProvider({ wnd, p, _ ->
+                    val m = menuFactory(wnd, p, host)
+                    m.setLocator(locator)
+                    m
+                }, title)
+                NetworkHooks.openScreen(player, menuProvider) { buffer ->
+                    MenuLocators.writeToPacket(buffer, locator)
+                    buffer.writeBoolean(fromSubMenu)
+                }
+                true
+            }
+        }
     }
 
     init {
@@ -178,7 +212,7 @@ class AppliedCreate {
         MENU_TYPES.register(bus)
         CREATIVE_TABS.register(bus)
 
-        PartModels.registerModels(AndesitePatternProviderPart.getModels())
+        bus.addListener(::onCommonSetup)
 
         if (FMLEnvironment.dist.isClient) {
             ClientSetup.register(bus)
@@ -186,5 +220,22 @@ class AppliedCreate {
         }
 
         LOGGER.info("Applied Create loaded - Mechanical Craft Encoder standalone mod")
+    }
+
+    private fun onCommonSetup(event: FMLCommonSetupEvent) {
+        event.enqueueWork {
+            registerPatternProviderOpener(ANDESITE_PATTERN_PROVIDER_MENU.get()) { wnd, inv, host ->
+                AndesitePatternProviderMenu(
+                    ANDESITE_PATTERN_PROVIDER_MENU.get(),
+                    wnd, inv, host
+                )
+            }
+            registerPatternProviderOpener(BRASS_PATTERN_PROVIDER_MENU.get()) { wnd, inv, host ->
+                BrassPatternProviderMenu(
+                    BRASS_PATTERN_PROVIDER_MENU.get(),
+                    wnd, inv, host
+                )
+            }
+        }
     }
 }

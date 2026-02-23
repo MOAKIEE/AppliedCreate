@@ -1,8 +1,5 @@
 {
     "variants": {
-        "facing=north": { "model": "appliedcreate:block/brass_pattern_provider" },
-        "facing=south": { "model": "appliedcreate:block/brass_pattern_provider", "y": 180 },
-        "facing=west": { "model": "appliedcreate:block/brass_pattern_provider", "y": 270 },
-        "facing=east": { "model": "appliedcreate:block/brass_pattern_provider", "y": 90 }
+        "": { "model": "appliedcreate:block/brass_pattern_provider" }
     }
 }
