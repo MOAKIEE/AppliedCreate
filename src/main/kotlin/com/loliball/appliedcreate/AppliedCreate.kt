@@ -206,6 +206,33 @@ class AppliedCreate {
         MENU_TYPES.register(bus)
         CREATIVE_TABS.register(bus)
 
+        // Register part models manually since Kotlin companion object @PartModels annotations
+        // are not discoverable by AE2's Java reflection-based PartModelsHelper scanner
+        appeng.api.parts.PartModels.registerModels(
+            AndesitePatternProviderPart.ANDESITE_MODEL_BASE
+        )
+        appeng.api.parts.PartModels.registerModels(
+            *AndesitePatternProviderPart.ANDESITE_MODELS_OFF.models.toTypedArray()
+        )
+        appeng.api.parts.PartModels.registerModels(
+            *AndesitePatternProviderPart.ANDESITE_MODELS_ON.models.toTypedArray()
+        )
+        appeng.api.parts.PartModels.registerModels(
+            *AndesitePatternProviderPart.ANDESITE_MODELS_HAS_CHANNEL.models.toTypedArray()
+        )
+        appeng.api.parts.PartModels.registerModels(
+            BrassPatternProviderPart.BRASS_MODEL_BASE
+        )
+        appeng.api.parts.PartModels.registerModels(
+            *BrassPatternProviderPart.BRASS_MODELS_OFF.models.toTypedArray()
+        )
+        appeng.api.parts.PartModels.registerModels(
+            *BrassPatternProviderPart.BRASS_MODELS_ON.models.toTypedArray()
+        )
+        appeng.api.parts.PartModels.registerModels(
+            *BrassPatternProviderPart.BRASS_MODELS_HAS_CHANNEL.models.toTypedArray()
+        )
+
         bus.addListener(::onCommonSetup)
 
         if (FMLEnvironment.dist.isClient) {
