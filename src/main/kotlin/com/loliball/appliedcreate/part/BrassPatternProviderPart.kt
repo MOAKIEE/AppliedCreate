@@ -1,14 +1,19 @@
 package com.loliball.appliedcreate.part
 
 import appeng.api.parts.IPartItem
+import appeng.api.parts.IPartModel
 import appeng.api.stacks.AEItemKey
+import appeng.core.AppEng
 import appeng.helpers.patternprovider.PatternProviderLogic
+import appeng.items.parts.PartModels
 import appeng.menu.ISubMenu
 import appeng.menu.MenuOpener
 import appeng.menu.locator.MenuLocator
+import appeng.parts.PartModel
 import appeng.parts.crafting.PatternProviderPart
 import com.loliball.appliedcreate.AppliedCreate
 import com.loliball.appliedcreate.logic.MechanicalCraftingPatternLogic
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
 
@@ -34,7 +39,41 @@ class BrassPatternProviderPart(partItem: IPartItem<*>) : PatternProviderPart(par
         return AppliedCreate.BRASS_PATTERN_PROVIDER_PART_ITEM.get().defaultInstance
     }
 
+    override fun getStaticModels(): IPartModel {
+        return if (isActive && isPowered) {
+            BRASS_MODELS_HAS_CHANNEL
+        } else if (isPowered) {
+            BRASS_MODELS_ON
+        } else {
+            BRASS_MODELS_OFF
+        }
+    }
+
     companion object {
         const val PATTERN_SLOTS = 36
+
+        @JvmStatic
+        val BRASS_MODEL_BASE = ResourceLocation(AppliedCreate.MOD_ID, "part/brass_pattern_provider_base")
+
+        @JvmStatic
+        @PartModels
+        val BRASS_MODELS_OFF = PartModel(
+            BRASS_MODEL_BASE,
+            ResourceLocation(AppEng.MOD_ID, "part/interface_off")
+        )
+
+        @JvmStatic
+        @PartModels
+        val BRASS_MODELS_ON = PartModel(
+            BRASS_MODEL_BASE,
+            ResourceLocation(AppEng.MOD_ID, "part/interface_on")
+        )
+
+        @JvmStatic
+        @PartModels
+        val BRASS_MODELS_HAS_CHANNEL = PartModel(
+            BRASS_MODEL_BASE,
+            ResourceLocation(AppEng.MOD_ID, "part/interface_has_channel")
+        )
     }
 }

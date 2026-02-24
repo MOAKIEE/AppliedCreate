@@ -1,0 +1,12 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "particle": "appliedcreate:block/andesite_pattern_provider_side",
+    "down": "appliedcreate:block/andesite_pattern_provider_alternate",
+    "up": "appliedcreate:block/andesite_pattern_provider_alternate_front",
+    "north": "appliedcreate:block/andesite_pattern_provider_alternate_arrow",
+    "south": "appliedcreate:block/andesite_pattern_provider_alternate_arrow",
+    "east": "appliedcreate:block/andesite_pattern_provider_alternate_arrow",
+    "west": "appliedcreate:block/andesite_pattern_provider_alternate_arrow"
+  }
+}

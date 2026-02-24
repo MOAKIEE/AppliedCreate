@@ -1,6 +1,8 @@
 {
-  "parent": "minecraft:item/generated",
+  "parent": "ae2:item/cable_interface",
   "textures": {
-    "layer0": "appliedcreate:item/brass_pattern_provider_part"
+    "sides": "appliedcreate:part/brass_pattern_provider_sides",
+    "back": "appliedcreate:part/brass_pattern_provider_back",
+    "front": "appliedcreate:part/brass_pattern_provider"
   }
 }
