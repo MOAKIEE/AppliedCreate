@@ -175,6 +175,7 @@ class AppliedCreate {
                 val host = locator.locate(inv.player, PatternProviderLogicHost::class.java)
                     ?: throw IllegalStateException("Could not find PatternProviderLogicHost")
                 val menu = factory(menuTypeHolder!!, windowId, inv, host)
+                menu.setLocator(locator)
                 menu.setReturnedFromSubScreen(buf.readBoolean())
                 menu
             }
