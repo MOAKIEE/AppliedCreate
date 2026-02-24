@@ -1,11 +1,14 @@
 package com.loliball.appliedcreate
 
-import com.loliball.appliedcreate.gui.AndesitePatternProviderScreen
-import com.loliball.appliedcreate.gui.BrassPatternProviderScreen
+import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
 import com.loliball.appliedcreate.gui.MechanicalCraftEncoderMenu
 import com.loliball.appliedcreate.gui.MechanicalCraftEncoderScreen
+import appeng.client.gui.implementations.PatternProviderScreen
+import appeng.client.gui.style.ScreenStyle
 import appeng.init.client.InitScreens
 import net.minecraft.client.gui.screens.MenuScreens
+import net.minecraft.network.chat.Component
+import net.minecraft.world.entity.player.Inventory
 import net.minecraftforge.api.distmarker.Dist
 import net.minecraftforge.api.distmarker.OnlyIn
 import net.minecraftforge.eventbus.api.IEventBus
@@ -25,13 +28,10 @@ object ClientSetup {
             }
 
             InitScreens.register(
-                AppliedCreate.ANDESITE_PATTERN_PROVIDER_MENU.get(),
-                ::AndesitePatternProviderScreen,
-                "/screens/appliedcreate/andesite_pattern_provider.json"
-            )
-            InitScreens.register(
                 AppliedCreate.BRASS_PATTERN_PROVIDER_MENU.get(),
-                ::BrassPatternProviderScreen,
+                { menu: BrassPatternProviderMenu, inv: Inventory, title: Component, style: ScreenStyle ->
+                    PatternProviderScreen(menu, inv, title, style)
+                },
                 "/screens/appliedcreate/brass_pattern_provider.json"
             )
         }

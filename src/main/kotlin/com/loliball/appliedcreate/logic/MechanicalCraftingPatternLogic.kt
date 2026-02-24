@@ -274,6 +274,11 @@ class MechanicalCraftingPatternLogic(
                                 assignment.crafter.inventory.insertItem(0, assignment.stack, false)
                             }
 
+
+                            // Trigger crafting by calling checkCompletedRecipe on one crafter
+                            // This replicates what happens when a crafter receives a redstone signal
+                            crafters.firstOrNull()?.checkCompletedRecipe(true)
+
                             try {
                                 onPushPatternSuccessMethod?.invoke(this, patternDetails)
                             } catch (e: Exception) {

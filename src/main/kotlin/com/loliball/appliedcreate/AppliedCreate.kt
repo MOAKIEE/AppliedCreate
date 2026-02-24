@@ -7,7 +7,7 @@ import com.loliball.appliedcreate.block.MechanicalCraftEncoderBlock
 import com.loliball.appliedcreate.block.entity.AndesitePatternProviderBlockEntity
 import com.loliball.appliedcreate.block.entity.BrassPatternProviderBlockEntity
 import com.loliball.appliedcreate.block.entity.MechanicalCraftEncoderBlockEntity
-import com.loliball.appliedcreate.gui.AndesitePatternProviderMenu
+
 import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
 import com.loliball.appliedcreate.gui.MechanicalCraftEncoderMenu
 import com.loliball.appliedcreate.item.BrassPatternProviderUpgradeItem
@@ -96,13 +96,6 @@ class AppliedCreate {
                     ::AndesitePatternProviderBlockEntity,
                     ANDESITE_PATTERN_PROVIDER_BLOCK.get()
                 ).build(null)
-            }
-
-        val ANDESITE_PATTERN_PROVIDER_MENU: RegistryObject<MenuType<AndesitePatternProviderMenu>> =
-            MENU_TYPES.register("andesite_pattern_provider") {
-                createPatternProviderMenuType { menuType, windowId, inv, host ->
-                    AndesitePatternProviderMenu(menuType, windowId, inv, host)
-                }
             }
 
         // ── Brass Pattern Provider ──
@@ -225,12 +218,7 @@ class AppliedCreate {
 
     private fun onCommonSetup(event: FMLCommonSetupEvent) {
         event.enqueueWork {
-            registerPatternProviderOpener(ANDESITE_PATTERN_PROVIDER_MENU.get()) { wnd, inv, host ->
-                AndesitePatternProviderMenu(
-                    ANDESITE_PATTERN_PROVIDER_MENU.get(),
-                    wnd, inv, host
-                )
-            }
+
             registerPatternProviderOpener(BRASS_PATTERN_PROVIDER_MENU.get()) { wnd, inv, host ->
                 BrassPatternProviderMenu(
                     BRASS_PATTERN_PROVIDER_MENU.get(),

@@ -100,11 +100,10 @@ class AndesitePatternProviderBlockEntity(pos: BlockPos, state: BlockState) :
     }
 
     override fun openMenu(player: Player, locator: MenuLocator) {
-        MenuOpener.open(AppliedCreate.ANDESITE_PATTERN_PROVIDER_MENU.get(), player, locator)
+        MenuOpener.open(appeng.menu.implementations.PatternProviderMenu.TYPE, player, locator)
     }
-
     override fun returnToMainMenu(player: Player, subMenu: ISubMenu) {
-        MenuOpener.returnTo(AppliedCreate.ANDESITE_PATTERN_PROVIDER_MENU.get(), player, subMenu.locator)
+        MenuOpener.returnTo(appeng.menu.implementations.PatternProviderMenu.TYPE, player, subMenu.locator)
     }
 
     override fun <T : Any> getCapability(cap: Capability<T>, side: Direction?): LazyOptional<T> {
