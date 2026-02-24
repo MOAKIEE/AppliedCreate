@@ -2,7 +2,7 @@
   "includes": ["../common/common.json", "../common/player_inventory.json"],
   "generatedBackground": {
     "width": 176,
-    "height": 267
+    "height": 269
   },
   "slots": {
     "ENCODED_PATTERN": {
