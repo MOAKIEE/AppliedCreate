@@ -335,6 +335,11 @@ class MechanicalCraftingPatternLogic(
                     }
                 }
             }
+
+                // Found recipes matching this output but none fit any adjacent crafter grid.
+                // Return false to prevent fallback to super.pushPattern() which would
+                // dump items sequentially and potentially craft the wrong item.
+                return false
         }
 
         return super.pushPattern(patternDetails, inputHolder)
