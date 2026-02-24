@@ -1,5 +1,5 @@
 {
-  "includes": ["common/common.json", "common/player_inventory.json"],
+  "includes": ["../common/common.json", "../common/player_inventory.json"],
   "generatedBackground": {
     "width": 176,
     "height": 267

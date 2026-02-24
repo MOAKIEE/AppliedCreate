@@ -4,6 +4,7 @@ import appeng.api.networking.IGridNodeListener
 import appeng.api.orientation.BlockOrientation
 import appeng.api.stacks.AEItemKey
 import appeng.api.util.AECableType
+import appeng.block.crafting.PushDirection
 import appeng.blockentity.grid.AENetworkBlockEntity
 import appeng.helpers.patternprovider.PatternProviderLogic
 import appeng.helpers.patternprovider.PatternProviderLogicHost
@@ -27,7 +28,7 @@ class AndesitePatternProviderBlockEntity(pos: BlockPos, state: BlockState) :
     AENetworkBlockEntity(AppliedCreate.ANDESITE_PATTERN_PROVIDER_BE.get(), pos, state),
     PatternProviderLogicHost {
 
-    private val logic: PatternProviderLogic = createLogic()
+    internal val logic: PatternProviderLogic = createLogic()
 
     private fun createLogic(): PatternProviderLogic {
         return MechanicalCraftingPatternLogic(this.mainNode, this, PATTERN_SLOTS)
@@ -38,7 +39,12 @@ class AndesitePatternProviderBlockEntity(pos: BlockPos, state: BlockState) :
     }
 
     override fun getGridConnectableSides(orientation: BlockOrientation): Set<Direction> {
-        return EnumSet.allOf(Direction::class.java)
+        val pushDirection = getPushDirection().direction
+        return if (pushDirection == null) {
+            EnumSet.allOf(Direction::class.java)
+        } else {
+            EnumSet.complementOf(EnumSet.of(pushDirection))
+        }
     }
 
     override fun addAdditionalDrops(level: Level, pos: BlockPos, drops: MutableList<ItemStack>) {
@@ -73,7 +79,12 @@ class AndesitePatternProviderBlockEntity(pos: BlockPos, state: BlockState) :
     override fun getLogic(): PatternProviderLogic = logic
 
     override fun getTargets(): EnumSet<Direction> {
-        return EnumSet.allOf(Direction::class.java)
+        val pushDirection = getPushDirection()
+        return if (pushDirection.direction == null) {
+            EnumSet.allOf(Direction::class.java)
+        } else {
+            EnumSet.of(pushDirection.direction)
+        }
     }
 
     override fun getTerminalIcon(): AEItemKey {
@@ -102,6 +113,15 @@ class AndesitePatternProviderBlockEntity(pos: BlockPos, state: BlockState) :
             return lo
         }
         return super.getCapability(cap, side)
+    }
+
+    override fun setBlockState(state: BlockState) {
+        super.setBlockState(state)
+        onGridConnectableSidesChanged()
+    }
+
+    private fun getPushDirection(): PushDirection {
+        return blockState.getValue(com.loliball.appliedcreate.block.AndesitePatternProviderBlock.PUSH_DIRECTION)
     }
 
     companion object {

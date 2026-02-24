@@ -1,8 +1,8 @@
 package com.loliball.appliedcreate.block
 
-import com.loliball.appliedcreate.AppliedCreate
 import com.loliball.appliedcreate.block.entity.AndesitePatternProviderBlockEntity
 import net.minecraft.core.BlockPos
+import net.minecraft.core.Direction
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.player.Player
@@ -12,9 +12,14 @@ import net.minecraft.world.level.block.EntityBlock
 import net.minecraft.world.level.block.SoundType
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
+import net.minecraft.world.level.block.state.StateDefinition
+import net.minecraft.world.level.block.state.properties.EnumProperty
 import net.minecraft.world.level.material.MapColor
 import net.minecraft.world.phys.BlockHitResult
+import appeng.block.crafting.PushDirection
 import appeng.menu.locator.MenuLocators
+import appeng.util.InteractionUtil
+import appeng.util.Platform
 
 class AndesitePatternProviderBlock : Block(
     Properties.of()
@@ -23,6 +28,15 @@ class AndesitePatternProviderBlock : Block(
         .sound(SoundType.STONE)
         .requiresCorrectToolForDrops()
 ), EntityBlock {
+
+    init {
+        registerDefaultState(defaultBlockState().setValue(PUSH_DIRECTION, PushDirection.ALL))
+    }
+
+    override fun createBlockStateDefinition(builder: StateDefinition.Builder<Block, BlockState>) {
+        super.createBlockStateDefinition(builder)
+        builder.add(PUSH_DIRECTION)
+    }
 
     override fun newBlockEntity(pos: BlockPos, state: BlockState): BlockEntity {
         return AndesitePatternProviderBlockEntity(pos, state)
@@ -37,6 +51,16 @@ class AndesitePatternProviderBlock : Block(
         hand: InteractionHand,
         hit: BlockHitResult
     ): InteractionResult {
+        if (InteractionUtil.isInAlternateUseMode(player)) {
+            return InteractionResult.PASS
+        }
+
+        val heldItem = player.getItemInHand(hand)
+        if (!heldItem.isEmpty && InteractionUtil.canWrenchRotate(heldItem)) {
+            setSide(level, pos, hit.direction)
+            return InteractionResult.sidedSuccess(level.isClientSide)
+        }
+
         if (!level.isClientSide) {
             val blockEntity = level.getBlockEntity(pos)
             if (blockEntity is AndesitePatternProviderBlockEntity) {
@@ -44,6 +68,20 @@ class AndesitePatternProviderBlock : Block(
             }
         }
         return InteractionResult.sidedSuccess(level.isClientSide)
+    }
+
+    override fun neighborChanged(
+        state: BlockState,
+        level: Level,
+        pos: BlockPos,
+        block: Block,
+        fromPos: BlockPos,
+        isMoving: Boolean
+    ) {
+        val be = level.getBlockEntity(pos)
+        if (be is AndesitePatternProviderBlockEntity) {
+            be.logic.updateRedstoneState()
+        }
     }
 
     @Suppress("DEPRECATION")
@@ -56,6 +94,25 @@ class AndesitePatternProviderBlock : Block(
                 drops.forEach { net.minecraft.world.Containers.dropItemStack(level, pos.x.toDouble(), pos.y.toDouble(), pos.z.toDouble(), it) }
             }
             super.onRemove(state, level, pos, newState, moving)
+        }
+    }
+
+    companion object {
+        @JvmField
+        val PUSH_DIRECTION: EnumProperty<PushDirection> = EnumProperty.create("push_direction", PushDirection::class.java)
+
+        fun setSide(level: Level, pos: BlockPos, facing: Direction) {
+            val currentState = level.getBlockState(pos)
+            val pushSide = currentState.getValue(PUSH_DIRECTION).direction
+
+            val newPushDirection = when {
+                pushSide == facing.opposite -> PushDirection.fromDirection(facing)
+                pushSide == facing -> PushDirection.ALL
+                pushSide == null -> PushDirection.fromDirection(facing.opposite)
+                else -> PushDirection.fromDirection(Platform.rotateAround(pushSide, facing))
+            }
+
+            level.setBlockAndUpdate(pos, currentState.setValue(PUSH_DIRECTION, newPushDirection))
         }
     }
 }
