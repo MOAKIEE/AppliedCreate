@@ -14,7 +14,7 @@ import net.minecraft.world.InteractionResult
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.context.UseOnContext
 
-class BrassPatternProviderUpgradeItem : Item(Properties().stacksTo(16)) {
+class BrassPatternProviderUpgradeItem : Item(Properties().stacksTo(64)) {
 
     override fun useOn(context: UseOnContext): InteractionResult {
         val level = context.level
@@ -34,7 +34,7 @@ class BrassPatternProviderUpgradeItem : Item(Properties().stacksTo(16)) {
             val oldState = level.getBlockState(pos)
             val pushDir = oldState.getValue(AndesitePatternProviderBlock.PUSH_DIRECTION)
 
-            level.removeBlockEntity(pos)
+            blockEntity.clearContent()
             level.setBlock(
                 pos,
                 AppliedCreate.BRASS_PATTERN_PROVIDER_BLOCK.get().defaultBlockState()
