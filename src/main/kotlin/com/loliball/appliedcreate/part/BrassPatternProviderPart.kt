@@ -8,7 +8,7 @@ import appeng.helpers.patternprovider.PatternProviderLogic
 import appeng.items.parts.PartModels
 import appeng.menu.ISubMenu
 import appeng.menu.MenuOpener
-import appeng.menu.locator.MenuLocator
+import appeng.menu.locator.MenuHostLocator
 import appeng.parts.PartModel
 import appeng.parts.crafting.PatternProviderPart
 import com.loliball.appliedcreate.AppliedCreate
@@ -23,12 +23,12 @@ class BrassPatternProviderPart(partItem: IPartItem<*>) : PatternProviderPart(par
         return MechanicalCraftingPatternLogic(this.mainNode, this, PATTERN_SLOTS)
     }
 
-    override fun openMenu(player: Player, locator: MenuLocator) {
+    override fun openMenu(player: Player, locator: MenuHostLocator) {
         MenuOpener.open(AppliedCreate.BRASS_PATTERN_PROVIDER_MENU.get(), player, locator)
     }
 
     override fun returnToMainMenu(player: Player, subMenu: ISubMenu) {
-        MenuOpener.returnTo(AppliedCreate.BRASS_PATTERN_PROVIDER_MENU.get(), player, subMenu.locator)
+        MenuOpener.returnTo(AppliedCreate.BRASS_PATTERN_PROVIDER_MENU.get(), player, subMenu.getLocator())
     }
 
     override fun getTerminalIcon(): AEItemKey {
@@ -53,27 +53,27 @@ class BrassPatternProviderPart(partItem: IPartItem<*>) : PatternProviderPart(par
         const val PATTERN_SLOTS = 36
 
         @JvmStatic
-        val BRASS_MODEL_BASE = ResourceLocation(AppliedCreate.MOD_ID, "part/brass_pattern_provider_base")
+        val BRASS_MODEL_BASE = ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "part/brass_pattern_provider_base")
 
         @JvmStatic
         @PartModels
         val BRASS_MODELS_OFF = PartModel(
             BRASS_MODEL_BASE,
-            ResourceLocation(AppEng.MOD_ID, "part/interface_off")
+            ResourceLocation.fromNamespaceAndPath(AppEng.MOD_ID, "part/interface_off")
         )
 
         @JvmStatic
         @PartModels
         val BRASS_MODELS_ON = PartModel(
             BRASS_MODEL_BASE,
-            ResourceLocation(AppEng.MOD_ID, "part/interface_on")
+            ResourceLocation.fromNamespaceAndPath(AppEng.MOD_ID, "part/interface_on")
         )
 
         @JvmStatic
         @PartModels
         val BRASS_MODELS_HAS_CHANNEL = PartModel(
             BRASS_MODEL_BASE,
-            ResourceLocation(AppEng.MOD_ID, "part/interface_has_channel")
+            ResourceLocation.fromNamespaceAndPath(AppEng.MOD_ID, "part/interface_has_channel")
         )
     }
 }

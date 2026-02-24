@@ -17,6 +17,7 @@ import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.crafting.Ingredient
 import net.minecraft.world.item.crafting.RecipeType
 import net.minecraft.world.item.crafting.ShapedRecipe
+import net.minecraft.world.item.crafting.RecipeHolder
 import java.lang.reflect.Method
 
 class MechanicalCraftingPatternLogic(
@@ -192,13 +193,14 @@ class MechanicalCraftingPatternLogic(
             // 1. Search MechanicalCraftingRecipe
             @Suppress("UNCHECKED_CAST")
             val mcRecipeType = BuiltInRegistries.RECIPE_TYPE
-                .get(ResourceLocation("create", "mechanical_crafting"))
+                .get(ResourceLocation.fromNamespaceAndPath("create", "mechanical_crafting"))
                     as? RecipeType<MechanicalCraftingRecipe>
 
             if (mcRecipeType != null) {
                 val mcRecipes = level.recipeManager.getAllRecipesFor(mcRecipeType)
-                for (recipe in mcRecipes) {
-                    if (ItemStack.isSameItemSameTags(recipe.getResultItem(registryAccess), outputStack)) {
+                for (recipeHolder in mcRecipes) {
+                    val recipe = recipeHolder.value()
+                    if (ItemStack.isSameItemSameComponents(recipe.getResultItem(registryAccess), outputStack)) {
                         candidateRecipes.add(RecipeInfo(
                             width = recipe.width,
                             height = recipe.height,
@@ -209,10 +211,12 @@ class MechanicalCraftingPatternLogic(
             }
 
             // 2. Search vanilla ShapedRecipe (covers iron boots, iron trapdoor, etc.)
+            // 2. Search vanilla ShapedRecipe (covers iron boots, iron trapdoor, etc.)
             val craftingRecipes = level.recipeManager.getAllRecipesFor(RecipeType.CRAFTING)
-            for (recipe in craftingRecipes) {
+            for (recipeHolder in craftingRecipes) {
+                val recipe = recipeHolder.value()
                 if (recipe is ShapedRecipe) {
-                    if (ItemStack.isSameItemSameTags(recipe.getResultItem(registryAccess), outputStack)) {
+                    if (ItemStack.isSameItemSameComponents(recipe.getResultItem(registryAccess), outputStack)) {
                         candidateRecipes.add(RecipeInfo(
                             width = recipe.width,
                             height = recipe.height,

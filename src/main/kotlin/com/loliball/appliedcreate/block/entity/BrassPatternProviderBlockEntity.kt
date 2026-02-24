@@ -5,27 +5,26 @@ import appeng.api.orientation.BlockOrientation
 import appeng.api.stacks.AEItemKey
 import appeng.api.util.AECableType
 import appeng.block.crafting.PushDirection
-import appeng.blockentity.grid.AENetworkBlockEntity
+import appeng.blockentity.grid.AENetworkedBlockEntity
 import appeng.helpers.patternprovider.PatternProviderLogic
 import appeng.helpers.patternprovider.PatternProviderLogicHost
 import appeng.menu.ISubMenu
 import appeng.menu.MenuOpener
-import appeng.menu.locator.MenuLocator
+import appeng.menu.locator.MenuHostLocator
 import com.loliball.appliedcreate.AppliedCreate
 import com.loliball.appliedcreate.logic.MechanicalCraftingPatternLogic
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
+import net.minecraft.core.HolderLookup
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.state.BlockState
-import net.minecraftforge.common.capabilities.Capability
-import net.minecraftforge.common.util.LazyOptional
 import java.util.EnumSet
 
 class BrassPatternProviderBlockEntity(pos: BlockPos, state: BlockState) :
-    AENetworkBlockEntity(AppliedCreate.BRASS_PATTERN_PROVIDER_BE.get(), pos, state),
+    AENetworkedBlockEntity(AppliedCreate.BRASS_PATTERN_PROVIDER_BE.get(), pos, state),
     PatternProviderLogicHost {
 
     internal val logic: PatternProviderLogic = createLogic()
@@ -39,7 +38,7 @@ class BrassPatternProviderBlockEntity(pos: BlockPos, state: BlockState) :
     }
 
     override fun getGridConnectableSides(orientation: BlockOrientation): Set<Direction> {
-        val pushDirection = getPushDirection().direction
+        val pushDirection = getPushDirection().getDirection()
         return if (pushDirection == null) {
             EnumSet.allOf(Direction::class.java)
         } else {
@@ -62,14 +61,14 @@ class BrassPatternProviderBlockEntity(pos: BlockPos, state: BlockState) :
         this.logic.updatePatterns()
     }
 
-    override fun saveAdditional(data: CompoundTag) {
-        super.saveAdditional(data)
-        this.logic.writeToNBT(data)
+    override fun saveAdditional(data: CompoundTag, registries: HolderLookup.Provider) {
+        super.saveAdditional(data, registries)
+        this.logic.writeToNBT(data, registries)
     }
 
-    override fun loadTag(data: CompoundTag) {
-        super.loadTag(data)
-        this.logic.readFromNBT(data)
+    override fun loadTag(data: CompoundTag, registries: HolderLookup.Provider) {
+        super.loadTag(data, registries)
+        this.logic.readFromNBT(data, registries)
     }
 
     override fun getCableConnectionType(dir: Direction): AECableType {
@@ -80,10 +79,10 @@ class BrassPatternProviderBlockEntity(pos: BlockPos, state: BlockState) :
 
     override fun getTargets(): EnumSet<Direction> {
         val pushDirection = getPushDirection()
-        return if (pushDirection.direction == null) {
+        return if (pushDirection.getDirection() == null) {
             EnumSet.allOf(Direction::class.java)
         } else {
-            EnumSet.of(pushDirection.direction)
+            EnumSet.of(pushDirection.getDirection())
         }
     }
 
@@ -99,20 +98,12 @@ class BrassPatternProviderBlockEntity(pos: BlockPos, state: BlockState) :
         return AppliedCreate.BRASS_PATTERN_PROVIDER_ITEM.get().defaultInstance
     }
 
-    override fun openMenu(player: Player, locator: MenuLocator) {
+    override fun openMenu(player: Player, locator: MenuHostLocator) {
         MenuOpener.open(AppliedCreate.BRASS_PATTERN_PROVIDER_MENU.get(), player, locator)
     }
 
     override fun returnToMainMenu(player: Player, subMenu: ISubMenu) {
-        MenuOpener.returnTo(AppliedCreate.BRASS_PATTERN_PROVIDER_MENU.get(), player, subMenu.locator)
-    }
-
-    override fun <T : Any> getCapability(cap: Capability<T>, side: Direction?): LazyOptional<T> {
-        val lo = logic.getCapability(cap)
-        if (lo.isPresent) {
-            return lo
-        }
-        return super.getCapability(cap, side)
+        MenuOpener.returnTo(AppliedCreate.BRASS_PATTERN_PROVIDER_MENU.get(), player, subMenu.getLocator())
     }
 
     override fun setBlockState(state: BlockState) {

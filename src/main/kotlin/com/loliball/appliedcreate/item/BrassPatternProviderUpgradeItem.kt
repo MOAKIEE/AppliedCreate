@@ -21,14 +21,14 @@ class BrassPatternProviderUpgradeItem : Item(Properties().stacksTo(64)) {
         val pos = context.clickedPos
         val player = context.player ?: return InteractionResult.PASS
 
-        if (level.isClientSide) return InteractionResult.sidedSuccess(true)
+        if (level.isClientSide) return InteractionResult.SUCCESS
 
         val blockEntity = level.getBlockEntity(pos)
 
         // Case 1: Block form — Andesite Pattern Provider block entity
         if (blockEntity is AndesitePatternProviderBlockEntity) {
             val savedTag = CompoundTag()
-            blockEntity.saveAdditional(savedTag)
+            blockEntity.saveAdditional(savedTag, level.registryAccess())
 
             // Preserve PUSH_DIRECTION from old block state
             val oldState = level.getBlockState(pos)
@@ -44,7 +44,7 @@ class BrassPatternProviderUpgradeItem : Item(Properties().stacksTo(64)) {
 
             val newBe = level.getBlockEntity(pos)
             if (newBe is BrassPatternProviderBlockEntity) {
-                newBe.loadTag(savedTag)
+                newBe.loadTag(savedTag, level.registryAccess())
                 newBe.setChanged()
             }
 
@@ -68,7 +68,7 @@ class BrassPatternProviderUpgradeItem : Item(Properties().stacksTo(64)) {
 
                 // Save part NBT data
                 val savedTag = CompoundTag()
-                andesitePart.writeToNBT(savedTag)
+                andesitePart.writeToNBT(savedTag, level.registryAccess())
 
                 // Remove old part
                 host.removePart(andesitePart)
@@ -83,7 +83,7 @@ class BrassPatternProviderUpgradeItem : Item(Properties().stacksTo(64)) {
 
                 if (brassPart != null) {
                     // Restore saved data to new part
-                    brassPart.readFromNBT(savedTag)
+                    brassPart.readFromNBT(savedTag, level.registryAccess())
                     host.markForUpdate()
                     host.markForSave()
                 }

@@ -3,11 +3,11 @@
     "category": "misc",
     "ingredients": [
         {
-            "item": "appliedcreate:andesite_pattern_provider"
+            "item": "appliedcreate:brass_pattern_provider_part"
         }
     ],
     "result": {
-        "item": "appliedcreate:andesite_pattern_provider_part",
+        "id": "appliedcreate:brass_pattern_provider",
         "count": 1
     }
 }

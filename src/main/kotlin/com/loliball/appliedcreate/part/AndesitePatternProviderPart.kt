@@ -8,7 +8,7 @@ import appeng.helpers.patternprovider.PatternProviderLogic
 import appeng.items.parts.PartModels
 import appeng.menu.ISubMenu
 import appeng.menu.MenuOpener
-import appeng.menu.locator.MenuLocator
+import appeng.menu.locator.MenuHostLocator
 import appeng.parts.PartModel
 import appeng.parts.crafting.PatternProviderPart
 import com.loliball.appliedcreate.AppliedCreate
@@ -23,11 +23,11 @@ class AndesitePatternProviderPart(partItem: IPartItem<*>) : PatternProviderPart(
         return MechanicalCraftingPatternLogic(this.mainNode, this, PATTERN_SLOTS)
     }
 
-    override fun openMenu(player: Player, locator: MenuLocator) {
+    override fun openMenu(player: Player, locator: MenuHostLocator) {
         MenuOpener.open(appeng.menu.implementations.PatternProviderMenu.TYPE, player, locator)
     }
     override fun returnToMainMenu(player: Player, subMenu: ISubMenu) {
-        MenuOpener.returnTo(appeng.menu.implementations.PatternProviderMenu.TYPE, player, subMenu.locator)
+        MenuOpener.returnTo(appeng.menu.implementations.PatternProviderMenu.TYPE, player, subMenu.getLocator())
     }
 
     override fun getTerminalIcon(): AEItemKey {
@@ -52,27 +52,27 @@ class AndesitePatternProviderPart(partItem: IPartItem<*>) : PatternProviderPart(
         const val PATTERN_SLOTS = 9
 
         @JvmStatic
-        val ANDESITE_MODEL_BASE = ResourceLocation(AppliedCreate.MOD_ID, "part/andesite_pattern_provider_base")
+        val ANDESITE_MODEL_BASE = ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "part/andesite_pattern_provider_base")
 
         @JvmStatic
         @PartModels
         val ANDESITE_MODELS_OFF = PartModel(
             ANDESITE_MODEL_BASE,
-            ResourceLocation(AppEng.MOD_ID, "part/interface_off")
+            ResourceLocation.fromNamespaceAndPath(AppEng.MOD_ID, "part/interface_off")
         )
 
         @JvmStatic
         @PartModels
         val ANDESITE_MODELS_ON = PartModel(
             ANDESITE_MODEL_BASE,
-            ResourceLocation(AppEng.MOD_ID, "part/interface_on")
+            ResourceLocation.fromNamespaceAndPath(AppEng.MOD_ID, "part/interface_on")
         )
 
         @JvmStatic
         @PartModels
         val ANDESITE_MODELS_HAS_CHANNEL = PartModel(
             ANDESITE_MODEL_BASE,
-            ResourceLocation(AppEng.MOD_ID, "part/interface_has_channel")
+            ResourceLocation.fromNamespaceAndPath(AppEng.MOD_ID, "part/interface_has_channel")
         )
     }
 }

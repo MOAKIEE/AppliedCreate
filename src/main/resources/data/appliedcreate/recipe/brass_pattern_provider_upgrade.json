@@ -10,7 +10,7 @@
         }
     ],
     "result": {
-        "item": "appliedcreate:brass_pattern_provider_upgrade",
+        "id": "appliedcreate:brass_pattern_provider_upgrade",
         "count": 1
     }
 }

@@ -5,7 +5,9 @@ import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
+import net.minecraft.world.ItemInteractionResult
 import net.minecraft.world.entity.player.Player
+import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.EntityBlock
@@ -42,25 +44,34 @@ class AndesitePatternProviderBlock : Block(
         return AndesitePatternProviderBlockEntity(pos, state)
     }
 
-    @Suppress("DEPRECATION")
-    override fun use(
+    override fun useItemOn(
+        stack: ItemStack,
         state: BlockState,
         level: Level,
         pos: BlockPos,
         player: Player,
         hand: InteractionHand,
         hit: BlockHitResult
-    ): InteractionResult {
+    ): ItemInteractionResult {
         if (InteractionUtil.isInAlternateUseMode(player)) {
-            return InteractionResult.PASS
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
         }
 
-        val heldItem = player.getItemInHand(hand)
-        if (!heldItem.isEmpty && InteractionUtil.canWrenchRotate(heldItem)) {
+        if (!stack.isEmpty && InteractionUtil.canWrenchRotate(stack)) {
             setSide(level, pos, hit.direction)
-            return InteractionResult.sidedSuccess(level.isClientSide)
+            return ItemInteractionResult.sidedSuccess(level.isClientSide)
         }
 
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
+    }
+
+    override fun useWithoutItem(
+        state: BlockState,
+        level: Level,
+        pos: BlockPos,
+        player: Player,
+        hit: BlockHitResult
+    ): InteractionResult {
         if (!level.isClientSide) {
             val blockEntity = level.getBlockEntity(pos)
             if (blockEntity is AndesitePatternProviderBlockEntity) {
@@ -103,7 +114,7 @@ class AndesitePatternProviderBlock : Block(
 
         fun setSide(level: Level, pos: BlockPos, facing: Direction) {
             val currentState = level.getBlockState(pos)
-            val pushSide = currentState.getValue(PUSH_DIRECTION).direction
+            val pushSide = currentState.getValue(PUSH_DIRECTION).getDirection()
 
             val newPushDirection = when {
                 pushSide == facing.opposite -> PushDirection.fromDirection(facing)

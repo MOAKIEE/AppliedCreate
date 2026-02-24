@@ -1,7 +1,6 @@
 plugins {
-    id("net.minecraftforge.gradle") version "6.0.+"
-    id("org.parchmentmc.librarian.forgegradle") version "1.+"
-    id("org.jetbrains.kotlin.jvm") version "1.9.25"
+    id("net.neoforged.moddev") version "1.0.15"
+    id("org.jetbrains.kotlin.jvm") version "2.3.0"
 }
 
 version = project.extra["mod_version"] as String
@@ -12,38 +11,26 @@ base {
     archivesName.set(modId)
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
-kotlin.jvmToolchain(17)
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+kotlin.jvmToolchain(21)
 
-minecraft {
-    mappings("parchment", project.extra["parchment_mappings_version"] as String)
+neoForge {
+    version = project.extra["neoforge_version"] as String
+
+    mods {
+        create(modId) {
+            sourceSet(sourceSets.main.get())
+        }
+    }
 
     runs {
         create("client") {
-            workingDirectory(project.file("run"))
-            property("forge.logging.markers", "REGISTRIES")
-            property("forge.logging.console.level", "debug")
-            property("guideDev.ae2guide.sources", file("src/main/resources/assets/appliedcreate/ae2guide").absolutePath)
-            property("guideDev.ae2guide.sourcesNamespace", "appliedcreate")
-
-            mods {
-                create(modId) {
-                    source(sourceSets.main.get())
-                }
-            }
+            client()
+            systemProperty("guideDev.ae2guide.sources", file("src/main/resources/assets/appliedcreate/ae2guide").absolutePath)
+            systemProperty("guideDev.ae2guide.sourcesNamespace", "appliedcreate")
         }
-
         create("server") {
-            workingDirectory(project.file("run"))
-            property("forge.logging.markers", "REGISTRIES")
-            property("forge.logging.console.level", "debug")
-            args("--nogui")
-
-            mods {
-                create(modId) {
-                    source(sourceSets.main.get())
-                }
-            }
+            server()
         }
     }
 }
@@ -62,10 +49,6 @@ repositories {
         content { includeGroup("maven.modrinth") }
     }
     maven {
-        name = "Create Maven"
-        url = uri("https://maven.tterrag.com/")
-    }
-    maven {
         name = "Create Mod Maven"
         url = uri("https://maven.createmod.net")
     }
@@ -76,21 +59,14 @@ repositories {
 }
 
 dependencies {
-    minecraft("net.minecraftforge:forge:${project.extra["minecraft_version"]}-${project.extra["forge_version"]}")
+    implementation("thedarkcolour:kotlinforforge-neoforge:${project.extra["kotlin_for_forge_version"]}")
 
-    implementation("thedarkcolour:kotlinforforge:${project.extra["kotlin_for_forge_version"]}")
+    implementation("org.appliedenergistics:appliedenergistics2:${project.extra["ae2_version"]}")
+    implementation("org.appliedenergistics:guideme:${project.extra["guideme_version"]}")
 
-    compileOnly(fg.deobf("com.simibubi.create:create-${project.extra["minecraft_version"]}:${project.extra["create_version"]}:slim"))
-
-    compileOnly(fg.deobf("dev.engine-room.flywheel:flywheel-forge-${project.extra["minecraft_version"]}:1.0.0-beta-195"))
-
-    // Ponder is needed as compile-only dependency because Create's MechanicalCrafterBlockEntity
-    // extends VirtualBlockEntity from the Ponder library
-    compileOnly(fg.deobf("net.createmod.ponder:Ponder-Forge-${project.extra["minecraft_version"]}:${project.extra["ponder_version"]}"))
-
-    compileOnly(fg.deobf("net.createmod.catnip:Catnip-Forge-${project.extra["minecraft_version"]}:0.8.42"))
-
-    compileOnly(fg.deobf("appeng:appliedenergistics2-forge:${project.extra["ae2_version"]}"))
+    compileOnly("com.simibubi.create:create-${project.extra["minecraft_version"]}:${project.extra["create_version"]}")
+    compileOnly("dev.engine-room.flywheel:flywheel-neoforge-${project.extra["minecraft_version"]}:${project.extra["flywheel_version"]}")
+    compileOnly("net.createmod.ponder:ponder-neoforge:${project.extra["ponder_version"]}")
 }
 
 tasks.named<Jar>("jar") {
@@ -104,9 +80,32 @@ tasks.named<Jar>("jar") {
             "Implementation-Vendor" to project.extra["mod_authors"]
         )
     }
-    finalizedBy("reobfJar")
 }
 
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
+}
+
+tasks.withType<ProcessResources>().configureEach {
+    val replaceProperties = mapOf(
+        "mod_id" to modId,
+        "mod_name" to project.extra["mod_name"],
+        "mod_license" to project.extra["mod_license"],
+        "mod_version" to project.version,
+        "mod_authors" to project.extra["mod_authors"],
+        "mod_description" to project.extra["mod_description"],
+        "neoforge_version" to project.extra["neoforge_version"],
+        "minecraft_version" to project.extra["minecraft_version"],
+        "loader_version_range" to project.extra["loader_version_range"],
+        "neo_version_range" to project.extra["neo_version_range"],
+        "minecraft_version_range" to project.extra["minecraft_version_range"],
+        "create_version_range" to project.extra["create_version_range"],
+        "ae2_version_range" to project.extra["ae2_version_range"]
+    )
+
+    inputs.properties(replaceProperties)
+
+    filesMatching("META-INF/neoforge.mods.toml") {
+        expand(replaceProperties)
+    }
 }
