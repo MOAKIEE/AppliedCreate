@@ -1,8 +1,0 @@
-{
-    "variants": {
-        "facing=north": { "model": "appliedcreate:block/mechanical_craft_encoder" },
-        "facing=south": { "model": "appliedcreate:block/mechanical_craft_encoder", "y": 180 },
-        "facing=west": { "model": "appliedcreate:block/mechanical_craft_encoder", "y": 270 },
-        "facing=east": { "model": "appliedcreate:block/mechanical_craft_encoder", "y": 90 }
-    }
-}

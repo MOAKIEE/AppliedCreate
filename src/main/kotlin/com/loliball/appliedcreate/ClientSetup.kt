@@ -1,12 +1,9 @@
 package com.loliball.appliedcreate
 
 import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
-import com.loliball.appliedcreate.gui.MechanicalCraftEncoderMenu
-import com.loliball.appliedcreate.gui.MechanicalCraftEncoderScreen
 import appeng.client.gui.implementations.PatternProviderScreen
 import appeng.client.gui.style.ScreenStyle
 import appeng.init.client.InitScreens
-import net.minecraft.client.gui.screens.MenuScreens
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.player.Inventory
 import net.minecraftforge.api.distmarker.Dist
@@ -23,10 +20,6 @@ object ClientSetup {
 
     private fun onClientSetup(event: FMLClientSetupEvent) {
         event.enqueueWork {
-            MenuScreens.register(AppliedCreate.MECHANICAL_CRAFT_ENCODER_MENU.get()) { menu: MechanicalCraftEncoderMenu, inv, title ->
-                MechanicalCraftEncoderScreen(menu, inv, title)
-            }
-
             InitScreens.register(
                 AppliedCreate.BRASS_PATTERN_PROVIDER_MENU.get(),
                 { menu: BrassPatternProviderMenu, inv: Inventory, title: Component, style: ScreenStyle ->

@@ -70,5 +70,5 @@ Use a <ItemLink id="appliedcreate:brass_pattern_provider_upgrade" /> on an exist
 
 - Use the Brass Pattern Provider when you have many different mechanical crafting recipes to automate
 - The cable subpart form is great for dense ME network builds
-- Combine with the <ItemLink id="appliedcreate:mechanical_craft_encoder" /> to quickly reference recipe layouts
+- Refer to JEI/REI for correct ingredient layouts when creating processing patterns
 - Multiple providers can be placed adjacent to the same Mechanical Crafter array for even more pattern capacity

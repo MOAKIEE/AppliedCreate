@@ -52,7 +52,7 @@ The Andesite Pattern Provider works with **AE2 processing patterns**. When creat
 2. Switch to **Processing** mode
 3. Set the **inputs** to match the mechanical crafting recipe ingredients
 4. Set the **output** to the recipe result
-5. Use the <ItemLink id="appliedcreate:mechanical_craft_encoder" /> as a reference for correct ingredient layouts
+5. Refer to JEI/REI for correct ingredient layouts for mechanical crafting recipes
 
 When the ME system receives a crafting request, the provider will:
 1. Request all required materials from the ME network

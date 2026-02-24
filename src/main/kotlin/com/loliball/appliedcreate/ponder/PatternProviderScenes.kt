@@ -2,10 +2,8 @@ package com.loliball.appliedcreate.ponder
 
 import com.loliball.appliedcreate.AppliedCreate
 import net.createmod.catnip.utility.Pointing
-import net.createmod.ponder.api.PonderPalette
 import net.createmod.ponder.api.scene.SceneBuilder
 import net.createmod.ponder.api.scene.SceneBuildingUtil
-import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.world.item.ItemStack
 
@@ -123,54 +121,6 @@ object PatternProviderScenes {
 
         scene.overlay().showText(60)
             .text("Also available as a cable subpart for compact ME network builds")
-            .independent()
-            .attachKeyFrame()
-        scene.idle(70)
-
-        scene.markAsFinished()
-    }
-
-    fun mechanicalCraftEncoder(scene: SceneBuilder, util: SceneBuildingUtil) {
-        scene.title("mechanical_craft_encoder", "Mechanical Craft Encoder")
-        scene.configureBasePlate(0, 0, 5)
-        scene.showBasePlate()
-        scene.idle(10)
-
-        val encoderPos = util.grid().at(2, 1, 2)
-        val encoderSelection = util.select().position(encoderPos)
-
-        scene.world().showSection(encoderSelection, Direction.DOWN)
-        scene.idle(20)
-
-        scene.overlay().showText(60)
-            .text("The Mechanical Craft Encoder helps you look up Create mechanical crafting recipes")
-            .pointAt(util.vector().blockSurface(encoderPos, Direction.WEST))
-            .placeNearTarget()
-            .attachKeyFrame()
-        scene.idle(70)
-
-        scene.overlay().showControls(
-            util.vector().blockSurface(encoderPos, Direction.NORTH),
-            Pointing.RIGHT,
-            40
-        ).rightClick()
-        scene.idle(10)
-
-        scene.overlay().showText(60)
-            .text("Right-click to open its GUI and browse all available mechanical crafting recipes")
-            .pointAt(util.vector().blockSurface(encoderPos, Direction.NORTH))
-            .placeNearTarget()
-        scene.idle(70)
-
-        scene.overlay().showText(80)
-            .text("Use it as a reference when creating AE2 processing patterns for the Pattern Providers")
-            .pointAt(util.vector().blockSurface(encoderPos, Direction.UP))
-            .placeNearTarget()
-            .attachKeyFrame()
-        scene.idle(90)
-
-        scene.overlay().showText(60)
-            .text("The encoder displays the ingredient grid layout, including empty slots and grid dimensions")
             .independent()
             .attachKeyFrame()
         scene.idle(70)

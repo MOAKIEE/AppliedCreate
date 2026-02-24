@@ -3,13 +3,10 @@ package com.loliball.appliedcreate
 import com.loliball.appliedcreate.ponder.AppliedCreatePonderPlugin
 import com.loliball.appliedcreate.block.AndesitePatternProviderBlock
 import com.loliball.appliedcreate.block.BrassPatternProviderBlock
-import com.loliball.appliedcreate.block.MechanicalCraftEncoderBlock
 import com.loliball.appliedcreate.block.entity.AndesitePatternProviderBlockEntity
 import com.loliball.appliedcreate.block.entity.BrassPatternProviderBlockEntity
-import com.loliball.appliedcreate.block.entity.MechanicalCraftEncoderBlockEntity
 
 import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
-import com.loliball.appliedcreate.gui.MechanicalCraftEncoderMenu
 import com.loliball.appliedcreate.item.BrassPatternProviderUpgradeItem
 import com.loliball.appliedcreate.item.MechanicalCraftingPartItem
 import com.loliball.appliedcreate.part.AndesitePatternProviderPart
@@ -55,30 +52,6 @@ class AppliedCreate {
         val MENU_TYPES: DeferredRegister<MenuType<*>> = DeferredRegister.create(ForgeRegistries.MENU_TYPES, MOD_ID)
         val CREATIVE_TABS: DeferredRegister<CreativeModeTab> = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MOD_ID)
 
-        // ── Mechanical Craft Encoder ──
-        val MECHANICAL_CRAFT_ENCODER_BLOCK: RegistryObject<Block> = BLOCKS.register("mechanical_craft_encoder") {
-            MechanicalCraftEncoderBlock()
-        }
-
-        val MECHANICAL_CRAFT_ENCODER_ITEM: RegistryObject<Item> = ITEMS.register("mechanical_craft_encoder") {
-            BlockItem(MECHANICAL_CRAFT_ENCODER_BLOCK.get(), Item.Properties())
-        }
-
-        @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-        val MECHANICAL_CRAFT_ENCODER_BE: RegistryObject<BlockEntityType<MechanicalCraftEncoderBlockEntity>> =
-            BLOCK_ENTITY_TYPES.register("mechanical_craft_encoder") {
-                BlockEntityType.Builder.of(
-                    ::MechanicalCraftEncoderBlockEntity,
-                    MECHANICAL_CRAFT_ENCODER_BLOCK.get()
-                ).build(null)
-            }
-
-        val MECHANICAL_CRAFT_ENCODER_MENU: RegistryObject<MenuType<MechanicalCraftEncoderMenu>> =
-            MENU_TYPES.register("mechanical_craft_encoder") {
-                IForgeMenuType.create { windowId, inv, data ->
-                    MechanicalCraftEncoderMenu(windowId, inv, data)
-                }
-            }
 
         // ── Andesite Pattern Provider ──
         val ANDESITE_PATTERN_PROVIDER_BLOCK: RegistryObject<Block> = BLOCKS.register("andesite_pattern_provider") {
@@ -146,9 +119,8 @@ class AppliedCreate {
         val CREATIVE_TAB: RegistryObject<CreativeModeTab> = CREATIVE_TABS.register("main") {
             CreativeModeTab.builder()
                 .title(Component.translatable("itemGroup.$MOD_ID"))
-                .icon { MECHANICAL_CRAFT_ENCODER_ITEM.get().defaultInstance }
+                .icon { ANDESITE_PATTERN_PROVIDER_ITEM.get().defaultInstance }
                 .displayItems { _, output ->
-                    output.accept(MECHANICAL_CRAFT_ENCODER_ITEM.get())
                     output.accept(ANDESITE_PATTERN_PROVIDER_ITEM.get())
                     output.accept(BRASS_PATTERN_PROVIDER_ITEM.get())
                     output.accept(ANDESITE_PATTERN_PROVIDER_PART_ITEM.get())
@@ -240,7 +212,7 @@ class AppliedCreate {
             PonderIndex.addPlugin(AppliedCreatePonderPlugin())
         }
 
-        LOGGER.info("Applied Create loaded - Mechanical Craft Encoder standalone mod")
+        LOGGER.info("Applied Create loaded")
     }
 
     private fun onCommonSetup(event: FMLCommonSetupEvent) {

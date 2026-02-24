@@ -21,9 +21,6 @@ class AppliedCreatePonderPlugin : PonderPlugin {
 
         helper.forComponents(AppliedCreate.BRASS_PATTERN_PROVIDER_BLOCK.id)
             .addStoryBoard("brass_pattern_provider", PatternProviderScenes::brassPatternProvider, APPLIED_CREATE_TAG)
-
-        helper.forComponents(AppliedCreate.MECHANICAL_CRAFT_ENCODER_BLOCK.id)
-            .addStoryBoard("mechanical_craft_encoder", PatternProviderScenes::mechanicalCraftEncoder, APPLIED_CREATE_TAG)
     }
 
     override fun registerTags(helper: PonderTagRegistrationHelper<ResourceLocation>) {
@@ -37,6 +34,5 @@ class AppliedCreatePonderPlugin : PonderPlugin {
         helper.addToTag(APPLIED_CREATE_TAG)
             .add(AppliedCreate.ANDESITE_PATTERN_PROVIDER_BLOCK.id)
             .add(AppliedCreate.BRASS_PATTERN_PROVIDER_BLOCK.id)
-            .add(AppliedCreate.MECHANICAL_CRAFT_ENCODER_BLOCK.id)
     }
 }

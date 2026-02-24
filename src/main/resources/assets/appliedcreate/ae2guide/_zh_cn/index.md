@@ -1,7 +1,7 @@
 ---
 navigation:
   title: 应用机动
-  icon: appliedcreate:mechanical_craft_encoder
+  icon: appliedcreate:andesite_pattern_provider
   position: 0
 ---
 
@@ -12,15 +12,6 @@ navigation:
 ## 物品与方块
 
 <Row gap="20">
-<Column>
-
-<ItemImage id="appliedcreate:mechanical_craft_encoder" scale="4" />
-
-### <ItemLink id="appliedcreate:mechanical_craft_encoder" />
-
-将机械动力的动力合成配方编码为材料包裹，用于配合动力合成器使用。
-
-</Column>
 <Column>
 
 <ItemImage id="appliedcreate:andesite_pattern_provider" scale="4" />
@@ -43,11 +34,10 @@ navigation:
 
 ## 快速入门
 
-1. 使用 <ItemLink id="appliedcreate:mechanical_craft_encoder" /> 查阅机械动力的动力合成配方
-2. 在AE2样板终端中创建与配方输入输出匹配的处理样板
-3. 将 <ItemLink id="appliedcreate:andesite_pattern_provider" /> 或 <ItemLink id="appliedcreate:brass_pattern_provider" /> 放置在动力合成器阵列旁边
-4. 放入处理样板并连接到ME网络
-5. 样板供应器会自动将材料分配到正确的动力合成器槽位中
+1. 在AE2样板终端中创建与动力合成配方输入输出匹配的处理样板
+2. 将 <ItemLink id="appliedcreate:andesite_pattern_provider" /> 或 <ItemLink id="appliedcreate:brass_pattern_provider" /> 放置在动力合成器阵列旁边
+3. 放入处理样板并连接到ME网络
+4. 样板供应器会自动将材料分配到正确的动力合成器槽位中
 
 ## 升级路径
 

@@ -70,5 +70,5 @@ item_ids:
 
 - 当需要自动化大量不同的动力合成配方时，使用黄铜样板供应器
 - 线缆子部件形态非常适合高密度ME网络布局
-- 配合 <ItemLink id="appliedcreate:mechanical_craft_encoder" /> 快速查阅配方布局
+- 参考JEI/REI查阅配方布局，创建正确的处理样板
 - 可以在同一个动力合成器阵列旁放置多个供应器，获得更多样板容量

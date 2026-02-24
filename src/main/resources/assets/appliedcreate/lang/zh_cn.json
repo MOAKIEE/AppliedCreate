@@ -1,5 +1,4 @@
 {
-    "block.appliedcreate.mechanical_craft_encoder": "动力合成编码器",
     "block.appliedcreate.andesite_pattern_provider": "安山样板供应器",
     "block.appliedcreate.brass_pattern_provider": "黄铜样板供应器",
     "item.appliedcreate.brass_pattern_provider_upgrade": "黄铜样板供应器升级",
@@ -18,8 +17,5 @@
     "appliedcreate.ponder.andesite_pattern_provider.header": "使用安山样板供应器",
 
     "appliedcreate.ponder.brass_pattern_provider": "黄铜样板供应器",
-    "appliedcreate.ponder.brass_pattern_provider.header": "使用黄铜样板供应器",
-
-    "appliedcreate.ponder.mechanical_craft_encoder": "动力合成编码器",
-    "appliedcreate.ponder.mechanical_craft_encoder.header": "使用动力合成编码器"
+    "appliedcreate.ponder.brass_pattern_provider.header": "使用黄铜样板供应器"
 }
