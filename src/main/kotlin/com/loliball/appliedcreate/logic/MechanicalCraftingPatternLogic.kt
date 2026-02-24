@@ -14,7 +14,9 @@ import com.simibubi.create.content.kinetics.crafter.RecipeGridHandler
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.ItemStack
+import net.minecraft.world.item.crafting.Ingredient
 import net.minecraft.world.item.crafting.RecipeType
+import net.minecraft.world.item.crafting.ShapedRecipe
 import java.lang.reflect.Method
 
 class MechanicalCraftingPatternLogic(
@@ -176,116 +178,159 @@ class MechanicalCraftingPatternLogic(
         val outputKey = patternDetails.primaryOutput?.what as? AEItemKey
         if (outputKey != null) {
             val outputStack = outputKey.toStack()
+            val registryAccess = level.registryAccess()
 
+            // Data class to hold recipe info uniformly for both recipe types
+            data class RecipeInfo(
+                val width: Int,
+                val height: Int,
+                val ingredients: List<Ingredient> // size = width * height, may contain EMPTY
+            )
+
+            val candidateRecipes = ArrayList<RecipeInfo>()
+
+            // 1. Search MechanicalCraftingRecipe
             @Suppress("UNCHECKED_CAST")
-            val recipeType = BuiltInRegistries.RECIPE_TYPE
+            val mcRecipeType = BuiltInRegistries.RECIPE_TYPE
                 .get(ResourceLocation("create", "mechanical_crafting"))
                     as? RecipeType<MechanicalCraftingRecipe>
 
-            if (recipeType != null) {
-                val recipes = level.recipeManager.getAllRecipesFor(recipeType)
-                val recipe = recipes.firstOrNull {
-                    ItemStack.isSameItemSameTags(it.getResultItem(level.registryAccess()), outputStack)
+            if (mcRecipeType != null) {
+                val mcRecipes = level.recipeManager.getAllRecipesFor(mcRecipeType)
+                for (recipe in mcRecipes) {
+                    if (ItemStack.isSameItemSameTags(recipe.getResultItem(registryAccess), outputStack)) {
+                        candidateRecipes.add(RecipeInfo(
+                            width = recipe.width,
+                            height = recipe.height,
+                            ingredients = recipe.ingredients
+                        ))
+                    }
+                }
+            }
+
+            // 2. Search vanilla ShapedRecipe (covers iron boots, iron trapdoor, etc.)
+            val craftingRecipes = level.recipeManager.getAllRecipesFor(RecipeType.CRAFTING)
+            for (recipe in craftingRecipes) {
+                if (recipe is ShapedRecipe) {
+                    if (ItemStack.isSameItemSameTags(recipe.getResultItem(registryAccess), outputStack)) {
+                        candidateRecipes.add(RecipeInfo(
+                            width = recipe.width,
+                            height = recipe.height,
+                            ingredients = recipe.ingredients
+                        ))
+                    }
+                }
+            }
+
+            if (candidateRecipes.isNotEmpty()) {
+                // Build input stacks from AE2 inputHolder
+                val inputStacks = ArrayList<ItemStack>()
+                for (input in inputHolder) {
+                    for (entry in input) {
+                        val key = entry.key
+                        if (key is AEItemKey) {
+                            repeat(entry.longValue.toInt()) {
+                                inputStacks.add(key.toStack(1))
+                            }
+                        }
+                    }
                 }
 
-                if (recipe != null) {
-                    val targets = hostRef.targets
-                    for (direction in targets) {
-                        val neighborPos = be.blockPos.relative(direction)
-                        val neighbor = level.getBlockEntity(neighborPos)
-                        if (neighbor is MechanicalCrafterBlockEntity) {
-                            val crafters = RecipeGridHandler.getAllCraftersOfChain(neighbor)
-                            if (crafters.isNullOrEmpty()) continue
+                data class SlotAssignment(
+                    val crafter: MechanicalCrafterBlockEntity,
+                    val stack: ItemStack
+                )
 
-                            val recipeWidth = recipe.width
-                            val recipeHeight = recipe.height
+                // Try each adjacent crafter chain
+                val targets = hostRef.targets
+                for (direction in targets) {
+                    val neighborPos = be.blockPos.relative(direction)
+                    val neighbor = level.getBlockEntity(neighborPos)
+                    if (neighbor !is MechanicalCrafterBlockEntity) continue
 
-                            val gridMap = computeCrafterGridPositions(crafters) ?: continue
+                    val crafters = RecipeGridHandler.getAllCraftersOfChain(neighbor)
+                    if (crafters.isNullOrEmpty()) continue
 
-                            val gridWidth = (gridMap.keys.maxOfOrNull { it.first } ?: 0) + 1
-                            val gridHeight = (gridMap.keys.maxOfOrNull { it.second } ?: 0) + 1
-                            if (gridWidth != recipeWidth || gridHeight != recipeHeight) continue
+                    val gridMap = computeCrafterGridPositions(crafters) ?: continue
 
-                            val inputStacks = ArrayList<ItemStack>()
-                            for (input in inputHolder) {
-                                for (entry in input) {
-                                    val key = entry.key
-                                    if (key is AEItemKey) {
-                                        repeat(entry.longValue.toInt()) {
-                                            inputStacks.add(key.toStack(1))
+                    val gridWidth = (gridMap.keys.maxOfOrNull { it.first } ?: 0) + 1
+                    val gridHeight = (gridMap.keys.maxOfOrNull { it.second } ?: 0) + 1
+
+                    // Try each candidate recipe at each valid sliding offset
+                    for (recipeInfo in candidateRecipes) {
+                        val rw = recipeInfo.width
+                        val rh = recipeInfo.height
+
+                        // Recipe must fit within grid
+                        if (rw > gridWidth || rh > gridHeight) continue
+
+                        // Try all valid placement offsets
+                        for (offsetX in 0..(gridWidth - rw)) {
+                            for (offsetY in 0..(gridHeight - rh)) {
+                                val slotAssignments = ArrayList<SlotAssignment>()
+                                val tempInputs = ArrayList(inputStacks)
+                                var canFit = true
+
+                                for (row in 0 until rh) {
+                                    for (col in 0 until rw) {
+                                        val ingredientIndex = col + row * rw
+                                        val ingredient = recipeInfo.ingredients.getOrNull(ingredientIndex)
+
+                                        if (ingredient == null || ingredient.isEmpty) continue
+
+                                        // Coordinate mapping:
+                                        // recipe (col, row) where row=0 is top
+                                        // grid (gridX, gridY) where gridY=0 is bottom (Create's Y inversion)
+                                        // MechanicalCraftingInventory: slot = x + (height-1-y)*width
+                                        // So recipe row 0 (top) → gridY = gridHeight-1-offsetY
+                                        //    recipe row rh-1 (bottom) → gridY = gridHeight-1-offsetY-(rh-1)
+                                        val gridX = col + offsetX
+                                        val gridY = (gridHeight - 1) - (row + offsetY)
+
+                                        val crafter = gridMap[Pair(gridX, gridY)]
+                                        if (crafter == null) {
+                                            canFit = false
+                                            break
                                         }
+
+                                        val matchIndex = tempInputs.indexOfFirst { ingredient.test(it) }
+                                        if (matchIndex == -1) {
+                                            canFit = false
+                                            break
+                                        }
+
+                                        val stackToInsert = tempInputs[matchIndex]
+
+                                        val remainder = crafter.inventory.insertItem(0, stackToInsert.copy(), true)
+                                        if (!remainder.isEmpty) {
+                                            canFit = false
+                                            break
+                                        }
+
+                                        slotAssignments.add(SlotAssignment(crafter, stackToInsert.copy()))
+                                        tempInputs.removeAt(matchIndex)
                                     }
+                                    if (!canFit) break
                                 }
-                            }
 
-                            // Coordinate mapping: recipe ingredients[col + row*width] (row=0 = top)
-                            // vs Create grid where UP→yOffset=-1 (higher crafters = lower gridY).
-                            // MechanicalCraftingInventory inverts Y: slot = x + (height-1-y)*width
-                            // Result: gridY = (recipeHeight - 1) - row, gridX = col
+                                if (!canFit) continue
 
-                            data class SlotAssignment(
-                                val crafter: MechanicalCrafterBlockEntity,
-                                val stack: ItemStack
-                            )
-
-                            val slotAssignments = ArrayList<SlotAssignment>()
-                            val tempInputs = ArrayList(inputStacks)
-                            var canFit = true
-
-                            for (row in 0 until recipeHeight) {
-                                for (col in 0 until recipeWidth) {
-                                    val ingredientIndex = col + row * recipeWidth
-                                    val ingredient = recipe.ingredients.getOrNull(ingredientIndex)
-
-                                    if (ingredient == null || ingredient.isEmpty) continue
-
-                                    val gridX = col
-                                    val gridY = (recipeHeight - 1) - row
-
-                                    val crafter = gridMap[Pair(gridX, gridY)]
-                                    if (crafter == null) {
-                                        canFit = false
-                                        break
-                                    }
-
-                                    val matchIndex = tempInputs.indexOfFirst { ingredient.test(it) }
-                                    if (matchIndex == -1) {
-                                        canFit = false
-                                        break
-                                    }
-
-                                    val stackToInsert = tempInputs[matchIndex]
-
-                                    val remainder = crafter.inventory.insertItem(0, stackToInsert.copy(), true)
-                                    if (!remainder.isEmpty) {
-                                        canFit = false
-                                        break
-                                    }
-
-                                    slotAssignments.add(SlotAssignment(crafter, stackToInsert.copy()))
-                                    tempInputs.removeAt(matchIndex)
+                                // All ingredients placed successfully — commit
+                                for (assignment in slotAssignments) {
+                                    assignment.crafter.inventory.insertItem(0, assignment.stack, false)
                                 }
-                                if (!canFit) break
+
+                                // Trigger crafting
+                                crafters.firstOrNull()?.checkCompletedRecipe(true)
+
+                                try {
+                                    onPushPatternSuccessMethod?.invoke(this, patternDetails)
+                                } catch (e: Exception) {
+                                    resetCraftingLock()
+                                }
+
+                                return true
                             }
-
-                            if (!canFit) continue
-
-                            for (assignment in slotAssignments) {
-                                assignment.crafter.inventory.insertItem(0, assignment.stack, false)
-                            }
-
-
-                            // Trigger crafting by calling checkCompletedRecipe on one crafter
-                            // This replicates what happens when a crafter receives a redstone signal
-                            crafters.firstOrNull()?.checkCompletedRecipe(true)
-
-                            try {
-                                onPushPatternSuccessMethod?.invoke(this, patternDetails)
-                            } catch (e: Exception) {
-                                resetCraftingLock()
-                            }
-
-                            return true
                         }
                     }
                 }
@@ -294,4 +339,5 @@ class MechanicalCraftingPatternLogic(
 
         return super.pushPattern(patternDetails, inputHolder)
     }
+
 }
