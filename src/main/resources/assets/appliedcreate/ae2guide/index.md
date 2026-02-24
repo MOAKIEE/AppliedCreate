@@ -9,6 +9,8 @@ navigation:
 
 Applied Create bridges [Create](https://www.curseforge.com/minecraft/mc-mods/create) mechanical crafting with [Applied Energistics 2](https://www.curseforge.com/minecraft/mc-mods/applied-energistics-2) automation.
 
+It introduces specialized pattern providers that understand Create's Mechanical Crafter grid layout, automatically distributing ingredients to the correct slots — enabling fully automated mechanical crafting driven by your ME network.
+
 ## Items & Blocks
 
 <Row gap="20">
@@ -18,7 +20,7 @@ Applied Create bridges [Create](https://www.curseforge.com/minecraft/mc-mods/cre
 
 ### <ItemLink id="appliedcreate:andesite_pattern_provider" />
 
-AE2 pattern provider designed for Create Mechanical Crafters. Supports 9 processing patterns.
+Compact pattern provider with 9 processing pattern slots. A great starting point for automating mechanical crafting recipes.
 
 </Column>
 <Column>
@@ -27,17 +29,18 @@ AE2 pattern provider designed for Create Mechanical Crafters. Supports 9 process
 
 ### <ItemLink id="appliedcreate:brass_pattern_provider" />
 
-Upgraded version supporting 36 processing patterns. Can also be used as a cable subpart.
+Upgraded pattern provider with 36 processing pattern slots. Ideal for complex automation setups with many different recipes.
 
 </Column>
 </Row>
 
-## Getting Started
+## How It Works
 
-1. Create AE2 processing patterns that match the mechanical crafting recipe inputs and outputs
-2. Place an <ItemLink id="appliedcreate:andesite_pattern_provider" /> or <ItemLink id="appliedcreate:brass_pattern_provider" /> adjacent to your Mechanical Crafter array
-3. Insert processing patterns and connect to your ME network
-4. The pattern provider will automatically push ingredients into the correct Mechanical Crafter slots
+1. Create AE2 **processing patterns** whose inputs match the mechanical crafting recipe ingredients and whose output matches the recipe result
+2. Place a pattern provider **adjacent** to your Mechanical Crafter array
+3. Connect the provider to your ME network and insert the processing patterns
+4. When a crafting request arrives, the provider automatically identifies the matching recipe and distributes ingredients into the correct Mechanical Crafter slots
+5. The Mechanical Crafters then complete the recipe — the finished item can be returned to the ME network via any method (e.g. funnel, chute, or import bus)
 
 ## Upgrade Path
 

@@ -8,14 +8,5 @@
 
     "gui.appliedcreate.patterns": "样板",
     "gui.appliedcreate.AndesitePatternProvider": "安山样板供应器",
-    "gui.appliedcreate.BrassPatternProvider": "黄铜样板供应器",
-
-    "appliedcreate.ponder.tag.applied_create": "应用机动",
-    "appliedcreate.ponder.tag.applied_create.description": "来自应用机动模组的方块",
-
-    "appliedcreate.ponder.andesite_pattern_provider": "安山样板供应器",
-    "appliedcreate.ponder.andesite_pattern_provider.header": "使用安山样板供应器",
-
-    "appliedcreate.ponder.brass_pattern_provider": "黄铜样板供应器",
-    "appliedcreate.ponder.brass_pattern_provider.header": "使用黄铜样板供应器"
+    "gui.appliedcreate.BrassPatternProvider": "黄铜样板供应器"
 }

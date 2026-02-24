@@ -84,6 +84,8 @@ dependencies {
 
     compileOnly(fg.deobf("dev.engine-room.flywheel:flywheel-forge-${project.extra["minecraft_version"]}:1.0.0-beta-195"))
 
+    // Ponder is needed as compile-only dependency because Create's MechanicalCrafterBlockEntity
+    // extends VirtualBlockEntity from the Ponder library
     compileOnly(fg.deobf("net.createmod.ponder:Ponder-Forge-${project.extra["minecraft_version"]}:${project.extra["ponder_version"]}"))
 
     compileOnly(fg.deobf("net.createmod.catnip:Catnip-Forge-${project.extra["minecraft_version"]}:0.8.42"))

@@ -25,27 +25,18 @@ The Brass Pattern Provider is the upgraded version of the <ItemLink id="appliedc
 ## Key Features
 
 - **36 Pattern Slots** — Four times the capacity of the Andesite variant
-- **Smart Distribution** — Same intelligent ingredient distribution as the Andesite version
-- **AE2 Integration** — Full ME network device with material requesting
-- **Cable Subpart** — Available as a cable-attached part
+- **Smart Grid Distribution** — Automatically matches recipes and distributes ingredients to the correct Mechanical Crafter slots, supporting both Create mechanical crafting recipes and vanilla shaped recipes
+- **Sliding Placement** — Recipes smaller than the crafter grid are placed correctly; oversized recipes are rejected
+- **Full AE2 Integration** — Blocking mode, lock crafting, pattern terminal visibility, priority settings, and all standard AE2 pattern provider features
+- **Directional Mode** — Right-click with a wrench to switch to directional mode
+- **Cable Subpart** — Available as a cable-attached part for compact builds
 - **In-Place Upgrade** — Upgrade from Andesite variant preserving all patterns
-
-## Comparison
-
-| Feature | Andesite | Brass |
-|---------|----------|-------|
-| Pattern Slots | 9 | 36 |
-| Cable Part | ✓ | ✓ |
-| ME Network | ✓ | ✓ |
-| Smart Distribution | ✓ | ✓ |
 
 ## Setup
 
-Setup is identical to the <ItemLink id="appliedcreate:andesite_pattern_provider" />:
-
-1. **Build** your Mechanical Crafter array and connect them with a wrench
-2. **Place** the Brass Pattern Provider adjacent to the Mechanical Crafter array
-3. **Connect** to your ME network with AE2 cables
+1. **Build** your Mechanical Crafter array and connect the crafters with a wrench
+2. **Place** the Brass Pattern Provider adjacent to any crafter in the array
+3. **Connect** to your ME network using AE2 cables
 4. **Insert** up to 36 processing patterns
 
 ### Cable Subpart Form
@@ -70,5 +61,5 @@ Use a <ItemLink id="appliedcreate:brass_pattern_provider_upgrade" /> on an exist
 
 - Use the Brass Pattern Provider when you have many different mechanical crafting recipes to automate
 - The cable subpart form is great for dense ME network builds
-- Refer to JEI/REI for correct ingredient layouts when creating processing patterns
+- Processing pattern input order does not matter — the provider matches recipes by output item
 - Multiple providers can be placed adjacent to the same Mechanical Crafter array for even more pattern capacity

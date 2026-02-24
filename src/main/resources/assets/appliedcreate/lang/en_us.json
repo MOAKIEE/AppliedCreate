@@ -8,14 +8,5 @@
 
     "gui.appliedcreate.patterns": "Patterns",
     "gui.appliedcreate.AndesitePatternProvider": "Andesite Pattern Provider",
-    "gui.appliedcreate.BrassPatternProvider": "Brass Pattern Provider",
-
-    "appliedcreate.ponder.tag.applied_create": "Applied Create",
-    "appliedcreate.ponder.tag.applied_create.description": "Blocks from the Applied Create mod",
-
-    "appliedcreate.ponder.andesite_pattern_provider": "Andesite Pattern Provider",
-    "appliedcreate.ponder.andesite_pattern_provider.header": "Using the Andesite Pattern Provider",
-
-    "appliedcreate.ponder.brass_pattern_provider": "Brass Pattern Provider",
-    "appliedcreate.ponder.brass_pattern_provider.header": "Using the Brass Pattern Provider"
+    "gui.appliedcreate.BrassPatternProvider": "Brass Pattern Provider"
 }

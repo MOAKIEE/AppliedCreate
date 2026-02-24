@@ -1,6 +1,5 @@
 package com.loliball.appliedcreate
 
-import com.loliball.appliedcreate.ponder.AppliedCreatePonderPlugin
 import com.loliball.appliedcreate.block.AndesitePatternProviderBlock
 import com.loliball.appliedcreate.block.BrassPatternProviderBlock
 import com.loliball.appliedcreate.block.entity.AndesitePatternProviderBlockEntity
@@ -35,7 +34,6 @@ import net.minecraftforge.network.NetworkHooks
 import net.minecraftforge.registries.DeferredRegister
 import net.minecraftforge.registries.ForgeRegistries
 import net.minecraftforge.registries.RegistryObject
-import net.createmod.ponder.foundation.PonderIndex
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import thedarkcolour.kotlinforforge.forge.MOD_BUS
@@ -209,7 +207,6 @@ class AppliedCreate {
 
         if (FMLEnvironment.dist.isClient) {
             ClientSetup.register(bus)
-            PonderIndex.addPlugin(AppliedCreatePonderPlugin())
         }
 
         LOGGER.info("Applied Create loaded")
