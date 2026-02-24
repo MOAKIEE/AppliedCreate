@@ -1,8 +1,8 @@
 {
-    "type": "minecraft:crafting_shaped",
+    "type": "create:mechanical_crafting",
     "pattern": [
-        "ABA",
-        "BCB",
+        "AAA",
+        "ACA",
         "ABA"
     ],
     "key": {

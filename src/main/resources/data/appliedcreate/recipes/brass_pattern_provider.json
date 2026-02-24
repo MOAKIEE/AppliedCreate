@@ -1,12 +1,12 @@
 {
     "type": "create:mechanical_crafting",
     "pattern": [
-        "ABA",
-        "BCB",
+        "AAA",
+        "ACA",
         "ABA"
     ],
     "key": {
-        "A": { "item": "create:brass_sheet" },
+        "A": { "item": "create:brass_ingot" },
         "B": { "item": "create:brass_casing" },
         "C": { "item": "ae2:pattern_provider" }
     },
