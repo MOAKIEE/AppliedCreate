@@ -166,6 +166,60 @@ class AppliedCreate {
                 ).build(null)
             }
 
+        // ── Stress Storage Crafting Items ──
+        val STRESS_CIRCUIT_BOARD: RegistryObject<Item> = ITEMS.register("stress_circuit_board") {
+            Item(Item.Properties())
+        }
+        val ADVANCED_STRESS_CIRCUIT_BOARD: RegistryObject<Item> = ITEMS.register("advanced_stress_circuit_board") {
+            Item(Item.Properties())
+        }
+        val STRESS_PROCESSOR: RegistryObject<Item> = ITEMS.register("stress_processor") {
+            Item(Item.Properties())
+        }
+        val ADVANCED_STRESS_PROCESSOR: RegistryObject<Item> = ITEMS.register("advanced_stress_processor") {
+            Item(Item.Properties())
+        }
+
+        // ── Stress Storage Components ──
+        val STRESS_STORAGE_COMPONENT_1K: RegistryObject<Item> = ITEMS.register("stress_storage_component_1k") {
+            Item(Item.Properties())
+        }
+        val STRESS_STORAGE_COMPONENT_4K: RegistryObject<Item> = ITEMS.register("stress_storage_component_4k") {
+            Item(Item.Properties())
+        }
+        val STRESS_STORAGE_COMPONENT_16K: RegistryObject<Item> = ITEMS.register("stress_storage_component_16k") {
+            Item(Item.Properties())
+        }
+        val STRESS_STORAGE_COMPONENT_64K: RegistryObject<Item> = ITEMS.register("stress_storage_component_64k") {
+            Item(Item.Properties())
+        }
+        val STRESS_STORAGE_COMPONENT_256K: RegistryObject<Item> = ITEMS.register("stress_storage_component_256k") {
+            Item(Item.Properties())
+        }
+        val STRESS_STORAGE_COMPONENT_1M: RegistryObject<Item> = ITEMS.register("stress_storage_component_1m") {
+            Item(Item.Properties())
+        }
+        val STRESS_STORAGE_COMPONENT_4M: RegistryObject<Item> = ITEMS.register("stress_storage_component_4m") {
+            Item(Item.Properties())
+        }
+        val STRESS_STORAGE_COMPONENT_16M: RegistryObject<Item> = ITEMS.register("stress_storage_component_16m") {
+            Item(Item.Properties())
+        }
+        val STRESS_STORAGE_COMPONENT_64M: RegistryObject<Item> = ITEMS.register("stress_storage_component_64m") {
+            Item(Item.Properties())
+        }
+        val STRESS_STORAGE_COMPONENT_256M: RegistryObject<Item> = ITEMS.register("stress_storage_component_256m") {
+            Item(Item.Properties())
+        }
+
+        // ── Cell Housings ──
+        val ANDESITE_STRESS_CELL_HOUSING: RegistryObject<Item> = ITEMS.register("andesite_stress_cell_housing") {
+            Item(Item.Properties())
+        }
+        val BRASS_STRESS_CELL_HOUSING: RegistryObject<Item> = ITEMS.register("brass_stress_cell_housing") {
+            Item(Item.Properties())
+        }
+
         // ── Stress Storage Cells ──
         val STRESS_CELL_1K: RegistryObject<Item> = ITEMS.register("stress_storage_cell_1k") {
             StressStorageCell(Item.Properties(), 0.5, 1, 8, 1)
@@ -219,6 +273,26 @@ class AppliedCreate {
                     output.accept(STRESS_P2P_TUNNEL_PART_ITEM.get())
                     output.accept(STRESS_ACCEPTOR_ITEM.get())
                     output.accept(STRESS_PROVIDER_ITEM.get())
+                    // Crafting items
+                    output.accept(STRESS_CIRCUIT_BOARD.get())
+                    output.accept(ADVANCED_STRESS_CIRCUIT_BOARD.get())
+                    output.accept(STRESS_PROCESSOR.get())
+                    output.accept(ADVANCED_STRESS_PROCESSOR.get())
+                    // Components
+                    output.accept(STRESS_STORAGE_COMPONENT_1K.get())
+                    output.accept(STRESS_STORAGE_COMPONENT_4K.get())
+                    output.accept(STRESS_STORAGE_COMPONENT_16K.get())
+                    output.accept(STRESS_STORAGE_COMPONENT_64K.get())
+                    output.accept(STRESS_STORAGE_COMPONENT_256K.get())
+                    output.accept(STRESS_STORAGE_COMPONENT_1M.get())
+                    output.accept(STRESS_STORAGE_COMPONENT_4M.get())
+                    output.accept(STRESS_STORAGE_COMPONENT_16M.get())
+                    output.accept(STRESS_STORAGE_COMPONENT_64M.get())
+                    output.accept(STRESS_STORAGE_COMPONENT_256M.get())
+                    // Housings
+                    output.accept(ANDESITE_STRESS_CELL_HOUSING.get())
+                    output.accept(BRASS_STRESS_CELL_HOUSING.get())
+                    // Cells
                     STRESS_CELLS.forEach { output.accept(it.get()) }
                 }
                 .build()

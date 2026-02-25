@@ -1,0 +1,19 @@
+{
+  "type": "ae2:inscriber",
+  "ingredients": {
+    "bottom": {
+      "item": "ae2:printed_silicon"
+    },
+    "middle": {
+      "item": "minecraft:redstone"
+    },
+    "top": {
+      "item": "appliedcreate:advanced_stress_circuit_board"
+    }
+  },
+  "mode": "press",
+  "result": {
+    "item": "appliedcreate:advanced_stress_processor",
+    "count": 1
+  }
+}

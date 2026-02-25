@@ -88,9 +88,9 @@ class StressStorageCell(
             if (tintIndex == 1) {
                 val cellInv = StorageCells.getCellInventory(stack, null)
                 val cellStatus = cellInv?.status ?: CellState.EMPTY
-                return cellStatus.stateColor
+                return cellStatus.stateColor or (0xFF shl 24)
             }
-            return 0xFFFFFF
+            return -1  // 0xFFFFFFFF = opaque white (no tint)
         }
     }
 }

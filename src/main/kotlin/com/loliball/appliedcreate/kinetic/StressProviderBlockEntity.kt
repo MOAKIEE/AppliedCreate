@@ -36,6 +36,23 @@ class StressProviderBlockEntity(
         return providedSpeed
     }
 
+    override fun initialize() {
+        super.initialize()
+        if (level != null && !level!!.isClientSide) {
+            val tunnel = findAdjacentTunnel()
+            if (tunnel != null) {
+                val newSpeed = tunnel.getTransferSpeed()
+                if (newSpeed != 0f && newSpeed != providedSpeed) {
+                    providedSpeed = newSpeed
+                }
+            }
+            if (!hasSource() || getGeneratedSpeed() > theoreticalSpeed) {
+                updateGeneratedRotation()
+            }
+        }
+    }
+
+
     // calculateAddedStressCapacity() is NOT overridden — the base class reads
     // from BlockStressValues.getCapacity(block) which returns our registered 2048.0
 

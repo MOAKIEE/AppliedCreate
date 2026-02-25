@@ -41,6 +41,14 @@ class StressAcceptorBlockEntity(
         }
     }
 
+    override fun initialize() {
+        super.initialize()
+        if (level != null && !level!!.isClientSide && speed != 0f) {
+            pushToTunnel(speed)
+        }
+    }
+
+
     /**
      * Find the adjacent Stress P2P tunnel part and push our speed to it.
      */

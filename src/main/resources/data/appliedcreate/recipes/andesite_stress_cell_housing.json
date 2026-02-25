@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "a": {
+      "item": "ae2:quartz_glass"
+    },
+    "b": {
+      "tag": "forge:dusts/redstone"
+    },
+    "c": {
+      "item": "create:andesite_alloy"
+    },
+    "d": {
+      "tag": "forge:ingots/copper"
+    }
+  },
+  "pattern": [
+    "aba",
+    "b b",
+    "cdc"
+  ],
+  "result": {
+    "item": "appliedcreate:andesite_stress_cell_housing",
+    "count": 1
+  }
+}

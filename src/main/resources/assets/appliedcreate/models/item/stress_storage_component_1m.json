@@ -1,0 +1,6 @@
+{
+    "parent": "item/generated",
+    "textures": {
+        "layer0": "appliedcreate:item/stress_storage_component_1m"
+    }
+}
