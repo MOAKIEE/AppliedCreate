@@ -1,6 +1,8 @@
 package com.loliball.appliedcreate
 
+import com.loliball.appliedcreate.client.StressKeyRenderHandler
 import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
+import com.loliball.appliedcreate.storage.StressStorageCell
 import appeng.client.gui.implementations.PatternProviderScreen
 import appeng.client.gui.style.ScreenStyle
 import appeng.init.client.InitScreens
@@ -8,6 +10,7 @@ import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.player.Inventory
 import net.minecraftforge.api.distmarker.Dist
 import net.minecraftforge.api.distmarker.OnlyIn
+import net.minecraftforge.client.event.RegisterColorHandlersEvent
 import net.minecraftforge.eventbus.api.IEventBus
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent
 
@@ -16,6 +19,7 @@ object ClientSetup {
 
     fun register(bus: IEventBus) {
         bus.addListener(::onClientSetup)
+        bus.addListener(::onRegisterItemColors)
     }
 
     private fun onClientSetup(event: FMLClientSetupEvent) {
@@ -27,6 +31,18 @@ object ClientSetup {
                 },
                 "/screens/appliedcreate/brass_pattern_provider.json"
             )
+
+            // Register StressKey render handler for ME terminal display
+            StressKeyRenderHandler.register()
         }
+    }
+
+    private fun onRegisterItemColors(event: RegisterColorHandlersEvent.Item) {
+        // Register color handler for stress storage cells (LED tint layer)
+        val cellItems = AppliedCreate.STRESS_CELLS.map { it.get() }.toTypedArray()
+        event.register(
+            { stack, tintIndex -> StressStorageCell.getColor(stack, tintIndex) },
+            *cellItems
+        )
     }
 }

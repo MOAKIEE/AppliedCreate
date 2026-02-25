@@ -2,6 +2,8 @@
     "replace": false,
     "values": [
         "appliedcreate:andesite_pattern_provider",
-        "appliedcreate:brass_pattern_provider"
+        "appliedcreate:brass_pattern_provider",
+        "appliedcreate:stress_acceptor",
+        "appliedcreate:stress_provider"
     ]
 }

@@ -1,0 +1,17 @@
+{
+    "type": "create:mechanical_crafting",
+    "pattern": [
+        "BCB",
+        "BSB",
+        "BBB"
+    ],
+    "key": {
+        "B": { "item": "create:brass_ingot" },
+        "C": { "item": "ae2:fluix_crystal" },
+        "S": { "item": "create:shaft" }
+    },
+    "result": {
+        "item": "appliedcreate:stress_provider",
+        "count": 1
+    }
+}

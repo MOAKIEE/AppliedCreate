@@ -8,5 +8,23 @@
 
     "gui.appliedcreate.patterns": "样板",
     "gui.appliedcreate.AndesitePatternProvider": "安山样板供应器",
-    "gui.appliedcreate.BrassPatternProvider": "黄铜样板供应器"
+    "gui.appliedcreate.BrassPatternProvider": "黄铜样板供应器",
+
+    "key_type.appliedcreate.stress": "应力",
+    "key.appliedcreate.stress": "应力",
+
+    "item.appliedcreate.stress_storage_cell_1k": "1k应力存储磁盘",
+    "item.appliedcreate.stress_storage_cell_4k": "4k应力存储磁盘",
+    "item.appliedcreate.stress_storage_cell_16k": "16k应力存储磁盘",
+    "item.appliedcreate.stress_storage_cell_64k": "64k应力存储磁盘",
+    "item.appliedcreate.stress_storage_cell_256k": "256k应力存储磁盘",
+    "item.appliedcreate.stress_storage_cell_1m": "1M应力存储磁盘",
+    "item.appliedcreate.stress_storage_cell_4m": "4M应力存储磁盘",
+    "item.appliedcreate.stress_storage_cell_16m": "16M应力存储磁盘",
+    "item.appliedcreate.stress_storage_cell_64m": "64M应力存储磁盘",
+    "item.appliedcreate.stress_storage_cell_256m": "256M应力存储磁盘",
+
+    "item.appliedcreate.stress_p2p_tunnel": "应力P2P通道",
+    "block.appliedcreate.stress_acceptor": "应力接收器",
+    "block.appliedcreate.stress_provider": "应力供应器"
 }

@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "appliedcreate:block/stress_acceptor",
+      "x": 180
+    },
+    "facing=east": {
+      "model": "appliedcreate:block/stress_acceptor",
+      "x": 90,
+      "y": 90
+    },
+    "facing=north": {
+      "model": "appliedcreate:block/stress_acceptor",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "appliedcreate:block/stress_acceptor",
+      "x": 90,
+      "y": 180
+    },
+    "facing=up": {
+      "model": "appliedcreate:block/stress_acceptor"
+    },
+    "facing=west": {
+      "model": "appliedcreate:block/stress_acceptor",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

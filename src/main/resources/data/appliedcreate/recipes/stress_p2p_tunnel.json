@@ -1,0 +1,16 @@
+{
+    "type": "create:mechanical_crafting",
+    "pattern": [
+        " S ",
+        "SPS",
+        " S "
+    ],
+    "key": {
+        "S": { "item": "create:shaft" },
+        "P": { "item": "ae2:me_p2p_tunnel" }
+    },
+    "result": {
+        "item": "appliedcreate:stress_p2p_tunnel",
+        "count": 1
+    }
+}

@@ -9,8 +9,17 @@ import appeng.blockentity.AEBaseBlockEntity
 import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
 import com.loliball.appliedcreate.item.BrassPatternProviderUpgradeItem
 import com.loliball.appliedcreate.item.MechanicalCraftingPartItem
+import com.loliball.appliedcreate.kinetic.StressAcceptorBlock
+import com.loliball.appliedcreate.kinetic.StressAcceptorBlockEntity
+import com.loliball.appliedcreate.kinetic.StressProviderBlock
+import com.loliball.appliedcreate.kinetic.StressProviderBlockEntity
 import com.loliball.appliedcreate.part.AndesitePatternProviderPart
 import com.loliball.appliedcreate.part.BrassPatternProviderPart
+import com.loliball.appliedcreate.p2p.StressP2PTunnelPart
+import com.loliball.appliedcreate.storage.StressKeyType
+import com.loliball.appliedcreate.storage.StressStorageCell
+import appeng.api.features.P2PTunnelAttunement
+import appeng.api.stacks.AEKeyTypes
 import appeng.helpers.patternprovider.PatternProviderLogicHost
 import appeng.menu.MenuOpener
 import appeng.menu.locator.MenuLocator
@@ -114,6 +123,88 @@ class AppliedCreate {
             ) { partItem -> BrassPatternProviderPart(partItem) }
         }
 
+        // ── Stress P2P Tunnel ──
+        val STRESS_P2P_TUNNEL_PART_ITEM: RegistryObject<Item> = ITEMS.register("stress_p2p_tunnel") {
+            MechanicalCraftingPartItem(
+                Item.Properties(),
+                StressP2PTunnelPart::class.java
+            ) { partItem -> StressP2PTunnelPart(partItem) }
+        }
+
+        // ── Stress P2P Companion Blocks ──
+        val STRESS_ACCEPTOR_BLOCK: RegistryObject<Block> = BLOCKS.register("stress_acceptor") {
+            StressAcceptorBlock()
+        }
+
+        val STRESS_ACCEPTOR_ITEM: RegistryObject<Item> = ITEMS.register("stress_acceptor") {
+            BlockItem(STRESS_ACCEPTOR_BLOCK.get(), Item.Properties())
+        }
+
+        @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
+        val STRESS_ACCEPTOR_BE: RegistryObject<BlockEntityType<StressAcceptorBlockEntity>> =
+            BLOCK_ENTITY_TYPES.register("stress_acceptor") {
+                BlockEntityType.Builder.of(
+                    ::StressAcceptorBlockEntity,
+                    STRESS_ACCEPTOR_BLOCK.get()
+                ).build(null)
+            }
+
+        val STRESS_PROVIDER_BLOCK: RegistryObject<Block> = BLOCKS.register("stress_provider") {
+            StressProviderBlock()
+        }
+
+        val STRESS_PROVIDER_ITEM: RegistryObject<Item> = ITEMS.register("stress_provider") {
+            BlockItem(STRESS_PROVIDER_BLOCK.get(), Item.Properties())
+        }
+
+        @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
+        val STRESS_PROVIDER_BE: RegistryObject<BlockEntityType<StressProviderBlockEntity>> =
+            BLOCK_ENTITY_TYPES.register("stress_provider") {
+                BlockEntityType.Builder.of(
+                    ::StressProviderBlockEntity,
+                    STRESS_PROVIDER_BLOCK.get()
+                ).build(null)
+            }
+
+        // ── Stress Storage Cells ──
+        val STRESS_CELL_1K: RegistryObject<Item> = ITEMS.register("stress_storage_cell_1k") {
+            StressStorageCell(Item.Properties(), 0.5, 1, 8, 1)
+        }
+        val STRESS_CELL_4K: RegistryObject<Item> = ITEMS.register("stress_storage_cell_4k") {
+            StressStorageCell(Item.Properties(), 1.0, 4, 8, 1)
+        }
+        val STRESS_CELL_16K: RegistryObject<Item> = ITEMS.register("stress_storage_cell_16k") {
+            StressStorageCell(Item.Properties(), 1.5, 16, 8, 1)
+        }
+        val STRESS_CELL_64K: RegistryObject<Item> = ITEMS.register("stress_storage_cell_64k") {
+            StressStorageCell(Item.Properties(), 2.0, 64, 8, 1)
+        }
+        val STRESS_CELL_256K: RegistryObject<Item> = ITEMS.register("stress_storage_cell_256k") {
+            StressStorageCell(Item.Properties(), 2.5, 256, 8, 1)
+        }
+        val STRESS_CELL_1M: RegistryObject<Item> = ITEMS.register("stress_storage_cell_1m") {
+            StressStorageCell(Item.Properties(), 3.0, 1024, 8, 1)
+        }
+        val STRESS_CELL_4M: RegistryObject<Item> = ITEMS.register("stress_storage_cell_4m") {
+            StressStorageCell(Item.Properties(), 3.5, 4096, 8, 1)
+        }
+        val STRESS_CELL_16M: RegistryObject<Item> = ITEMS.register("stress_storage_cell_16m") {
+            StressStorageCell(Item.Properties(), 4.0, 16384, 8, 1)
+        }
+        val STRESS_CELL_64M: RegistryObject<Item> = ITEMS.register("stress_storage_cell_64m") {
+            StressStorageCell(Item.Properties(), 4.5, 65536, 8, 1)
+        }
+        val STRESS_CELL_256M: RegistryObject<Item> = ITEMS.register("stress_storage_cell_256m") {
+            StressStorageCell(Item.Properties(), 5.0, 262144, 8, 1)
+        }
+
+        val STRESS_CELLS: List<RegistryObject<Item>> by lazy {
+            listOf(
+                STRESS_CELL_1K, STRESS_CELL_4K, STRESS_CELL_16K, STRESS_CELL_64K, STRESS_CELL_256K,
+                STRESS_CELL_1M, STRESS_CELL_4M, STRESS_CELL_16M, STRESS_CELL_64M, STRESS_CELL_256M
+            )
+        }
+
         // ── Creative Tab ──
         val CREATIVE_TAB: RegistryObject<CreativeModeTab> = CREATIVE_TABS.register("main") {
             CreativeModeTab.builder()
@@ -125,6 +216,10 @@ class AppliedCreate {
                     output.accept(ANDESITE_PATTERN_PROVIDER_PART_ITEM.get())
                     output.accept(BRASS_PATTERN_PROVIDER_PART_ITEM.get())
                     output.accept(BRASS_PATTERN_PROVIDER_UPGRADE_ITEM.get())
+                    output.accept(STRESS_P2P_TUNNEL_PART_ITEM.get())
+                    output.accept(STRESS_ACCEPTOR_ITEM.get())
+                    output.accept(STRESS_PROVIDER_ITEM.get())
+                    STRESS_CELLS.forEach { output.accept(it.get()) }
                 }
                 .build()
         }
@@ -204,6 +299,11 @@ class AppliedCreate {
             *BrassPatternProviderPart.BRASS_MODELS_HAS_CHANNEL.models.toTypedArray()
         )
 
+        // Register Stress P2P Tunnel part models
+        for (model in StressP2PTunnelPart.getModels()) {
+            appeng.api.parts.PartModels.registerModels(*model.models.toTypedArray())
+        }
+
         bus.addListener(::onCommonSetup)
 
         if (FMLEnvironment.dist.isClient) {
@@ -214,16 +314,22 @@ class AppliedCreate {
     }
 
     private fun onCommonSetup(event: FMLCommonSetupEvent) {
+        // Register representative items so devices appear in ME network status and Jade
+        AEBaseBlockEntity.registerBlockEntityItem(
+            ANDESITE_PATTERN_PROVIDER_BE.get(),
+            ANDESITE_PATTERN_PROVIDER_ITEM.get()
+        )
+        AEBaseBlockEntity.registerBlockEntityItem(
+            BRASS_PATTERN_PROVIDER_BE.get(),
+            BRASS_PATTERN_PROVIDER_ITEM.get()
+        )
+
         event.enqueueWork {
-            // Register representative items so devices appear in ME network status and Jade
-            AEBaseBlockEntity.registerBlockEntityItem(
-                ANDESITE_PATTERN_PROVIDER_BE.get(),
-                ANDESITE_PATTERN_PROVIDER_ITEM.get()
-            )
-            AEBaseBlockEntity.registerBlockEntityItem(
-                BRASS_PATTERN_PROVIDER_BE.get(),
-                BRASS_PATTERN_PROVIDER_ITEM.get()
-            )
+            // Register our custom AE key type so AE2 recognizes StressKey in storage
+            AEKeyTypes.register(StressKeyType.TYPE)
+
+            // Register P2P attunement for stress tunnel
+            P2PTunnelAttunement.registerAttunementTag(STRESS_P2P_TUNNEL_PART_ITEM.get())
 
             registerPatternProviderOpener(BRASS_PATTERN_PROVIDER_MENU.get()) { wnd, inv, host ->
                 BrassPatternProviderMenu(
@@ -231,6 +337,14 @@ class AppliedCreate {
                     wnd, inv, host
                 )
             }
+
+            // Register stress values for companion blocks
+            com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
+                STRESS_ACCEPTOR_BLOCK.get(), { 0.0 }
+            )
+            com.simibubi.create.api.stress.BlockStressValues.CAPACITIES.register(
+                STRESS_PROVIDER_BLOCK.get(), { 2048.0 }
+            )
         }
     }
 }
