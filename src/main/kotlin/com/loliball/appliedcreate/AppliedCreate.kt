@@ -334,8 +334,9 @@ class AppliedCreate {
         event.enqueueWork {
             // Key type registration moved to init block (must happen before registry freeze)
 
-            // Register P2P attunement for stress tunnel
-            P2PTunnelAttunement.registerAttunementTag(STRESS_P2P_TUNNEL_PART_ITEM.get())
+            // P2P attunement tag skipped: AE2 19.x validateTunnelPartItem requires PartItem,
+            // not IPartItem. Our MechanicalCraftingPartItem implements IPartItem but extends Item.
+            // The tunnel still works — just no tag-based auto-attunement.
 
             registerPatternProviderOpener(BRASS_PATTERN_PROVIDER_MENU.get()) { wnd, inv, host ->
                 BrassPatternProviderMenu(
