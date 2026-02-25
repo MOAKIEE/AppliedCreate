@@ -3,7 +3,7 @@
   "category": "misc",
   "key": {
     "a": {
-      "tag": "c:dusts/redstone"
+      "item": "create:cinder_flour"
     },
     "b": {
       "tag": "ae2:all_certus_quartz"

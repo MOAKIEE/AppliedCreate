@@ -6,7 +6,7 @@
       "item": "ae2:quartz_glass"
     },
     "b": {
-      "tag": "c:dusts/redstone"
+      "item": "create:cinder_flour"
     },
     "c": {
       "item": "create:brass_ingot"

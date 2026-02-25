@@ -423,9 +423,6 @@ class AppliedCreate {
             com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
                 STRESS_ACCEPTOR_BLOCK.get(), { 0.0 }
             )
-            com.simibubi.create.api.stress.BlockStressValues.CAPACITIES.register(
-                STRESS_PROVIDER_BLOCK.get(), { 2048.0 }
-            )
         }
     }
 
