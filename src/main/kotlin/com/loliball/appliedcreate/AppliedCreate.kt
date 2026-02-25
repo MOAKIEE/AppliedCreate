@@ -11,6 +11,7 @@ import com.loliball.appliedcreate.item.MechanicalCraftingPartItem
 import com.loliball.appliedcreate.part.AndesitePatternProviderPart
 import com.loliball.appliedcreate.part.BrassPatternProviderPart
 import appeng.api.AECapabilities
+import appeng.blockentity.AEBaseBlockEntity
 import appeng.helpers.patternprovider.PatternProviderLogicHost
 import appeng.menu.MenuOpener
 import appeng.menu.locator.MenuHostLocator
@@ -213,8 +214,17 @@ class AppliedCreate {
     }
 
     private fun onCommonSetup(event: FMLCommonSetupEvent) {
-        event.enqueueWork {
+        // Register representative items so AE2 network status and Jade show our devices correctly
+        AEBaseBlockEntity.registerBlockEntityItem(
+            ANDESITE_PATTERN_PROVIDER_BE.get(),
+            ANDESITE_PATTERN_PROVIDER_ITEM.get().asItem()
+        )
+        AEBaseBlockEntity.registerBlockEntityItem(
+            BRASS_PATTERN_PROVIDER_BE.get(),
+            BRASS_PATTERN_PROVIDER_ITEM.get().asItem()
+        )
 
+        event.enqueueWork {
             registerPatternProviderOpener(BRASS_PATTERN_PROVIDER_MENU.get()) { wnd, inv, host ->
                 BrassPatternProviderMenu(
                     BRASS_PATTERN_PROVIDER_MENU.get(),
