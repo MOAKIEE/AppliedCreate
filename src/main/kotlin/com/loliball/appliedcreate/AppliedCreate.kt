@@ -244,5 +244,17 @@ class AppliedCreate {
             AECapabilities.IN_WORLD_GRID_NODE_HOST,
             BRASS_PATTERN_PROVIDER_BE.get()
         ) { be, _ -> be }
-    }
+
+        // Register GENERIC_INTERNAL_INV so AE2's registerGenericAdapters auto-registers
+        // Capabilities.ItemHandler.BLOCK and FluidHandler.BLOCK adapters for our blocks,
+        // enabling item insertion from hoppers, Create mechanical crafters, etc.
+        event.registerBlockEntity(
+            AECapabilities.GENERIC_INTERNAL_INV,
+            ANDESITE_PATTERN_PROVIDER_BE.get()
+        ) { be, _ -> be.logic.returnInv }
+        event.registerBlockEntity(
+            AECapabilities.GENERIC_INTERNAL_INV,
+            BRASS_PATTERN_PROVIDER_BE.get()
+        ) { be, _ -> be.logic.returnInv }
+}
 }
