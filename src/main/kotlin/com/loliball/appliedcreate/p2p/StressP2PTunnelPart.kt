@@ -8,8 +8,6 @@ import appeng.parts.p2p.P2PTunnelPart
 import com.loliball.appliedcreate.AppliedCreate
 import com.loliball.appliedcreate.kinetic.StressAcceptorBlockEntity
 import com.loliball.appliedcreate.kinetic.StressProviderBlockEntity
-import net.minecraft.core.Direction
-import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 
 /**
@@ -25,51 +23,17 @@ import net.minecraft.resources.ResourceLocation
  * Input flow: Kinetic Network → StressAcceptorBlockEntity → StressP2PTunnelPart (input) → ME Network
  * Output flow: ME Network → StressP2PTunnelPart (output) → StressProviderBlockEntity → Kinetic Network
  *
- * Only speed is transferred. The output-side StressProviderBlockEntity uses a fixed
- * stress capacity registered via BlockStressValues.CAPACITIES.
+ * Companion blocks handle the kinetic bridging via Create's custom connection system.
+ * This tunnel part just manages the P2P link and notifies companions of changes.
  */
 class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunnelPart>(partItem) {
-
-    // Cached speed value from the input-side companion block
-    private var transferSpeed: Float = 0f
 
     override fun getStaticModels(): IPartModel {
         return MODELS.getModel(this.isPowered, this.isActive)
     }
 
-    override fun readFromNBT(data: CompoundTag) {
-        super.readFromNBT(data)
-        transferSpeed = data.getFloat("TransferSpeed")
-    }
-
-    override fun writeToNBT(data: CompoundTag) {
-        super.writeToNBT(data)
-        data.putFloat("TransferSpeed", transferSpeed)
-    }
-
     /**
-     * Called by the input-side StressAcceptorBlockEntity to update the speed to transfer.
-     */
-    fun updateInputSpeed(speed: Float) {
-        if (isOutput) return  // Only input side accepts updates
-        this.transferSpeed = speed
-        host.markForSave()
-        // Propagate to all output tunnels
-        notifyOutputs()
-    }
-
-    /**
-     * Called by output-side StressProviderBlockEntity to read the transfer speed.
-     * Output tunnels read from their linked input tunnel.
-     */
-    fun getTransferSpeed(): Float {
-        if (!isOutput) return transferSpeed  // Direct access if we ARE the input
-        val input = input ?: return 0f
-        return input.transferSpeed
-    }
-
-    /**
-     * Notify all output-side companion blocks to update their generated rotation.
+     * Notify all output-side companion blocks to update their registration.
      */
     private fun notifyOutputs() {
         for (output in getOutputs()) {
@@ -78,7 +42,7 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
     }
 
     /**
-     * Notify the adjacent companion block (StressProvider) to update.
+     * Notify the adjacent companion block to update its registration.
      */
     fun notifyCompanion() {
         val level = blockEntity.level ?: return
@@ -86,25 +50,21 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         val side = this.side
         val companionPos = pos.relative(side)
         val be = level.getBlockEntity(companionPos)
+        
         if (be is StressProviderBlockEntity) {
-            be.updateFromTunnel()
+            be.reloadKinetics()
+        } else if (be is StressAcceptorBlockEntity) {
+            be.updateRegistration()
         }
     }
 
-    /**
-     * Find the adjacent StressAcceptorBlockEntity (for input side).
-     */
-    fun findCompanionAcceptor(): StressAcceptorBlockEntity? {
-        val level = blockEntity.level ?: return null
-        val companionPos = blockEntity.blockPos.relative(this.side)
-        val be = level.getBlockEntity(companionPos)
-        return be as? StressAcceptorBlockEntity
-    }
 
     override fun onTunnelNetworkChange() {
-        // When P2P network changes (new outputs linked, etc.), notify output companions
-        notifyOutputs()
+        // When P2P network changes (new outputs linked, etc.), notify all companions
+        notifyCompanion() // Update own companion
+        notifyOutputs()   // Update outputs' companions
     }
+
 
     companion object {
         private val MODELS = P2PModels(

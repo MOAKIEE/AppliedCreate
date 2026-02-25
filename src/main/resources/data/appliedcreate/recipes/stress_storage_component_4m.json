@@ -3,7 +3,7 @@
   "category": "misc",
   "key": {
     "a": {
-      "tag": "forge:dusts/redstone"
+      "item": "create:cinder_flour"
     },
     "b": {
       "item": "appliedcreate:advanced_stress_processor"

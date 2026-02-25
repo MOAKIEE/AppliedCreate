@@ -5,7 +5,7 @@
       "item": "ae2:printed_silicon"
     },
     "middle": {
-      "item": "minecraft:redstone"
+      "item": "create:cinder_flour"
     },
     "top": {
       "item": "appliedcreate:stress_circuit_board"
