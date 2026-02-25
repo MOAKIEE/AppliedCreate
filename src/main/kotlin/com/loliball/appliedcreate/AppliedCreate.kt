@@ -4,6 +4,7 @@ import com.loliball.appliedcreate.block.AndesitePatternProviderBlock
 import com.loliball.appliedcreate.block.BrassPatternProviderBlock
 import com.loliball.appliedcreate.block.entity.AndesitePatternProviderBlockEntity
 import com.loliball.appliedcreate.block.entity.BrassPatternProviderBlockEntity
+import appeng.blockentity.AEBaseBlockEntity
 
 import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
 import com.loliball.appliedcreate.item.BrassPatternProviderUpgradeItem
@@ -214,6 +215,15 @@ class AppliedCreate {
 
     private fun onCommonSetup(event: FMLCommonSetupEvent) {
         event.enqueueWork {
+            // Register representative items so devices appear in ME network status and Jade
+            AEBaseBlockEntity.registerBlockEntityItem(
+                ANDESITE_PATTERN_PROVIDER_BE.get(),
+                ANDESITE_PATTERN_PROVIDER_ITEM.get()
+            )
+            AEBaseBlockEntity.registerBlockEntityItem(
+                BRASS_PATTERN_PROVIDER_BE.get(),
+                BRASS_PATTERN_PROVIDER_ITEM.get()
+            )
 
             registerPatternProviderOpener(BRASS_PATTERN_PROVIDER_MENU.get()) { wnd, inv, host ->
                 BrassPatternProviderMenu(
