@@ -20,17 +20,19 @@ import net.minecraft.resources.ResourceLocation
  * is NOT capability-based — it uses adjacency-based RotationPropagator.
  *
  * Instead, companion blocks (StressAcceptor on input side, StressProvider on output side)
- * sit adjacent to the cable bus containing this P2P part. They communicate speed and stress
- * capacity through this tunnel.
+ * sit adjacent to the cable bus containing this P2P part. They communicate speed
+ * through this tunnel.
  *
  * Input flow: Kinetic Network → StressAcceptorBlockEntity → StressP2PTunnelPart (input) → ME Network
  * Output flow: ME Network → StressP2PTunnelPart (output) → StressProviderBlockEntity → Kinetic Network
+ *
+ * Only speed is transferred. The output-side StressProviderBlockEntity uses a fixed
+ * stress capacity registered via BlockStressValues.CAPACITIES.
  */
 class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunnelPart>(partItem) {
 
-    // Cached values from the input-side companion block
+    // Cached speed value from the input-side companion block
     private var transferSpeed: Float = 0f
-    private var transferStressCapacity: Float = 0f
 
     override fun getStaticModels(): IPartModel {
         return MODELS.getModel(this.isPowered, this.isActive)
@@ -39,41 +41,32 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
     override fun readFromNBT(data: CompoundTag, registries: HolderLookup.Provider) {
         super.readFromNBT(data, registries)
         transferSpeed = data.getFloat("TransferSpeed")
-        transferStressCapacity = data.getFloat("TransferStressCapacity")
     }
 
     override fun writeToNBT(data: CompoundTag, registries: HolderLookup.Provider) {
         super.writeToNBT(data, registries)
         data.putFloat("TransferSpeed", transferSpeed)
-        data.putFloat("TransferStressCapacity", transferStressCapacity)
     }
 
     /**
-     * Called by the input-side StressAcceptorBlockEntity to update the values to transfer.
+     * Called by the input-side StressAcceptorBlockEntity to update the speed to transfer.
      */
-    fun updateInputValues(speed: Float, stressCapacity: Float) {
+    fun updateInputValues(speed: Float) {
         if (isOutput) return  // Only input side accepts updates
         this.transferSpeed = speed
-        this.transferStressCapacity = stressCapacity
         host.markForSave()
         // Propagate to all output tunnels
         notifyOutputs()
     }
 
     /**
-     * Called by output-side StressProviderBlockEntity to read the values.
-     * Reads from the input tunnel of this P2P link.
+     * Called by output-side StressProviderBlockEntity to read the transfer speed.
+     * Output tunnels read from their linked input tunnel.
      */
     fun getTransferSpeed(): Float {
         if (!isOutput) return transferSpeed  // Direct access if we ARE the input
         val input = input ?: return 0f
         return input.transferSpeed
-    }
-
-    fun getTransferStressCapacity(): Float {
-        if (!isOutput) return transferStressCapacity
-        val input = input ?: return 0f
-        return input.transferStressCapacity
     }
 
     /**
@@ -100,7 +93,7 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
     }
 
     /**
-     * Find the adjacent StressAcceptorBlockEntity (for input side) or StressProviderBlockEntity (for output side).
+     * Find the adjacent StressAcceptorBlockEntity (for input side).
      */
     fun findCompanionAcceptor(): StressAcceptorBlockEntity? {
         val level = blockEntity.level ?: return null

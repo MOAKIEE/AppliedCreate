@@ -10,12 +10,13 @@ import appeng.api.networking.IInWorldGridNodeHost
 /**
  * Stress Acceptor Block Entity — the input companion for Stress P2P.
  *
- * This KineticBlockEntity consumes rotation from the Create kinetic network.
- * Every tick, it reads its current speed and stress capacity and pushes them
- * to the adjacent StressP2PTunnelPart (input side).
+ * This KineticBlockEntity absorbs rotation from the Create kinetic network.
+ * Every tick, it reads its current speed and pushes it to the adjacent
+ * StressP2PTunnelPart (input side) for transfer through the ME network.
  *
- * Stress impact: configurable, represents the load this acceptor places on the kinetic network.
- * The impact should mirror the total stress being consumed by all output providers.
+ * Stress impact is 0 (free consumer), so it does not add load to the input network.
+ * The output-side StressProviderBlockEntity uses a fixed capacity to supply
+ * stress to the output kinetic network.
  */
 class StressAcceptorBlockEntity(
     type: BlockEntityType<*>,
@@ -24,27 +25,24 @@ class StressAcceptorBlockEntity(
 ) : KineticBlockEntity(type, pos, state) {
 
     private var lastPushedSpeed: Float = 0f
-    private var lastPushedCapacity: Float = 0f
 
     override fun tick() {
         super.tick()
         if (level == null || level!!.isClientSide) return
 
         val currentSpeed = speed
-        val currentCapacity = calculateAddedStressCapacity()
 
-        // Only update the tunnel when values change
-        if (currentSpeed != lastPushedSpeed || currentCapacity != lastPushedCapacity) {
+        // Only update the tunnel when speed changes
+        if (currentSpeed != lastPushedSpeed) {
             lastPushedSpeed = currentSpeed
-            lastPushedCapacity = currentCapacity
-            pushToTunnel(currentSpeed, currentCapacity)
+            pushToTunnel(currentSpeed)
         }
     }
 
     /**
-     * Find the adjacent Stress P2P tunnel part and push our kinetic values to it.
+     * Find the adjacent Stress P2P tunnel part and push our speed to it.
      */
-    private fun pushToTunnel(speed: Float, capacity: Float) {
+    private fun pushToTunnel(speed: Float) {
         val facing = blockState.getValue(
             com.simibubi.create.content.kinetics.base.DirectionalKineticBlock.FACING
         )
@@ -59,16 +57,14 @@ class StressAcceptorBlockEntity(
         val cableBus = be as? appeng.api.parts.IPartHost ?: return
         val part = cableBus.getPart(facing.opposite)
         if (part is StressP2PTunnelPart && !part.isOutput) {
-            part.updateInputValues(speed, capacity)
+            part.updateInputValues(speed)
         }
     }
 
     override fun onSpeedChanged(previousSpeed: Float) {
         super.onSpeedChanged(previousSpeed)
         // When our speed changes, immediately push to tunnel
-        val capacity = calculateAddedStressCapacity()
         lastPushedSpeed = speed
-        lastPushedCapacity = capacity
-        pushToTunnel(speed, capacity)
+        pushToTunnel(speed)
     }
 }

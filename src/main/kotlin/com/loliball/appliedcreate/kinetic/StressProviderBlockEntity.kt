@@ -13,7 +13,12 @@ import net.minecraft.world.level.block.state.BlockState
  * Stress Provider Block Entity — the output companion for Stress P2P.
  *
  * This GeneratingKineticBlockEntity generates rotation into the Create kinetic network.
- * It reads its speed and stress capacity from the adjacent Stress P2P Tunnel (output side).
+ * It reads speed from the adjacent Stress P2P Tunnel (output side) and generates
+ * rotation at that speed.
+ *
+ * Stress capacity is provided via BlockStressValues.CAPACITIES registration (2048 SU base).
+ * The base KineticBlockEntity.calculateAddedStressCapacity() reads this registered value
+ * automatically — no override needed.
  *
  * When the tunnel notifies us of updated values, we call updateGeneratedRotation()
  * to propagate the changes through the kinetic network.
@@ -25,16 +30,13 @@ class StressProviderBlockEntity(
 ) : GeneratingKineticBlockEntity(type, pos, state) {
 
     private var providedSpeed: Float = 0f
-    private var providedCapacity: Float = 0f
 
     override fun getGeneratedSpeed(): Float {
         return providedSpeed
     }
 
-    override fun calculateAddedStressCapacity(): Float {
-        this.lastCapacityProvided = providedCapacity
-        return providedCapacity
-    }
+    // calculateAddedStressCapacity() is NOT overridden — the base class reads
+    // from BlockStressValues.getCapacity(block) which returns our registered 2048.0
 
     /**
      * Called by StressP2PTunnelPart when new values arrive from the input side.
@@ -43,11 +45,9 @@ class StressProviderBlockEntity(
         val tunnel = findAdjacentTunnel() ?: return
 
         val newSpeed = tunnel.getTransferSpeed()
-        val newCapacity = tunnel.getTransferStressCapacity()
 
-        if (newSpeed != providedSpeed || newCapacity != providedCapacity) {
+        if (newSpeed != providedSpeed) {
             providedSpeed = newSpeed
-            providedCapacity = newCapacity
             updateGeneratedRotation()
         }
     }
@@ -71,13 +71,11 @@ class StressProviderBlockEntity(
 
     override fun write(compound: CompoundTag, registries: HolderLookup.Provider, clientPacket: Boolean) {
         compound.putFloat("ProvidedSpeed", providedSpeed)
-        compound.putFloat("ProvidedCapacity", providedCapacity)
         super.write(compound, registries, clientPacket)
     }
 
     override fun read(compound: CompoundTag, registries: HolderLookup.Provider, clientPacket: Boolean) {
         providedSpeed = compound.getFloat("ProvidedSpeed")
-        providedCapacity = compound.getFloat("ProvidedCapacity")
         super.read(compound, registries, clientPacket)
     }
 
