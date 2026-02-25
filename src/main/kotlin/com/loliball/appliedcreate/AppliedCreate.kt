@@ -271,6 +271,9 @@ class AppliedCreate {
         MENU_TYPES.register(bus)
         CREATIVE_TABS.register(bus)
 
+        // Register our custom AE key type EARLY — before registries freeze
+        AEKeyTypes.register(StressKeyType.TYPE)
+
         // Register part models manually since Kotlin companion object @PartModels annotations
         // are not discoverable by AE2's Java reflection-based PartModelsHelper scanner
         appeng.api.parts.PartModels.registerModels(
@@ -325,8 +328,7 @@ class AppliedCreate {
         )
 
         event.enqueueWork {
-            // Register our custom AE key type so AE2 recognizes StressKey in storage
-            AEKeyTypes.register(StressKeyType.TYPE)
+            // Key type registration moved to init block (must happen before registry freeze)
 
             // Register P2P attunement for stress tunnel
             P2PTunnelAttunement.registerAttunementTag(STRESS_P2P_TUNNEL_PART_ITEM.get())
