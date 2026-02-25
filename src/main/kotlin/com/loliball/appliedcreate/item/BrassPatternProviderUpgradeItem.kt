@@ -70,15 +70,15 @@ class BrassPatternProviderUpgradeItem : Item(Properties().stacksTo(64)) {
                 val savedTag = CompoundTag()
                 andesitePart.writeToNBT(savedTag)
 
-                // Remove old part
-                host.removePart(andesitePart)
-
-                // Add new brass part
+                // Atomically replace old part with new brass part
+                // Using replacePart instead of removePart+addPart to prevent
+                // the cable bus from being destroyed when this is the only part
                 @Suppress("UNCHECKED_CAST")
-                val brassPart = host.addPart(
+                val brassPart = host.replacePart(
                     AppliedCreate.BRASS_PATTERN_PROVIDER_PART_ITEM.get() as appeng.api.parts.IPartItem<BrassPatternProviderPart>,
                     side,
-                    player
+                    player,
+                    context.hand
                 )
 
                 if (brassPart != null) {
