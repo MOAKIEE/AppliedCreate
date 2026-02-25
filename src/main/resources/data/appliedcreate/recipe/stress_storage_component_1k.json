@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "a": {
+      "tag": "c:dusts/redstone"
+    },
+    "b": {
+      "tag": "ae2:all_certus_quartz"
+    },
+    "c": {
+      "item": "appliedcreate:stress_processor"
+    }
+  },
+  "pattern": [
+    "aba",
+    "bcb",
+    "aba"
+  ],
+  "result": {
+    "count": 1,
+    "id": "appliedcreate:stress_storage_component_1k"
+  }
+}

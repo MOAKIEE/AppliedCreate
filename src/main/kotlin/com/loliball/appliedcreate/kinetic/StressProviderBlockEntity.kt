@@ -39,6 +39,30 @@ class StressProviderBlockEntity(
     // from BlockStressValues.getCapacity(block) which returns our registered 2048.0
 
     /**
+     * Called on first tick by SmartBlockEntity.tick() -> initialize().
+     * Mirrors CreativeMotorBlockEntity.initialize() pattern:
+     * ensures rotation propagation happens on world load / block placement.
+     */
+    override fun initialize() {
+        super.initialize()
+        // Try to sync from tunnel immediately on initialization
+        if (level != null && !level!!.isClientSide) {
+            val tunnel = findAdjacentTunnel()
+            if (tunnel != null) {
+                val newSpeed = tunnel.getTransferSpeed()
+                if (newSpeed != 0f && newSpeed != providedSpeed) {
+                    providedSpeed = newSpeed
+                }
+            }
+            // Following Creative Motor pattern: if not sourced or generating faster
+            // than theoretical, trigger rotation propagation
+            if (!hasSource() || getGeneratedSpeed() > theoreticalSpeed) {
+                updateGeneratedRotation()
+            }
+        }
+    }
+
+    /**
      * Called by StressP2PTunnelPart when new values arrive from the input side.
      */
     fun updateFromTunnel() {

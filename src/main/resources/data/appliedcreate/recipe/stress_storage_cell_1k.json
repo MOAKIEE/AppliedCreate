@@ -1,23 +1,16 @@
 {
-    "type": "minecraft:crafting_shaped",
-    "pattern": [
-        "ABA",
-        "BCB",
-        "ABA"
-    ],
-    "key": {
-        "A": {
-            "item": "create:brass_ingot"
-        },
-        "B": {
-            "item": "create:shaft"
-        },
-        "C": {
-            "item": "ae2:cell_component_1k"
-        }
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "appliedcreate:stress_storage_component_1k"
     },
-    "result": {
-        "id": "appliedcreate:stress_storage_cell_1k",
-        "count": 1
+    {
+      "item": "appliedcreate:andesite_stress_cell_housing"
     }
+  ],
+  "result": {
+    "count": 1,
+    "id": "appliedcreate:stress_storage_cell_1k"
+  }
 }

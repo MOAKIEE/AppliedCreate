@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "a": {
+      "tag": "c:dusts/glowstone"
+    },
+    "b": {
+      "item": "appliedcreate:advanced_stress_processor"
+    },
+    "c": {
+      "item": "appliedcreate:stress_storage_component_64m"
+    },
+    "d": {
+      "item": "ae2:quartz_glass"
+    }
+  },
+  "pattern": [
+    "aba",
+    "cdc",
+    "aca"
+  ],
+  "result": {
+    "count": 1,
+    "id": "appliedcreate:stress_storage_component_256m"
+  }
+}

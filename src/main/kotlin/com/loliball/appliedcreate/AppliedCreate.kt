@@ -204,6 +204,70 @@ class AppliedCreate {
             )
         }
 
+        // ── Stress Crafting Items ──
+        // Circuit boards (inscribed)
+        val STRESS_CIRCUIT_BOARD: DeferredHolder<Item, Item> = ITEMS.register("stress_circuit_board") { ->
+            Item(Item.Properties())
+        }
+        val ADVANCED_STRESS_CIRCUIT_BOARD: DeferredHolder<Item, Item> = ITEMS.register("advanced_stress_circuit_board") { ->
+            Item(Item.Properties())
+        }
+
+        // Processors (assembled from circuit board + silicon + redstone)
+        val STRESS_PROCESSOR: DeferredHolder<Item, Item> = ITEMS.register("stress_processor") { ->
+            Item(Item.Properties())
+        }
+        val ADVANCED_STRESS_PROCESSOR: DeferredHolder<Item, Item> = ITEMS.register("advanced_stress_processor") { ->
+            Item(Item.Properties())
+        }
+
+        // Storage components (crafted with processors, following AE2 component pattern)
+        val STRESS_COMPONENT_1K: DeferredHolder<Item, Item> = ITEMS.register("stress_storage_component_1k") { ->
+            Item(Item.Properties())
+        }
+        val STRESS_COMPONENT_4K: DeferredHolder<Item, Item> = ITEMS.register("stress_storage_component_4k") { ->
+            Item(Item.Properties())
+        }
+        val STRESS_COMPONENT_16K: DeferredHolder<Item, Item> = ITEMS.register("stress_storage_component_16k") { ->
+            Item(Item.Properties())
+        }
+        val STRESS_COMPONENT_64K: DeferredHolder<Item, Item> = ITEMS.register("stress_storage_component_64k") { ->
+            Item(Item.Properties())
+        }
+        val STRESS_COMPONENT_256K: DeferredHolder<Item, Item> = ITEMS.register("stress_storage_component_256k") { ->
+            Item(Item.Properties())
+        }
+        val STRESS_COMPONENT_1M: DeferredHolder<Item, Item> = ITEMS.register("stress_storage_component_1m") { ->
+            Item(Item.Properties())
+        }
+        val STRESS_COMPONENT_4M: DeferredHolder<Item, Item> = ITEMS.register("stress_storage_component_4m") { ->
+            Item(Item.Properties())
+        }
+        val STRESS_COMPONENT_16M: DeferredHolder<Item, Item> = ITEMS.register("stress_storage_component_16m") { ->
+            Item(Item.Properties())
+        }
+        val STRESS_COMPONENT_64M: DeferredHolder<Item, Item> = ITEMS.register("stress_storage_component_64m") { ->
+            Item(Item.Properties())
+        }
+        val STRESS_COMPONENT_256M: DeferredHolder<Item, Item> = ITEMS.register("stress_storage_component_256m") { ->
+            Item(Item.Properties())
+        }
+
+        // Cell housings
+        val ANDESITE_STRESS_CELL_HOUSING: DeferredHolder<Item, Item> = ITEMS.register("andesite_stress_cell_housing") { ->
+            Item(Item.Properties())
+        }
+        val BRASS_STRESS_CELL_HOUSING: DeferredHolder<Item, Item> = ITEMS.register("brass_stress_cell_housing") { ->
+            Item(Item.Properties())
+        }
+
+        val STRESS_COMPONENTS: List<DeferredHolder<Item, Item>> by lazy {
+            listOf(
+                STRESS_COMPONENT_1K, STRESS_COMPONENT_4K, STRESS_COMPONENT_16K, STRESS_COMPONENT_64K, STRESS_COMPONENT_256K,
+                STRESS_COMPONENT_1M, STRESS_COMPONENT_4M, STRESS_COMPONENT_16M, STRESS_COMPONENT_64M, STRESS_COMPONENT_256M
+            )
+        }
+
         // ── Creative Tab ──
         val CREATIVE_TAB: DeferredHolder<CreativeModeTab, CreativeModeTab> = CREATIVE_TABS.register("main") { ->
             CreativeModeTab.builder()
@@ -218,6 +282,16 @@ class AppliedCreate {
                     output.accept(STRESS_P2P_TUNNEL_PART_ITEM.get())
                     output.accept(STRESS_ACCEPTOR_ITEM.get())
                     output.accept(STRESS_PROVIDER_ITEM.get())
+                    // Crafting items
+                    output.accept(STRESS_CIRCUIT_BOARD.get())
+                    output.accept(ADVANCED_STRESS_CIRCUIT_BOARD.get())
+                    output.accept(STRESS_PROCESSOR.get())
+                    output.accept(ADVANCED_STRESS_PROCESSOR.get())
+                    output.accept(ANDESITE_STRESS_CELL_HOUSING.get())
+                    output.accept(BRASS_STRESS_CELL_HOUSING.get())
+                    // Storage components
+                    STRESS_COMPONENTS.forEach { output.accept(it.get()) }
+                    // Storage cells
                     STRESS_CELLS.forEach { output.accept(it.get()) }
                 }
                 .build()

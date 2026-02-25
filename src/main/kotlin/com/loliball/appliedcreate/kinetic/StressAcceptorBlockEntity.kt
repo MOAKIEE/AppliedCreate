@@ -26,6 +26,17 @@ class StressAcceptorBlockEntity(
 
     private var lastPushedSpeed: Float = 0f
 
+    /**
+     * On initialization (first tick), push current speed to tunnel.
+     * This ensures the P2P link is established on world load.
+     */
+    override fun initialize() {
+        super.initialize()
+        if (level != null && !level!!.isClientSide && speed != 0f) {
+            pushToTunnel(speed)
+        }
+    }
+
     override fun tick() {
         super.tick()
         if (level == null || level!!.isClientSide) return
