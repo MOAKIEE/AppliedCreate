@@ -1,0 +1,23 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "ABA",
+        "BCB",
+        "ABA"
+    ],
+    "key": {
+        "A": {
+            "item": "create:brass_ingot"
+        },
+        "B": {
+            "item": "appliedcreate:stress_storage_cell_64m"
+        },
+        "C": {
+            "item": "ae2:cell_component_256k"
+        }
+    },
+    "result": {
+        "id": "appliedcreate:stress_storage_cell_256m",
+        "count": 1
+    }
+}

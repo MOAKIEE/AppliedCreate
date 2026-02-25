@@ -8,5 +8,23 @@
 
     "gui.appliedcreate.patterns": "Patterns",
     "gui.appliedcreate.AndesitePatternProvider": "Andesite Pattern Provider",
-    "gui.appliedcreate.BrassPatternProvider": "Brass Pattern Provider"
+    "gui.appliedcreate.BrassPatternProvider": "Brass Pattern Provider",
+
+    "key_type.appliedcreate.stress": "Stress",
+    "key.appliedcreate.stress": "Stress",
+
+    "item.appliedcreate.stress_storage_cell_1k": "1k Stress Storage Cell",
+    "item.appliedcreate.stress_storage_cell_4k": "4k Stress Storage Cell",
+    "item.appliedcreate.stress_storage_cell_16k": "16k Stress Storage Cell",
+    "item.appliedcreate.stress_storage_cell_64k": "64k Stress Storage Cell",
+    "item.appliedcreate.stress_storage_cell_256k": "256k Stress Storage Cell",
+    "item.appliedcreate.stress_storage_cell_1m": "1M Stress Storage Cell",
+    "item.appliedcreate.stress_storage_cell_4m": "4M Stress Storage Cell",
+    "item.appliedcreate.stress_storage_cell_16m": "16M Stress Storage Cell",
+    "item.appliedcreate.stress_storage_cell_64m": "64M Stress Storage Cell",
+    "item.appliedcreate.stress_storage_cell_256m": "256M Stress Storage Cell",
+
+    "item.appliedcreate.stress_p2p_tunnel": "Stress P2P Tunnel",
+    "block.appliedcreate.stress_acceptor": "Stress Acceptor",
+    "block.appliedcreate.stress_provider": "Stress Provider"
 }
