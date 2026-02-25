@@ -10,6 +10,7 @@ import com.loliball.appliedcreate.item.BrassPatternProviderUpgradeItem
 import com.loliball.appliedcreate.item.MechanicalCraftingPartItem
 import com.loliball.appliedcreate.part.AndesitePatternProviderPart
 import com.loliball.appliedcreate.part.BrassPatternProviderPart
+import appeng.api.AECapabilities
 import appeng.helpers.patternprovider.PatternProviderLogicHost
 import appeng.menu.MenuOpener
 import appeng.menu.locator.MenuHostLocator
@@ -31,6 +32,7 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent
 import net.neoforged.fml.loading.FMLEnvironment
 import net.neoforged.neoforge.registries.DeferredHolder
 import net.neoforged.neoforge.registries.DeferredRegister
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import thedarkcolour.kotlinforforge.neoforge.forge.MOD_BUS
@@ -201,6 +203,7 @@ class AppliedCreate {
         )
 
         bus.addListener(::onCommonSetup)
+        bus.addListener(::onRegisterCapabilities)
 
         if (FMLEnvironment.dist.isClient) {
             ClientSetup.register(bus)
@@ -219,5 +222,17 @@ class AppliedCreate {
                 )
             }
         }
+    }
+
+    private fun onRegisterCapabilities(event: RegisterCapabilitiesEvent) {
+        // Register IN_WORLD_GRID_NODE_HOST so AE2 cables recognize our blocks as grid devices
+        event.registerBlockEntity(
+            AECapabilities.IN_WORLD_GRID_NODE_HOST,
+            ANDESITE_PATTERN_PROVIDER_BE.get()
+        ) { be, _ -> be }
+        event.registerBlockEntity(
+            AECapabilities.IN_WORLD_GRID_NODE_HOST,
+            BRASS_PATTERN_PROVIDER_BE.get()
+        ) { be, _ -> be }
     }
 }
