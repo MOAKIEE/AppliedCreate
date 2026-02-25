@@ -270,9 +270,13 @@ class AppliedCreate {
         BLOCK_ENTITY_TYPES.register(bus)
         MENU_TYPES.register(bus)
         CREATIVE_TABS.register(bus)
-
-        // Register our custom AE key type EARLY — before registries freeze
-        AEKeyTypes.register(StressKeyType.TYPE)
+        bus.addListener { event: net.neoforged.neoforge.registries.RegisterEvent ->
+            // Register after AE2 creates its keytypes registry (NewRegistryEvent)
+            // but before registries freeze
+            event.register(appeng.api.stacks.AEKeyType.REGISTRY_KEY) {
+                AEKeyTypes.register(StressKeyType.TYPE)
+            }
+        }
 
         // Register part models manually since Kotlin companion object @PartModels annotations
         // are not discoverable by AE2's Java reflection-based PartModelsHelper scanner
