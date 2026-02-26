@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "appliedcreate:block/me_gearbox",
+      "x": 180
+    },
+    "facing=east": {
+      "model": "appliedcreate:block/me_gearbox",
+      "x": 90,
+      "y": 90
+    },
+    "facing=north": {
+      "model": "appliedcreate:block/me_gearbox",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "appliedcreate:block/me_gearbox",
+      "x": 90,
+      "y": 180
+    },
+    "facing=up": {
+      "model": "appliedcreate:block/me_gearbox"
+    },
+    "facing=west": {
+      "model": "appliedcreate:block/me_gearbox",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

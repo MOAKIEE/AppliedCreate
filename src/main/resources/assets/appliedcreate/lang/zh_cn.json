@@ -47,5 +47,8 @@
     "item.appliedcreate.stress_storage_component_256m": "256M应力存储组件",
 
     "item.appliedcreate.andesite_stress_cell_housing": "安山应力元件外壳",
-    "item.appliedcreate.brass_stress_cell_housing": "黄铜应力元件外壳"
+    "item.appliedcreate.brass_stress_cell_housing": "黄铜应力元件外壳",
+
+    "block.appliedcreate.kinetic_energy_acceptor": "动能接收器",
+    "block.appliedcreate.me_gearbox": "ME齿轮箱"
 }

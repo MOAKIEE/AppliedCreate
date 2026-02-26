@@ -4,6 +4,10 @@ import com.loliball.appliedcreate.cannon.MEBlueprintCannonBlock
 import com.loliball.appliedcreate.cannon.MEBlueprintCannonBlockEntity
 import com.loliball.appliedcreate.cannon.MEBlueprintCannonMenu
 import com.loliball.appliedcreate.cannon.ConfigureMECannonPayload
+import com.loliball.appliedcreate.energy.KineticEnergyAcceptorBlock
+import com.loliball.appliedcreate.energy.KineticEnergyAcceptorBlockEntity
+import com.loliball.appliedcreate.energy.MEGearboxBlock
+import com.loliball.appliedcreate.energy.MEGearboxBlockEntity
 import net.minecraft.world.level.block.state.BlockBehaviour
 import com.loliball.appliedcreate.block.AndesitePatternProviderBlock
 import com.loliball.appliedcreate.block.BrassPatternProviderBlock
@@ -179,6 +183,41 @@ class AppliedCreate {
                 }
             }
 
+        // ── Kinetic Energy Acceptor ──
+        val KINETIC_ENERGY_ACCEPTOR_BLOCK: DeferredHolder<Block, Block> = BLOCKS.register("kinetic_energy_acceptor") { ->
+            KineticEnergyAcceptorBlock()
+        }
+
+        val KINETIC_ENERGY_ACCEPTOR_ITEM: DeferredHolder<Item, Item> = ITEMS.register("kinetic_energy_acceptor") { ->
+            BlockItem(KINETIC_ENERGY_ACCEPTOR_BLOCK.get(), Item.Properties())
+        }
+
+        @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
+        val KINETIC_ENERGY_ACCEPTOR_BE: DeferredHolder<BlockEntityType<*>, BlockEntityType<KineticEnergyAcceptorBlockEntity>> =
+            BLOCK_ENTITY_TYPES.register("kinetic_energy_acceptor") { ->
+                BlockEntityType.Builder.of(
+                    { pos, state -> KineticEnergyAcceptorBlockEntity(KINETIC_ENERGY_ACCEPTOR_BE.get(), pos, state) },
+                    KINETIC_ENERGY_ACCEPTOR_BLOCK.get()
+                ).build(null)
+            }
+
+        // ── ME Gearbox ──
+        val ME_GEARBOX_BLOCK: DeferredHolder<Block, Block> = BLOCKS.register("me_gearbox") { ->
+            MEGearboxBlock()
+        }
+
+        val ME_GEARBOX_ITEM: DeferredHolder<Item, Item> = ITEMS.register("me_gearbox") { ->
+            BlockItem(ME_GEARBOX_BLOCK.get(), Item.Properties())
+        }
+
+        @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
+        val ME_GEARBOX_BE: DeferredHolder<BlockEntityType<*>, BlockEntityType<MEGearboxBlockEntity>> =
+            BLOCK_ENTITY_TYPES.register("me_gearbox") { ->
+                BlockEntityType.Builder.of(
+                    { pos, state -> MEGearboxBlockEntity(ME_GEARBOX_BE.get(), pos, state) },
+                    ME_GEARBOX_BLOCK.get()
+                ).build(null)
+            }
         // ── Stress Storage Cells ──
         val STRESS_CELL_1K: DeferredHolder<Item, Item> = ITEMS.register("stress_storage_cell_1k") { ->
             StressStorageCell(Item.Properties(), 0.5, 1, 8, 1)
@@ -296,6 +335,8 @@ class AppliedCreate {
                     output.accept(STRESS_P2P_TUNNEL_PART_ITEM.get())
                     output.accept(STRESS_P2P_COMPANION_ITEM.get())
                     output.accept(ME_BLUEPRINT_CANNON_ITEM.get())
+                    output.accept(KINETIC_ENERGY_ACCEPTOR_ITEM.get())
+                    output.accept(ME_GEARBOX_ITEM.get())
                     // Crafting items
                     output.accept(STRESS_CIRCUIT_BOARD.get())
                     output.accept(ADVANCED_STRESS_CIRCUIT_BOARD.get())
@@ -446,6 +487,21 @@ class AppliedCreate {
             com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
                 STRESS_P2P_COMPANION_BLOCK.get(), { 0.0 }
             )
+
+            // Register stress value for kinetic energy acceptor
+            com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
+                KINETIC_ENERGY_ACCEPTOR_BLOCK.get(), { KineticEnergyAcceptorBlockEntity.MAX_STRESS_SU / 256.0 }
+            )
+
+            // Register stress values for ME Gearbox
+            // Import mode: stress impact (consumes kinetic energy)
+            com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
+                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.STRESS_IMPACT_PER_RPM.toDouble() }
+            )
+            // Export mode: stress capacity (generates kinetic energy)
+            com.simibubi.create.api.stress.BlockStressValues.CAPACITIES.register(
+                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.STRESS_CAPACITY_PER_RPM.toDouble() }
+            )
         }
     }
 
@@ -464,6 +520,18 @@ class AppliedCreate {
         event.registerBlockEntity(
             AECapabilities.IN_WORLD_GRID_NODE_HOST,
             ME_BLUEPRINT_CANNON_BE.get()
+        ) { be, _ -> be }
+
+        // Kinetic Energy Acceptor — AE2 grid node for energy generation
+        event.registerBlockEntity(
+            AECapabilities.IN_WORLD_GRID_NODE_HOST,
+            KINETIC_ENERGY_ACCEPTOR_BE.get()
+        ) { be, _ -> be }
+
+        // ME Gearbox — AE2 grid node for stress transfer
+        event.registerBlockEntity(
+            AECapabilities.IN_WORLD_GRID_NODE_HOST,
+            ME_GEARBOX_BE.get()
         ) { be, _ -> be }
 
         // Register GENERIC_INTERNAL_INV so AE2's registerGenericAdapters auto-registers

@@ -1,0 +1,18 @@
+{
+    "type": "create:mechanical_crafting",
+    "pattern": [
+        "AGA",
+        "CSC",
+        "AGA"
+    ],
+    "key": {
+        "A": { "item": "create:brass_ingot" },
+        "G": { "item": "create:cogwheel" },
+        "C": { "item": "ae2:fluix_glass_cable" },
+        "S": { "item": "create:shaft" }
+    },
+    "result": {
+        "id": "appliedcreate:me_gearbox",
+        "count": 1
+    }
+}

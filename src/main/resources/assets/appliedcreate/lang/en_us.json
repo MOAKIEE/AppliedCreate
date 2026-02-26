@@ -47,5 +47,8 @@
     "item.appliedcreate.stress_storage_component_256m": "256M Stress Storage Assembly",
 
     "item.appliedcreate.andesite_stress_cell_housing": "Andesite Stress Cell Housing",
-    "item.appliedcreate.brass_stress_cell_housing": "Brass Stress Cell Housing"
+    "item.appliedcreate.brass_stress_cell_housing": "Brass Stress Cell Housing",
+
+    "block.appliedcreate.kinetic_energy_acceptor": "Kinetic Energy Acceptor",
+    "block.appliedcreate.me_gearbox": "ME Gearbox"
 }

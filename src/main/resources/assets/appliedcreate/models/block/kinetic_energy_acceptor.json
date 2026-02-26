@@ -1,0 +1,8 @@
+{
+    "parent": "minecraft:block/cube_bottom_top",
+    "textures": {
+        "bottom": "appliedcreate:block/kinetic_energy_acceptor_bottom",
+        "side": "appliedcreate:block/kinetic_energy_acceptor_side",
+        "top": "appliedcreate:block/kinetic_energy_acceptor_top"
+    }
+}

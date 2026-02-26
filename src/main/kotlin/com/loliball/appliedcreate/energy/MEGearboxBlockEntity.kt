@@ -1,0 +1,257 @@
+package com.loliball.appliedcreate.energy
+
+import appeng.api.config.Actionable
+import appeng.api.networking.security.IActionSource
+import appeng.api.orientation.BlockOrientation
+import appeng.api.storage.StorageHelper
+import com.loliball.appliedcreate.AppliedCreate
+import com.loliball.appliedcreate.storage.StressKey
+import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock
+import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
+import com.simibubi.create.foundation.utility.CreateLang
+import net.minecraft.ChatFormatting
+import net.minecraft.core.BlockPos
+import net.minecraft.core.Direction
+import net.minecraft.core.HolderLookup
+import net.minecraft.nbt.CompoundTag
+import net.minecraft.network.chat.Component
+import net.minecraft.world.level.block.entity.BlockEntityType
+import net.minecraft.world.level.block.state.BlockState
+import java.util.EnumSet
+import kotlin.math.abs
+
+/**
+ * ME Gearbox — a dual-network block joining AE2 ME network and Create kinetic network.
+ *
+ * Two modes (toggled via wrench):
+ * - EXPORT mode: Extracts stress from AE2 ME storage → generates rotation in Create kinetic network
+ *   (acts as GeneratingKineticBlockEntity, getGeneratedSpeed() returns configured RPM)
+ * - IMPORT mode: Consumes rotation from Create kinetic network → inserts stress into AE2 ME storage
+ *   (getGeneratedSpeed() returns 0, stress is consumed via calculateStressApplied())
+ *
+ * Stress transfer rate per tick:
+ *   - Export: extractable = |generatedSpeed| * stressCapacity / 256
+ *   - Import: consumed SU = |speed| * stressImpact
+ *
+ * The ME network side uses StorageHelper.poweredExtraction/poweredInsert with StressKey.INSTANCE.
+ */
+class MEGearboxBlockEntity(
+    type: BlockEntityType<*>,
+    pos: BlockPos,
+    state: BlockState
+) : NetworkedGeneratingKineticBlockEntity(type, pos, state) {
+
+    companion object {
+        /** Default RPM for export mode */
+        const val GENERATED_SPEED = 32
+        /** Stress capacity provided per RPM when exporting */
+        const val STRESS_CAPACITY_PER_RPM = 64.0f
+        /** Stress impact per RPM when importing */
+        const val STRESS_IMPACT_PER_RPM = 64.0f / 256.0f
+        /** Stress units transferred to/from ME per tick at 256 RPM */
+        const val STRESS_TRANSFER_PER_256_RPM = 16384L
+    }
+
+    enum class Mode {
+        EXPORT,  // ME → Kinetic (generates rotation)
+        IMPORT   // Kinetic → ME (consumes rotation)
+    }
+
+    var mode: Mode = Mode.EXPORT
+        private set
+
+    init {
+        mainNode.setVisualRepresentation(AppliedCreate.ME_GEARBOX_ITEM.get())
+        mainNode.setIdlePowerUsage(2.0)
+    }
+
+    // ── Behaviours ──
+
+    override fun addBehaviours(behaviours: MutableList<BlockEntityBehaviour>) {
+        super.addBehaviours(behaviours)
+    }
+
+    // ── Mode switching (wrench) ──
+
+    fun toggleMode() {
+        if (level == null || level!!.isClientSide) return
+
+        if (mode == Mode.EXPORT) {
+            mode = Mode.IMPORT
+            updateGeneratedRotation() // getGeneratedSpeed() now returns 0
+        } else {
+            mode = Mode.EXPORT
+            updateGeneratedRotation() // getGeneratedSpeed() now returns configured RPM
+        }
+        notifyUpdate()
+    }
+
+    // ── Grid connectivity: expose on sides perpendicular to shaft ──
+
+    override fun getGridConnectableSides(orientation: BlockOrientation): Set<Direction> {
+        val shaft = blockState.getValue(DirectionalKineticBlock.FACING)
+        return EnumSet.complementOf(EnumSet.of(shaft, shaft.opposite))
+    }
+
+    override fun initialize() {
+        super.initialize()
+        exposeSides()
+        if (!hasSource() || getGeneratedSpeed() > getTheoreticalSpeed()) {
+            updateGeneratedRotation()
+        }
+    }
+
+    // ── GeneratingKineticBlockEntity: getGeneratedSpeed ──
+
+    override fun getGeneratedSpeed(): Float {
+        if (mode == Mode.IMPORT) return 0f
+        // Export mode: generate rotation at fixed speed
+        val facing = blockState.getValue(DirectionalKineticBlock.FACING)
+        return convertToDirection(GENERATED_SPEED.toFloat(), facing)
+    }
+
+    // ── Stress ──
+
+    override fun calculateAddedStressCapacity(): Float {
+        if (mode == Mode.EXPORT) {
+            // As a generator, provide stress capacity
+            return STRESS_CAPACITY_PER_RPM * abs(GENERATED_SPEED)
+        }
+        return 0f
+    }
+
+    override fun calculateStressApplied(): Float {
+        if (mode == Mode.IMPORT) {
+            // As a consumer, apply stress impact
+            val impact = STRESS_IMPACT_PER_RPM
+            this.lastStressApplied = impact
+            return impact
+        }
+        this.lastStressApplied = 0f
+        return 0f
+    }
+
+    // ── Tick: Transfer stress between ME and kinetic networks ──
+
+    override fun tick() {
+        super.tick()
+
+        if (level == null || level!!.isClientSide) return
+
+        val grid = mainNode.grid ?: return
+        val storage = grid.storageService?.inventory ?: return
+        val energy = grid.energyService ?: return
+        val actionSource = IActionSource.ofMachine(mainNode::getNode)
+
+        when (mode) {
+            Mode.EXPORT -> tickExport(energy, storage, actionSource)
+            Mode.IMPORT -> tickImport(energy, storage, actionSource)
+        }
+    }
+
+    private fun tickExport(
+        energy: appeng.api.networking.energy.IEnergySource,
+        storage: appeng.api.storage.MEStorage,
+        actionSource: IActionSource
+    ) {
+        // Extract stress from ME storage to fuel kinetic generation
+        val rpm = abs(speed)
+        if (rpm == 0f) return
+
+        val stressNeeded = (STRESS_TRANSFER_PER_256_RPM * (rpm / 256.0)).toLong()
+        if (stressNeeded <= 0) return
+
+        StorageHelper.poweredExtraction(
+            energy, storage, StressKey.INSTANCE, stressNeeded, actionSource, Actionable.MODULATE
+        )
+    }
+
+    private fun tickImport(
+        energy: appeng.api.networking.energy.IEnergySource,
+        storage: appeng.api.storage.MEStorage,
+        actionSource: IActionSource
+    ) {
+        // Consume kinetic stress and insert into ME storage
+        val rpm = abs(speed)
+        if (rpm == 0f) return
+
+        val stressToInsert = (STRESS_TRANSFER_PER_256_RPM * (rpm / 256.0)).toLong()
+        if (stressToInsert <= 0) return
+
+        StorageHelper.poweredInsert(
+            energy, storage, StressKey.INSTANCE, stressToInsert, actionSource, Actionable.MODULATE
+        )
+    }
+
+    // ── NBT ──
+
+    override fun write(compound: CompoundTag, registries: HolderLookup.Provider, clientPacket: Boolean) {
+        super.write(compound, registries, clientPacket)
+        compound.putString("GearboxMode", mode.name)
+    }
+
+    override fun read(compound: CompoundTag, registries: HolderLookup.Provider, clientPacket: Boolean) {
+        super.read(compound, registries, clientPacket)
+        mode = try {
+            Mode.valueOf(compound.getString("GearboxMode"))
+        } catch (e: IllegalArgumentException) {
+            Mode.EXPORT
+        }
+    }
+
+    // ── Goggle Tooltip ──
+
+    override fun addToGoggleTooltip(tooltip: MutableList<Component>, isPlayerSneaking: Boolean): Boolean {
+        val modeStr = if (mode == Mode.EXPORT) "Export (ME → Kinetic)" else "Import (Kinetic → ME)"
+        CreateLang.text("ME Gearbox")
+            .style(ChatFormatting.GOLD)
+            .forGoggles(tooltip)
+        CreateLang.text("Mode: ")
+            .style(ChatFormatting.GRAY)
+            .add(CreateLang.text(modeStr).style(ChatFormatting.AQUA))
+            .forGoggles(tooltip, 1)
+
+        if (mode == Mode.EXPORT) {
+            val capacity = calculateAddedStressCapacity()
+            val stressTotal = abs(capacity * speed)
+            CreateLang.translate("gui.goggles.generator_stats")
+                .forGoggles(tooltip)
+            CreateLang.translate("tooltip.capacityProvided")
+                .style(ChatFormatting.GRAY)
+                .forGoggles(tooltip)
+            CreateLang.number(stressTotal.toDouble())
+                .translate("generic.unit.stress")
+                .style(ChatFormatting.AQUA)
+                .space()
+                .add(CreateLang.translate("gui.goggles.at_current_speed")
+                    .style(ChatFormatting.DARK_GRAY))
+                .forGoggles(tooltip, 1)
+        } else {
+            val stressTotal = lastStressApplied * abs(speed)
+            CreateLang.translate("gui.goggles.kinetic_stats")
+                .forGoggles(tooltip)
+            CreateLang.translate("tooltip.stressImpact")
+                .style(ChatFormatting.GRAY)
+                .forGoggles(tooltip)
+            CreateLang.number(stressTotal.toDouble())
+                .translate("generic.unit.stress")
+                .style(ChatFormatting.AQUA)
+                .space()
+                .add(CreateLang.translate("gui.goggles.at_current_speed")
+                    .style(ChatFormatting.DARK_GRAY))
+                .forGoggles(tooltip, 1)
+        }
+
+        // Show stress transfer rate
+        val rpm = abs(speed)
+        val transferRate = (STRESS_TRANSFER_PER_256_RPM * (rpm / 256.0)).toLong()
+        CreateLang.text("Transfer: ")
+            .style(ChatFormatting.GRAY)
+            .add(CreateLang.number(transferRate.toDouble())
+                .text(" SU/t")
+                .style(ChatFormatting.GOLD))
+            .forGoggles(tooltip, 1)
+
+        return true
+    }
+}
