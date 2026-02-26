@@ -10,6 +10,10 @@ import com.loliball.appliedcreate.block.BrassPatternProviderBlock
 import com.loliball.appliedcreate.block.entity.AndesitePatternProviderBlockEntity
 import com.loliball.appliedcreate.block.entity.BrassPatternProviderBlockEntity
 import net.minecraft.resources.ResourceLocation
+import com.loliball.appliedcreate.energy.KineticEnergyAcceptorBlock
+import com.loliball.appliedcreate.energy.KineticEnergyAcceptorBlockEntity
+import com.loliball.appliedcreate.energy.MEGearboxBlock
+import com.loliball.appliedcreate.energy.MEGearboxBlockEntity
 
 /**
  * Registers AE2 igtooltip (Jade/WTHIT) providers for our custom pattern provider blocks.
@@ -50,6 +54,20 @@ class AppliedCreateTooltipProvider : TooltipProvider {
             BrassPatternProviderBlockEntity::class.java,
             powerProvider
         )
+
+        // Kinetic Energy Acceptor
+        registration.addBlockEntityData(
+            ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "grid_node"),
+            KineticEnergyAcceptorBlockEntity::class.java,
+            gridNodeProvider
+        )
+
+        // ME Gearbox
+        registration.addBlockEntityData(
+            ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "grid_node"),
+            MEGearboxBlockEntity::class.java,
+            gridNodeProvider
+        )
     }
 
     override fun registerClient(registration: ClientRegistration) {
@@ -79,6 +97,22 @@ class AppliedCreateTooltipProvider : TooltipProvider {
             BrassPatternProviderBlock::class.java,
             ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "power_storage"),
             powerProvider
+        )
+
+        // Kinetic Energy Acceptor
+        registration.addBlockEntityBody(
+            KineticEnergyAcceptorBlockEntity::class.java,
+            KineticEnergyAcceptorBlock::class.java,
+            ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "grid_node_state"),
+            gridNodeProvider
+        )
+
+        // ME Gearbox
+        registration.addBlockEntityBody(
+            MEGearboxBlockEntity::class.java,
+            MEGearboxBlock::class.java,
+            ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "grid_node_state"),
+            gridNodeProvider
         )
     }
 }

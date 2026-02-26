@@ -3,6 +3,7 @@ package com.loliball.appliedcreate.energy
 import appeng.api.config.Actionable
 import appeng.api.networking.security.IActionSource
 import appeng.api.orientation.BlockOrientation
+import appeng.api.networking.GridFlags
 import appeng.api.storage.StorageHelper
 import com.loliball.appliedcreate.AppliedCreate
 import com.loliball.appliedcreate.storage.StressKey
@@ -60,9 +61,13 @@ class MEGearboxBlockEntity(
     var mode: Mode = Mode.EXPORT
         private set
 
+    /** Whether ME network actually has stress to supply in EXPORT mode */
+    private var hasStressSupply = false
+
     init {
         mainNode.setVisualRepresentation(AppliedCreate.ME_GEARBOX_ITEM.get())
         mainNode.setIdlePowerUsage(2.0)
+        mainNode.setFlags(GridFlags.REQUIRE_CHANNEL)
     }
 
     // ── Behaviours ──
@@ -78,9 +83,11 @@ class MEGearboxBlockEntity(
 
         if (mode == Mode.EXPORT) {
             mode = Mode.IMPORT
+            hasStressSupply = false
             updateGeneratedRotation() // getGeneratedSpeed() now returns 0
         } else {
             mode = Mode.EXPORT
+            hasStressSupply = false  // will be re-evaluated on next tick
             updateGeneratedRotation() // getGeneratedSpeed() now returns configured RPM
         }
         notifyUpdate()
@@ -105,6 +112,7 @@ class MEGearboxBlockEntity(
 
     override fun getGeneratedSpeed(): Float {
         if (mode == Mode.IMPORT) return 0f
+        if (!hasStressSupply) return 0f
         // Export mode: generate rotation at fixed speed
         val facing = blockState.getValue(DirectionalKineticBlock.FACING)
         return convertToDirection(GENERATED_SPEED.toFloat(), facing)
@@ -154,16 +162,38 @@ class MEGearboxBlockEntity(
         storage: appeng.api.storage.MEStorage,
         actionSource: IActionSource
     ) {
-        // Extract stress from ME storage to fuel kinetic generation
+        // Simulate extraction first to check if stress is available
         val rpm = abs(speed)
-        if (rpm == 0f) return
+        val stressNeeded = if (rpm == 0f) {
+            // When not spinning yet, check if we can extract at base RPM
+            (STRESS_TRANSFER_PER_256_RPM * (GENERATED_SPEED / 256.0)).toLong()
+        } else {
+            (STRESS_TRANSFER_PER_256_RPM * (rpm / 256.0)).toLong()
+        }
+        if (stressNeeded <= 0) {
+            if (hasStressSupply) {
+                hasStressSupply = false
+                updateGeneratedRotation()
+            }
+            return
+        }
 
-        val stressNeeded = (STRESS_TRANSFER_PER_256_RPM * (rpm / 256.0)).toLong()
-        if (stressNeeded <= 0) return
-
-        StorageHelper.poweredExtraction(
-            energy, storage, StressKey.INSTANCE, stressNeeded, actionSource, Actionable.MODULATE
+        val simulated = StorageHelper.poweredExtraction(
+            energy, storage, StressKey.INSTANCE, stressNeeded, actionSource, Actionable.SIMULATE
         )
+        val wasSupplied = hasStressSupply
+        hasStressSupply = simulated > 0
+
+        if (hasStressSupply != wasSupplied) {
+            updateGeneratedRotation()
+        }
+
+        if (hasStressSupply && rpm > 0f) {
+            // Actually extract stress
+            StorageHelper.poweredExtraction(
+                energy, storage, StressKey.INSTANCE, stressNeeded, actionSource, Actionable.MODULATE
+            )
+        }
     }
 
     private fun tickImport(
@@ -202,13 +232,15 @@ class MEGearboxBlockEntity(
     // ── Goggle Tooltip ──
 
     override fun addToGoggleTooltip(tooltip: MutableList<Component>, isPlayerSneaking: Boolean): Boolean {
-        val modeStr = if (mode == Mode.EXPORT) "Export (ME → Kinetic)" else "Import (Kinetic → ME)"
-        CreateLang.text("ME Gearbox")
+        val modeKey = if (mode == Mode.EXPORT) "appliedcreate.me_gearbox.mode.export" else "appliedcreate.me_gearbox.mode.import"
+        CreateLang.text("")
+            .add(Component.translatable("appliedcreate.me_gearbox.title"))
             .style(ChatFormatting.GOLD)
             .forGoggles(tooltip)
-        CreateLang.text("Mode: ")
+        CreateLang.text("")
+            .add(Component.translatable("appliedcreate.me_gearbox.mode"))
             .style(ChatFormatting.GRAY)
-            .add(CreateLang.text(modeStr).style(ChatFormatting.AQUA))
+            .add(CreateLang.text("").add(Component.translatable(modeKey)).style(ChatFormatting.AQUA))
             .forGoggles(tooltip, 1)
 
         if (mode == Mode.EXPORT) {
@@ -245,10 +277,11 @@ class MEGearboxBlockEntity(
         // Show stress transfer rate
         val rpm = abs(speed)
         val transferRate = (STRESS_TRANSFER_PER_256_RPM * (rpm / 256.0)).toLong()
-        CreateLang.text("Transfer: ")
+        CreateLang.text("")
+            .add(Component.translatable("appliedcreate.me_gearbox.transfer"))
             .style(ChatFormatting.GRAY)
             .add(CreateLang.number(transferRate.toDouble())
-                .text(" SU/t")
+                .add(Component.translatable("appliedcreate.me_gearbox.transfer.unit"))
                 .style(ChatFormatting.GOLD))
             .forGoggles(tooltip, 1)
 

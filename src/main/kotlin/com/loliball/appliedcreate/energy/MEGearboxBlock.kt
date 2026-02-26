@@ -78,8 +78,8 @@ class MEGearboxBlock : DirectionalKineticBlock(
         val be = level.getBlockEntity(pos) as? MEGearboxBlockEntity ?: return InteractionResult.PASS
         be.toggleMode()
 
-        val modeName = if (be.mode == MEGearboxBlockEntity.Mode.EXPORT) "Export (ME → Kinetic)" else "Import (Kinetic → ME)"
-        player.displayClientMessage(Component.literal("Mode: $modeName"), true)
+        val modeKey = if (be.mode == MEGearboxBlockEntity.Mode.EXPORT) "appliedcreate.me_gearbox.mode.export" else "appliedcreate.me_gearbox.mode.import"
+        player.displayClientMessage(Component.translatable("appliedcreate.me_gearbox.mode").append(Component.translatable(modeKey)), true)
 
         return InteractionResult.SUCCESS
     }
