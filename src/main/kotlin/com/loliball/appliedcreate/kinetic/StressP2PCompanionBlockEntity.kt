@@ -1,104 +1,38 @@
 package com.loliball.appliedcreate.kinetic
 
-import appeng.api.networking.GridHelper
-import appeng.api.networking.IGridNode
-import appeng.api.networking.IGridNodeListener
-import appeng.api.networking.IManagedGridNode
-import appeng.api.storage.MEStorage
-import appeng.api.util.AECableType
-import appeng.api.orientation.BlockOrientation
-import appeng.me.helpers.BlockEntityNodeListener
-import appeng.me.helpers.IGridConnectedBlockEntity
-import appeng.me.helpers.MachineSource
-import com.loliball.appliedcreate.AppliedCreate
 import com.loliball.appliedcreate.p2p.StressP2PNetwork
 import com.loliball.appliedcreate.p2p.StressP2PTunnelPart
-import com.loliball.appliedcreate.storage.StressKey
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock
 import com.simibubi.create.content.kinetics.base.IRotate
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity
 import net.minecraft.core.BlockPos
-import net.minecraft.core.Direction
-import net.minecraft.nbt.CompoundTag
-import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
 import org.slf4j.LoggerFactory
-import java.util.EnumSet
 
 /**
- * Stress Provider Block Entity — dual-purpose block:
+ * Stress P2P Companion Block Entity — unified kinetic bridge for AE2 P2P tunnels.
  *
- * 1. P2P Companion (output side): Uses Create's custom connection system to bridge
- *    kinetic networks through AE2 P2P tunnels. Receives rotation from the paired
- *    StressAcceptorBlockEntity on the input side through the virtual connection.
+ * Replaces the former StressAcceptorBlockEntity and StressProviderBlockEntity.
+ * This block is placed adjacent to a Stress P2P Tunnel (input OR output side) and
+ * uses Create's custom connection system to bridge kinetic networks through AE2 P2P tunnels.
  *
- * 2. ME Grid Device: Connects to the AE2 ME network and extracts stress from ME
- *    stress storage cells. Provides the extracted stress as rotation to the local
- *    kinetic network.
+ * All companions sharing the same P2P input tunnel position form a virtual kinetic network.
+ * Rotation propagates at 1:1 ratio between all companions keyed to the same input tunnel.
  *
- * Technical pattern: KineticBlockEntity + manual IManagedGridNode composition.
- * No stress capacity — the provider is a bridge, not a generator (for P2P mode).
+ * Architecture: Pure KineticBlockEntity — NO AE2 grid node, NO ME stress storage conversion.
+ * Following CreateEnderTransmission's EnergyTransmitterBlockEntity pattern.
+ *
+ * Stress impact is 0 — this block passively bridges rotation without adding load.
  */
-class StressProviderBlockEntity(
+class StressP2PCompanionBlockEntity(
     type: BlockEntityType<*>,
     pos: BlockPos,
     state: BlockState
-) : KineticBlockEntity(type, pos, state), IGridConnectedBlockEntity {
+) : KineticBlockEntity(type, pos, state) {
 
     companion object {
-        private val LOGGER = LoggerFactory.getLogger("AppliedCreate/StressProvider")
-    }
-
-    // ── AE2 Grid Node (manual composition) ──
-
-    @Suppress("UNCHECKED_CAST")
-    private val mainNode: IManagedGridNode = GridHelper.createManagedNode(
-        this,
-        BlockEntityNodeListener.INSTANCE as IGridNodeListener<IGridConnectedBlockEntity>
-    )
-        .setVisualRepresentation(AppliedCreate.STRESS_PROVIDER_ITEM.get())
-        .setInWorldNode(true)
-        .setTagName("proxy")
-        .setIdlePowerUsage(1.0)
-        .setExposedOnSides(EnumSet.allOf(Direction::class.java))
-
-    private val actionSource = MachineSource(this)
-
-    // ── IGridConnectedBlockEntity implementation ──
-
-    override fun getMainNode(): IManagedGridNode = mainNode
-
-    override fun getGridConnectableSides(orientation: BlockOrientation): Set<Direction> {
-        return EnumSet.allOf(Direction::class.java)
-    }
-
-    override fun saveChanges() {
-        setChanged()
-    }
-
-    override fun onMainNodeStateChanged(reason: IGridNodeListener.State) {
-        // Could send visual update to client if needed
-    }
-
-    override fun getCableConnectionType(dir: Direction): AECableType {
-        return AECableType.SMART
-    }
-
-    override fun getActionableNode(): IGridNode? {
-        return mainNode.node
-    }
-
-    override fun setOwner(owner: Player) {
-        mainNode.setOwningPlayer(owner)
-    }
-
-    override fun getGridNode(dir: Direction): IGridNode? {
-        val node = mainNode.node ?: return null
-        if (node is appeng.me.InWorldGridNode && node.isExposedOnSide(dir)) {
-            return node
-        }
-        return null
+        private val LOGGER = LoggerFactory.getLogger("AppliedCreate/StressP2PCompanion")
     }
 
     // ── P2P Companion (Create Custom Connection) ──
@@ -106,19 +40,18 @@ class StressProviderBlockEntity(
     /** The input tunnel's position, used as the network key in StressP2PNetwork */
     private var registeredInputPos: BlockPos? = null
 
-    /** Tick counter for early retry of P2P registration (grid may not be online yet) */
+    /** Tick counter for early retry of P2P registration (tunnel may not be loaded yet) */
     private var initRetryTicks = 0
+
+    /** Guard flag to prevent kinetic cascades during block removal/unload */
+    private var isRemoving = false
 
     fun getRegisteredInputPos(): BlockPos? = registeredInputPos
 
     override fun isCustomConnection(other: KineticBlockEntity, state: BlockState, otherState: BlockState): Boolean {
-        if (other is StressAcceptorBlockEntity || other is StressProviderBlockEntity) {
+        if (other is StressP2PCompanionBlockEntity) {
             val myKey = registeredInputPos ?: return false
-            val otherKey = when (other) {
-                is StressAcceptorBlockEntity -> other.getRegisteredInputPos()
-                is StressProviderBlockEntity -> other.getRegisteredInputPos()
-                else -> null
-            } ?: return false
+            val otherKey = other.getRegisteredInputPos() ?: return false
             return myKey == otherKey
         }
         return false
@@ -138,7 +71,7 @@ class StressProviderBlockEntity(
                 }
             }
             if (partners.isNotEmpty()) {
-                LOGGER.debug("[Provider@{}] addPropagationLocations: key={}, partners={}",
+                LOGGER.debug("[Companion@{}] addPropagationLocations: key={}, partners={}",
                     worldPosition, key, partners)
             }
         }
@@ -153,15 +86,11 @@ class StressProviderBlockEntity(
         connectedViaAxes: Boolean,
         connectedViaCogs: Boolean
     ): Float {
-        if (target is StressAcceptorBlockEntity || target is StressProviderBlockEntity) {
+        if (target is StressP2PCompanionBlockEntity) {
             val myKey = registeredInputPos ?: return 0f
-            val otherKey = when (target) {
-                is StressAcceptorBlockEntity -> target.getRegisteredInputPos()
-                is StressProviderBlockEntity -> target.getRegisteredInputPos()
-                else -> null
-            } ?: return 0f
+            val otherKey = target.getRegisteredInputPos() ?: return 0f
             if (myKey == otherKey) {
-                LOGGER.debug("[Provider@{}] propagateRotationTo {} -> speed modifier 1.0",
+                LOGGER.debug("[Companion@{}] propagateRotationTo {} -> speed modifier 1.0",
                     worldPosition, target.blockPos)
                 return 1f
             }
@@ -175,15 +104,13 @@ class StressProviderBlockEntity(
         super.initialize()
         if (level != null && !level!!.isClientSide) {
             registerWithNetwork()
-            mainNode.create(level, worldPosition)
-            LOGGER.debug("[Provider@{}] initialize: registeredInputPos={}",
+            LOGGER.debug("[Companion@{}] initialize: registeredInputPos={}",
                 worldPosition, registeredInputPos)
             if (registeredInputPos != null) {
                 // Re-trigger propagation so partners discover this new connection
                 attachKinetics()
             } else {
-                // Grid may not be online yet (output tunnel needs grid to find input)
-                // Schedule early retries every tick for the first few ticks
+                // Tunnel may not be loaded/linked yet — schedule early retries
                 initRetryTicks = 10
             }
         }
@@ -198,7 +125,7 @@ class StressProviderBlockEntity(
             initRetryTicks--
             val currentInputPos = findInputTunnelPos()
             if (currentInputPos != null && currentInputPos != registeredInputPos) {
-                LOGGER.debug("[Provider@{}] early retry found tunnel: {}",
+                LOGGER.debug("[Companion@{}] early retry found tunnel: {}",
                     worldPosition, currentInputPos)
                 reloadKinetics()
                 initRetryTicks = 0
@@ -209,7 +136,7 @@ class StressProviderBlockEntity(
         if (level!!.gameTime % 20 == 0L) {
             val currentInputPos = findInputTunnelPos()
             if (currentInputPos != registeredInputPos) {
-                LOGGER.debug("[Provider@{}] periodic check: tunnel changed {} -> {}",
+                LOGGER.debug("[Companion@{}] periodic check: tunnel changed {} -> {}",
                     worldPosition, registeredInputPos, currentInputPos)
                 reloadKinetics()
             }
@@ -217,27 +144,16 @@ class StressProviderBlockEntity(
     }
 
     override fun remove() {
-        LOGGER.debug("[Provider@{}] remove", worldPosition)
+        LOGGER.debug("[Companion@{}] remove", worldPosition)
+        isRemoving = true
         unregisterFromNetwork()
-        mainNode.destroy()
         super.remove()
     }
 
     override fun onChunkUnloaded() {
+        isRemoving = true
+        unregisterFromNetwork()
         super.onChunkUnloaded()
-        mainNode.destroy()
-    }
-
-    // ── NBT Persistence ──
-
-    override fun write(compound: CompoundTag, registries: net.minecraft.core.HolderLookup.Provider, clientPacket: Boolean) {
-        super.write(compound, registries, clientPacket)
-        mainNode.saveToNBT(compound)
-    }
-
-    override fun read(compound: CompoundTag, registries: net.minecraft.core.HolderLookup.Provider, clientPacket: Boolean) {
-        super.read(compound, registries, clientPacket)
-        mainNode.loadFromNBT(compound)
     }
 
     // ── P2P Network Registration ──
@@ -248,14 +164,15 @@ class StressProviderBlockEntity(
      */
     fun reloadKinetics() {
         if (level == null || level!!.isClientSide) return
-        LOGGER.debug("[Provider@{}] reloadKinetics: old={}",
+        if (isRemoving) return
+        LOGGER.debug("[Companion@{}] reloadKinetics: old={}",
             worldPosition, registeredInputPos)
         unregisterFromNetwork()
         if (hasNetwork()) getOrCreateNetwork().remove(this)
         detachKinetics()
         removeSource()
         registerWithNetwork()
-        LOGGER.debug("[Provider@{}] reloadKinetics: new={}, partners={}",
+        LOGGER.debug("[Companion@{}] reloadKinetics: new={}, partners={}",
             worldPosition, registeredInputPos,
             registeredInputPos?.let { StressP2PNetwork.getPartners(it, worldPosition) })
         attachKinetics()
@@ -280,8 +197,9 @@ class StressProviderBlockEntity(
     /**
      * Find the P2P input tunnel's BlockPos by looking at the adjacent cable bus.
      * FACING points toward the cable bus. The tunnel part sits on the opposite side.
-     * For the provider (output side), the adjacent tunnel is typically an output tunnel,
-     * so we follow the P2P link back to the input.
+     *
+     * For input tunnels: the adjacent tunnel IS the input — return its pos directly.
+     * For output tunnels: follow the P2P link back to the input tunnel's pos.
      */
     private fun findInputTunnelPos(): BlockPos? {
         val facing = blockState.getValue(DirectionalKineticBlock.FACING)
@@ -291,13 +209,13 @@ class StressProviderBlockEntity(
         val cableBus = be as? appeng.api.parts.IPartHost ?: return null
         val part = cableBus.getPart(facing.opposite) as? StressP2PTunnelPart ?: return null
 
-        return if (part.isOutput) {
-            // We're adjacent to an output tunnel; get the input's position
+        return if (!part.isOutput) {
+            // Adjacent to the input tunnel directly
+            part.blockEntity.blockPos
+        } else {
+            // Adjacent to an output tunnel; follow P2P link to get input's position
             // NOTE: This requires the ME grid to be online (part.input uses P2PService)
             part.input?.blockEntity?.blockPos
-        } else {
-            // We're adjacent to the input tunnel directly (unusual for provider)
-            part.blockEntity.blockPos
         }
     }
 }

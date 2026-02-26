@@ -14,10 +14,8 @@ import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
 import com.loliball.appliedcreate.item.BrassPatternProviderUpgradeItem
 import com.loliball.appliedcreate.item.MechanicalCraftingPartItem
 import com.loliball.appliedcreate.item.StressP2PPartItem
-import com.loliball.appliedcreate.kinetic.StressAcceptorBlock
-import com.loliball.appliedcreate.kinetic.StressAcceptorBlockEntity
-import com.loliball.appliedcreate.kinetic.StressProviderBlock
-import com.loliball.appliedcreate.kinetic.StressProviderBlockEntity
+import com.loliball.appliedcreate.kinetic.StressP2PCompanionBlock
+import com.loliball.appliedcreate.kinetic.StressP2PCompanionBlockEntity
 import com.loliball.appliedcreate.part.AndesitePatternProviderPart
 import com.loliball.appliedcreate.part.BrassPatternProviderPart
 import com.loliball.appliedcreate.p2p.StressP2PTunnelPart
@@ -137,38 +135,21 @@ class AppliedCreate {
             ) { partItem -> StressP2PTunnelPart(partItem) }
         }
 
-        // ── Stress P2P Companion Blocks ──
-        val STRESS_ACCEPTOR_BLOCK: DeferredHolder<Block, Block> = BLOCKS.register("stress_acceptor") { ->
-            StressAcceptorBlock()
+        // ── Stress P2P Companion Block ──
+        val STRESS_P2P_COMPANION_BLOCK: DeferredHolder<Block, Block> = BLOCKS.register("stress_p2p_companion") { ->
+            StressP2PCompanionBlock()
         }
 
-        val STRESS_ACCEPTOR_ITEM: DeferredHolder<Item, Item> = ITEMS.register("stress_acceptor") { ->
-            BlockItem(STRESS_ACCEPTOR_BLOCK.get(), Item.Properties())
-        }
-
-        @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-        val STRESS_ACCEPTOR_BE: DeferredHolder<BlockEntityType<*>, BlockEntityType<StressAcceptorBlockEntity>> =
-            BLOCK_ENTITY_TYPES.register("stress_acceptor") { ->
-                BlockEntityType.Builder.of(
-                    { pos, state -> StressAcceptorBlockEntity(STRESS_ACCEPTOR_BE.get(), pos, state) },
-                    STRESS_ACCEPTOR_BLOCK.get()
-                ).build(null)
-            }
-
-        val STRESS_PROVIDER_BLOCK: DeferredHolder<Block, Block> = BLOCKS.register("stress_provider") { ->
-            StressProviderBlock()
-        }
-
-        val STRESS_PROVIDER_ITEM: DeferredHolder<Item, Item> = ITEMS.register("stress_provider") { ->
-            BlockItem(STRESS_PROVIDER_BLOCK.get(), Item.Properties())
+        val STRESS_P2P_COMPANION_ITEM: DeferredHolder<Item, Item> = ITEMS.register("stress_p2p_companion") { ->
+            BlockItem(STRESS_P2P_COMPANION_BLOCK.get(), Item.Properties())
         }
 
         @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-        val STRESS_PROVIDER_BE: DeferredHolder<BlockEntityType<*>, BlockEntityType<StressProviderBlockEntity>> =
-            BLOCK_ENTITY_TYPES.register("stress_provider") { ->
+        val STRESS_P2P_COMPANION_BE: DeferredHolder<BlockEntityType<*>, BlockEntityType<StressP2PCompanionBlockEntity>> =
+            BLOCK_ENTITY_TYPES.register("stress_p2p_companion") { ->
                 BlockEntityType.Builder.of(
-                    { pos, state -> StressProviderBlockEntity(STRESS_PROVIDER_BE.get(), pos, state) },
-                    STRESS_PROVIDER_BLOCK.get()
+                    { pos, state -> StressP2PCompanionBlockEntity(STRESS_P2P_COMPANION_BE.get(), pos, state) },
+                    STRESS_P2P_COMPANION_BLOCK.get()
                 ).build(null)
             }
 
@@ -313,8 +294,7 @@ class AppliedCreate {
                     output.accept(BRASS_PATTERN_PROVIDER_PART_ITEM.get())
                     output.accept(BRASS_PATTERN_PROVIDER_UPGRADE_ITEM.get())
                     output.accept(STRESS_P2P_TUNNEL_PART_ITEM.get())
-                    output.accept(STRESS_ACCEPTOR_ITEM.get())
-                    output.accept(STRESS_PROVIDER_ITEM.get())
+                    output.accept(STRESS_P2P_COMPANION_ITEM.get())
                     output.accept(ME_BLUEPRINT_CANNON_ITEM.get())
                     // Crafting items
                     output.accept(STRESS_CIRCUIT_BOARD.get())
@@ -462,12 +442,9 @@ class AppliedCreate {
                 )
             }
 
-            // Register stress values for companion blocks
+            // Register stress value for companion block
             com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
-                STRESS_ACCEPTOR_BLOCK.get(), { 0.0 }
-            )
-            com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
-                STRESS_PROVIDER_BLOCK.get(), { 0.0 }
+                STRESS_P2P_COMPANION_BLOCK.get(), { 0.0 }
             )
         }
     }
@@ -483,15 +460,7 @@ class AppliedCreate {
             BRASS_PATTERN_PROVIDER_BE.get()
         ) { be, _ -> be }
 
-        // Register IN_WORLD_GRID_NODE_HOST for stress acceptor/provider (dual-purpose ME devices)
-        event.registerBlockEntity(
-            AECapabilities.IN_WORLD_GRID_NODE_HOST,
-            STRESS_ACCEPTOR_BE.get()
-        ) { be, _ -> be }
-        event.registerBlockEntity(
-            AECapabilities.IN_WORLD_GRID_NODE_HOST,
-            STRESS_PROVIDER_BE.get()
-        ) { be, _ -> be }
+        // Note: StressP2PCompanion does NOT need IN_WORLD_GRID_NODE_HOST — it has no AE2 grid node
         event.registerBlockEntity(
             AECapabilities.IN_WORLD_GRID_NODE_HOST,
             ME_BLUEPRINT_CANNON_BE.get()

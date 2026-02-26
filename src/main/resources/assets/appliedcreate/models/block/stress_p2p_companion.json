@@ -1,0 +1,8 @@
+{
+    "parent": "minecraft:block/cube_bottom_top",
+    "textures": {
+        "bottom": "appliedcreate:block/stress_p2p_companion_bottom",
+        "side": "appliedcreate:block/stress_p2p_companion_side",
+        "top": "appliedcreate:block/stress_p2p_companion_top"
+    }
+}

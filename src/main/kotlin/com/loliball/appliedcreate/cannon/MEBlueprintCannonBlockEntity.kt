@@ -173,8 +173,8 @@ class MEBlueprintCannonBlockEntity(type: BlockEntityType<*>, pos: BlockPos, stat
     }
 
     override fun remove() {
-        super.remove()
         mainNode.destroy()
+        super.remove()
     }
 
     override fun addBehaviours(behaviours: MutableList<BlockEntityBehaviour>) {}

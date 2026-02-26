@@ -25,8 +25,7 @@
     "item.appliedcreate.stress_storage_cell_256m": "256M Stress Storage Cell",
 
     "item.appliedcreate.stress_p2p_tunnel": "Stress P2P Tunnel",
-    "block.appliedcreate.stress_acceptor": "Stress Acceptor",
-    "block.appliedcreate.stress_provider": "Stress Provider",
+    "block.appliedcreate.stress_p2p_companion": "Stress P2P Companion",
     "block.appliedcreate.me_blueprint_cannon": "ME Blueprint Cannon",
 
     "gui.appliedcreate.slot.upgrades": "Upgrade Cards",

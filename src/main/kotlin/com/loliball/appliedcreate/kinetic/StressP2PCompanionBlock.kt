@@ -12,20 +12,23 @@ import net.minecraft.world.level.block.state.BlockState
 import com.loliball.appliedcreate.AppliedCreate
 
 /**
- * Stress Provider Block — placed adjacent to a Stress P2P Tunnel (output side).
+ * Stress P2P Companion Block — placed adjacent to a Stress P2P Tunnel (input OR output side).
  *
- * This is a KineticBlock that outputs rotation into the Create kinetic network.
- * It receives speed from the paired StressAcceptorBlockEntity on the input side
- * through the virtual connection managed by StressP2PNetwork.
+ * This is a unified KineticBlock that bridges Create kinetic networks through AE2 P2P tunnels.
+ * It auto-detects whether it sits next to an input or output tunnel and participates in the
+ * virtual kinetic network accordingly.
  *
  * The FACING direction points toward the cable containing the P2P tunnel.
- * The shaft outputs rotation from BOTH directions on the facing axis.
+ * The shaft accepts/outputs rotation from BOTH directions on the facing axis
+ * (critical for Create's RotationPropagator to discover the custom connection).
+ *
+ * Replaces the former StressAcceptorBlock and StressProviderBlock with a single block type.
  */
-class StressProviderBlock : DirectionalKineticBlock(
+class StressP2PCompanionBlock : DirectionalKineticBlock(
     Properties.of()
         .strength(3.5f)
         .noOcclusion()
-), IBE<StressProviderBlockEntity> {
+), IBE<StressP2PCompanionBlockEntity> {
 
     override fun getRotationAxis(state: BlockState): Direction.Axis {
         return state.getValue(FACING).axis
@@ -38,17 +41,17 @@ class StressProviderBlock : DirectionalKineticBlock(
         return face.axis == state.getValue(FACING).axis
     }
 
-    override fun getBlockEntityClass(): Class<StressProviderBlockEntity> {
-        return StressProviderBlockEntity::class.java
+    override fun getBlockEntityClass(): Class<StressP2PCompanionBlockEntity> {
+        return StressP2PCompanionBlockEntity::class.java
     }
 
-    override fun getBlockEntityType(): BlockEntityType<out StressProviderBlockEntity> {
+    override fun getBlockEntityType(): BlockEntityType<out StressP2PCompanionBlockEntity> {
         @Suppress("UNCHECKED_CAST")
-        return AppliedCreate.STRESS_PROVIDER_BE.get() as BlockEntityType<out StressProviderBlockEntity>
+        return AppliedCreate.STRESS_P2P_COMPANION_BE.get() as BlockEntityType<out StressP2PCompanionBlockEntity>
     }
 
     override fun newBlockEntity(pos: BlockPos, state: BlockState): BlockEntity {
-        return StressProviderBlockEntity(AppliedCreate.STRESS_PROVIDER_BE.get(), pos, state)
+        return StressP2PCompanionBlockEntity(AppliedCreate.STRESS_P2P_COMPANION_BE.get(), pos, state)
     }
 
     override fun getStateForPlacement(context: BlockPlaceContext): BlockState? {

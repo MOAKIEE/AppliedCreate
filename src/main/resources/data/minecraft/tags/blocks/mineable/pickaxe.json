@@ -3,7 +3,6 @@
     "values": [
         "appliedcreate:andesite_pattern_provider",
         "appliedcreate:brass_pattern_provider",
-        "appliedcreate:stress_acceptor",
-        "appliedcreate:stress_provider"
+        "appliedcreate:stress_p2p_companion"
     ]
 }

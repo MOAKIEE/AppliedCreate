@@ -8,8 +8,7 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * Global registry tracking paired Stress P2P companion blocks.
  *
- * Maps the P2P input tunnel's BlockPos to the set of companion KineticBlockEntity instances
- * (both StressAcceptor on the input side and StressProvider on the output sides).
+ * Maps the P2P input tunnel's BlockPos to the set of StressP2PCompanionBlockEntity positions.
  *
  * This enables Create's custom kinetic connection system (isCustomConnection /
  * addPropagationLocations / propagateRotationTo) to bridge kinetic networks
