@@ -18,7 +18,7 @@
   "pattern": [
     "aba",
     "cdc",
-    "aca"
+    "aba"
   ],
   "result": {
     "count": 1,

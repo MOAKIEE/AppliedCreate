@@ -1,5 +1,10 @@
 package com.loliball.appliedcreate
 
+import com.loliball.appliedcreate.cannon.MEBlueprintCannonBlock
+import com.loliball.appliedcreate.cannon.MEBlueprintCannonBlockEntity
+import com.loliball.appliedcreate.cannon.MEBlueprintCannonMenu
+import com.loliball.appliedcreate.cannon.ConfigureMECannonPayload
+import net.minecraft.world.level.block.state.BlockBehaviour
 import com.loliball.appliedcreate.block.AndesitePatternProviderBlock
 import com.loliball.appliedcreate.block.BrassPatternProviderBlock
 import com.loliball.appliedcreate.block.entity.AndesitePatternProviderBlockEntity
@@ -8,6 +13,7 @@ import com.loliball.appliedcreate.block.entity.BrassPatternProviderBlockEntity
 import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
 import com.loliball.appliedcreate.item.BrassPatternProviderUpgradeItem
 import com.loliball.appliedcreate.item.MechanicalCraftingPartItem
+import com.loliball.appliedcreate.item.StressP2PPartItem
 import com.loliball.appliedcreate.kinetic.StressAcceptorBlock
 import com.loliball.appliedcreate.kinetic.StressAcceptorBlockEntity
 import com.loliball.appliedcreate.kinetic.StressProviderBlock
@@ -43,6 +49,7 @@ import net.neoforged.fml.loading.FMLEnvironment
 import net.neoforged.neoforge.registries.DeferredHolder
 import net.neoforged.neoforge.registries.DeferredRegister
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import thedarkcolour.kotlinforforge.neoforge.forge.MOD_BUS
@@ -124,7 +131,7 @@ class AppliedCreate {
 
         // ── Stress P2P Tunnel ──
         val STRESS_P2P_TUNNEL_PART_ITEM: DeferredHolder<Item, Item> = ITEMS.register("stress_p2p_tunnel") { ->
-            MechanicalCraftingPartItem(
+            StressP2PPartItem(
                 Item.Properties(),
                 StressP2PTunnelPart::class.java
             ) { partItem -> StressP2PTunnelPart(partItem) }
@@ -163,6 +170,32 @@ class AppliedCreate {
                     { pos, state -> StressProviderBlockEntity(STRESS_PROVIDER_BE.get(), pos, state) },
                     STRESS_PROVIDER_BLOCK.get()
                 ).build(null)
+            }
+
+        // ── ME Blueprint Cannon ──
+        val ME_BLUEPRINT_CANNON_BLOCK: DeferredHolder<Block, Block> = BLOCKS.register("me_blueprint_cannon") { ->
+            MEBlueprintCannonBlock(BlockBehaviour.Properties.of().strength(3.5f).noOcclusion())
+        }
+
+        val ME_BLUEPRINT_CANNON_ITEM: DeferredHolder<Item, Item> = ITEMS.register("me_blueprint_cannon") { ->
+            BlockItem(ME_BLUEPRINT_CANNON_BLOCK.get(), Item.Properties())
+        }
+
+        @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
+        val ME_BLUEPRINT_CANNON_BE: DeferredHolder<BlockEntityType<*>, BlockEntityType<MEBlueprintCannonBlockEntity>> =
+            BLOCK_ENTITY_TYPES.register("me_blueprint_cannon") { ->
+                BlockEntityType.Builder.of(
+                    { pos, state -> MEBlueprintCannonBlockEntity(ME_BLUEPRINT_CANNON_BE.get(), pos, state) },
+                    ME_BLUEPRINT_CANNON_BLOCK.get()
+                ).build(null)
+            }
+
+        val ME_BLUEPRINT_CANNON_MENU: DeferredHolder<MenuType<*>, MenuType<MEBlueprintCannonMenu>> =
+            MENU_TYPES.register("me_blueprint_cannon") { ->
+                net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create { windowId, inv, buf ->
+                    // Correctly handle the late initialization of MENU_TYPES
+                    MEBlueprintCannonMenu(MENU_TYPES.getEntries().find { it.key!!.location().path == "me_blueprint_cannon" }!!.get() as MenuType<*>, windowId, inv, buf)
+                }
             }
 
         // ── Stress Storage Cells ──
@@ -282,6 +315,7 @@ class AppliedCreate {
                     output.accept(STRESS_P2P_TUNNEL_PART_ITEM.get())
                     output.accept(STRESS_ACCEPTOR_ITEM.get())
                     output.accept(STRESS_PROVIDER_ITEM.get())
+                    output.accept(ME_BLUEPRINT_CANNON_ITEM.get())
                     // Crafting items
                     output.accept(STRESS_CIRCUIT_BOARD.get())
                     output.accept(ADVANCED_STRESS_CIRCUIT_BOARD.get())
@@ -351,6 +385,14 @@ class AppliedCreate {
                 AEKeyTypes.register(StressKeyType.TYPE)
             }
         }
+        bus.addListener { event: RegisterPayloadHandlersEvent ->
+            val registrar = event.registrar(MOD_ID)
+            registrar.playToServer(
+                ConfigureMECannonPayload.TYPE,
+                ConfigureMECannonPayload.STREAM_CODEC,
+                ConfigureMECannonPayload::handle
+            )
+        }
 
         // Register part models manually since Kotlin companion object @PartModels annotations
         // are not discoverable by AE2's Java reflection-based PartModelsHelper scanner
@@ -404,13 +446,14 @@ class AppliedCreate {
             BRASS_PATTERN_PROVIDER_BE.get(),
             BRASS_PATTERN_PROVIDER_ITEM.get().asItem()
         )
+        AEBaseBlockEntity.registerBlockEntityItem(
+            ME_BLUEPRINT_CANNON_BE.get(),
+            ME_BLUEPRINT_CANNON_ITEM.get().asItem()
+        )
 
         event.enqueueWork {
-            // Key type registration moved to init block (must happen before registry freeze)
-
-            // P2P attunement tag skipped: AE2 19.x validateTunnelPartItem requires PartItem,
-            // not IPartItem. Our MechanicalCraftingPartItem implements IPartItem but extends Item.
-            // The tunnel still works — just no tag-based auto-attunement.
+            // Register P2P attunement tag — now works because StressP2PPartItem extends PartItem
+            P2PTunnelAttunement.registerAttunementTag(STRESS_P2P_TUNNEL_PART_ITEM.get())
 
             registerPatternProviderOpener(BRASS_PATTERN_PROVIDER_MENU.get()) { wnd, inv, host ->
                 BrassPatternProviderMenu(
@@ -422,6 +465,9 @@ class AppliedCreate {
             // Register stress values for companion blocks
             com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
                 STRESS_ACCEPTOR_BLOCK.get(), { 0.0 }
+            )
+            com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
+                STRESS_PROVIDER_BLOCK.get(), { 0.0 }
             )
         }
     }
@@ -435,6 +481,20 @@ class AppliedCreate {
         event.registerBlockEntity(
             AECapabilities.IN_WORLD_GRID_NODE_HOST,
             BRASS_PATTERN_PROVIDER_BE.get()
+        ) { be, _ -> be }
+
+        // Register IN_WORLD_GRID_NODE_HOST for stress acceptor/provider (dual-purpose ME devices)
+        event.registerBlockEntity(
+            AECapabilities.IN_WORLD_GRID_NODE_HOST,
+            STRESS_ACCEPTOR_BE.get()
+        ) { be, _ -> be }
+        event.registerBlockEntity(
+            AECapabilities.IN_WORLD_GRID_NODE_HOST,
+            STRESS_PROVIDER_BE.get()
+        ) { be, _ -> be }
+        event.registerBlockEntity(
+            AECapabilities.IN_WORLD_GRID_NODE_HOST,
+            ME_BLUEPRINT_CANNON_BE.get()
         ) { be, _ -> be }
 
         // Register GENERIC_INTERNAL_INV so AE2's registerGenericAdapters auto-registers

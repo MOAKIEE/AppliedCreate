@@ -1,0 +1,16 @@
+{
+  "replace": false,
+  "values": [
+    "create:shaft",
+    "create:cogwheel",
+    "create:large_cogwheel",
+    "create:gearbox",
+    "create:clutch",
+    "create:gearshift",
+    "create:encased_chain_drive",
+    "create:adjustable_chain_gearshift",
+    "create:hand_crank",
+    "create:mechanical_bearing",
+    "create:windmill_bearing"
+  ]
+}

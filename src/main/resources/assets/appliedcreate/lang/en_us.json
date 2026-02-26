@@ -27,6 +27,9 @@
     "item.appliedcreate.stress_p2p_tunnel": "Stress P2P Tunnel",
     "block.appliedcreate.stress_acceptor": "Stress Acceptor",
     "block.appliedcreate.stress_provider": "Stress Provider",
+    "block.appliedcreate.me_blueprint_cannon": "ME Blueprint Cannon",
+
+    "gui.appliedcreate.slot.upgrades": "Upgrade Cards",
 
     "item.appliedcreate.stress_circuit_board": "Andesite Stress Circuit Board",
     "item.appliedcreate.advanced_stress_circuit_board": "Brass Stress Circuit Board",

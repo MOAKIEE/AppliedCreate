@@ -1,44 +1,124 @@
 package com.loliball.appliedcreate.kinetic
+
+import appeng.api.networking.GridHelper
+import appeng.api.networking.IGridNode
+import appeng.api.networking.IGridNodeListener
+import appeng.api.networking.IInWorldGridNodeHost
+import appeng.api.networking.IManagedGridNode
+import appeng.api.networking.security.IActionHost
+import appeng.api.orientation.BlockOrientation
+import appeng.api.stacks.AEKeyType
+import appeng.api.storage.MEStorage
+import appeng.api.util.AECableType
+import appeng.me.helpers.BlockEntityNodeListener
+import appeng.me.helpers.IGridConnectedBlockEntity
+import appeng.me.helpers.MachineSource
+import com.loliball.appliedcreate.AppliedCreate
 import com.loliball.appliedcreate.p2p.StressP2PNetwork
 import com.loliball.appliedcreate.p2p.StressP2PTunnelPart
+import com.loliball.appliedcreate.storage.StressKey
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock
 import com.simibubi.create.content.kinetics.base.IRotate
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity
 import net.minecraft.core.BlockPos
+import net.minecraft.core.Direction
+import net.minecraft.nbt.CompoundTag
+import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
+import java.util.EnumSet
+import kotlin.math.abs
 
 /**
- * Stress Acceptor Block Entity — the input companion for Stress P2P.
+ * Stress Acceptor Block Entity — dual-purpose block:
  *
- * Extends KineticBlockEntity and uses Create's custom connection system
- * (isCustomConnection / addPropagationLocations / propagateRotationTo)
- * to bridge kinetic networks through the AE2 ME P2P tunnel.
+ * 1. P2P Companion (input side): Uses Create's custom connection system to bridge
+ *    kinetic networks through AE2 P2P tunnels. All companions sharing the same P2P
+ *    input key form a virtual kinetic network.
  *
- * The acceptor receives rotation from the input kinetic network via its shaft,
- * and the virtual connection propagates that rotation to paired StressProviderBlockEntity
- * instances on the output side of the P2P tunnel.
+ * 2. ME Grid Device: Connects to the AE2 ME network and inserts stress (from the
+ *    kinetic network) into ME stress storage cells. Consumes rotation and converts
+ *    it to stored stress units.
  *
- * Stress impact is 0 (registered in AppliedCreate.kt), so this block does not
- * add load to the input kinetic network.
+ * Technical pattern: KineticBlockEntity + manual IManagedGridNode composition
+ * (can't extend both KineticBlockEntity and AENetworkedBlockEntity).
+ *
+ * Stress impact is 0 — this block passively bridges rotation without adding load
+ * (for the P2P companion role). For the ME storage role, stress is inserted based
+ * on the kinetic speed.
  */
 class StressAcceptorBlockEntity(
     type: BlockEntityType<*>,
     pos: BlockPos,
     state: BlockState
-) : KineticBlockEntity(type, pos, state) {
+) : KineticBlockEntity(type, pos, state), IGridConnectedBlockEntity {
+
+    // ── AE2 Grid Node (manual composition) ──
+
+    @Suppress("UNCHECKED_CAST")
+    private val mainNode: IManagedGridNode = GridHelper.createManagedNode(
+        this,
+        BlockEntityNodeListener.INSTANCE as IGridNodeListener<IGridConnectedBlockEntity>
+    )
+        .setVisualRepresentation(AppliedCreate.STRESS_ACCEPTOR_ITEM.get())
+        .setInWorldNode(true)
+        .setTagName("proxy")
+        .setIdlePowerUsage(1.0)
+        .setExposedOnSides(EnumSet.allOf(Direction::class.java))
+
+    private val actionSource = MachineSource(this)
+
+    // ── IGridConnectedBlockEntity implementation ──
+
+    override fun getMainNode(): IManagedGridNode = mainNode
+
+    override fun getGridConnectableSides(orientation: BlockOrientation): Set<Direction> {
+        return EnumSet.allOf(Direction::class.java)
+    }
+
+    override fun saveChanges() {
+        setChanged()
+    }
+
+    override fun onMainNodeStateChanged(reason: IGridNodeListener.State) {
+        // Could send visual update to client if needed
+    }
+
+    override fun getCableConnectionType(dir: Direction): AECableType {
+        return AECableType.SMART
+    }
+
+    override fun getActionableNode(): IGridNode? {
+        return mainNode.node
+    }
+
+    override fun setOwner(owner: Player) {
+        mainNode.setOwningPlayer(owner)
+    }
+
+    override fun getGridNode(dir: Direction): IGridNode? {
+        val node = mainNode.node ?: return null
+        if (node is appeng.me.InWorldGridNode && node.isExposedOnSide(dir)) {
+            return node
+        }
+        return null
+    }
+
+    // ── P2P Companion (Create Custom Connection) ──
 
     /** The input tunnel's position, used as the network key in StressP2PNetwork */
     private var registeredInputPos: BlockPos? = null
 
     fun getRegisteredInputPos(): BlockPos? = registeredInputPos
 
-    // ── Create Custom Connection Overrides ──
-
     override fun isCustomConnection(other: KineticBlockEntity, state: BlockState, otherState: BlockState): Boolean {
-        if (other is StressProviderBlockEntity) {
+        if (other is StressAcceptorBlockEntity || other is StressProviderBlockEntity) {
             val myKey = registeredInputPos ?: return false
-            val otherKey = other.getRegisteredInputPos() ?: return false
+            val otherKey = when (other) {
+                is StressAcceptorBlockEntity -> other.getRegisteredInputPos()
+                is StressProviderBlockEntity -> other.getRegisteredInputPos()
+                else -> null
+            } ?: return false
             return myKey == otherKey
         }
         return false
@@ -68,20 +148,26 @@ class StressAcceptorBlockEntity(
         connectedViaAxes: Boolean,
         connectedViaCogs: Boolean
     ): Float {
-        if (target is StressProviderBlockEntity) {
+        if (target is StressAcceptorBlockEntity || target is StressProviderBlockEntity) {
             val myKey = registeredInputPos ?: return 0f
-            val otherKey = target.getRegisteredInputPos() ?: return 0f
+            val otherKey = when (target) {
+                is StressAcceptorBlockEntity -> target.getRegisteredInputPos()
+                is StressProviderBlockEntity -> target.getRegisteredInputPos()
+                else -> null
+            } ?: return 0f
             if (myKey == otherKey) return 1f
         }
         return 0f
     }
 
-    // ── Network Registration ──
+    // ── Lifecycle ──
 
     override fun initialize() {
         super.initialize()
         if (level != null && !level!!.isClientSide) {
             registerWithNetwork()
+            // Create grid node after level is available
+            mainNode.create(level, worldPosition)
         }
     }
 
@@ -96,12 +182,35 @@ class StressAcceptorBlockEntity(
                 updateRegistration()
             }
         }
+
+        // Insert stress into ME network based on kinetic speed
+        insertStressIntoNetwork()
     }
 
     override fun remove() {
         unregisterFromNetwork()
+        mainNode.destroy()
         super.remove()
     }
+
+    override fun onChunkUnloaded() {
+        super.onChunkUnloaded()
+        mainNode.destroy()
+    }
+
+    // ── NBT Persistence ──
+
+    override fun write(compound: CompoundTag, registries: net.minecraft.core.HolderLookup.Provider, clientPacket: Boolean) {
+        super.write(compound, registries, clientPacket)
+        mainNode.saveToNBT(compound)
+    }
+
+    override fun read(compound: CompoundTag, registries: net.minecraft.core.HolderLookup.Provider, clientPacket: Boolean) {
+        super.read(compound, registries, clientPacket)
+        mainNode.loadFromNBT(compound)
+    }
+
+    // ── P2P Network Registration ──
 
     /**
      * Called when the P2P tunnel notifies us of a network change.
@@ -152,5 +261,30 @@ class StressAcceptorBlockEntity(
             // We're adjacent to an output tunnel; get the input's position
             part.input?.blockEntity?.blockPos
         }
+    }
+
+    // ── ME Stress Storage ──
+
+    /**
+     * Insert stress into ME network based on current kinetic speed.
+     * Runs every tick when the block has rotation speed.
+     */
+    private fun insertStressIntoNetwork() {
+        val currentSpeed = abs(speed)
+        if (currentSpeed < 0.01f) return
+
+        val grid = mainNode.grid ?: return
+        val storage: MEStorage = grid.storageService?.inventory ?: return
+
+        // Convert speed to stress units: speed * 256 per tick
+        val amount = (currentSpeed * 256).toLong()
+        if (amount <= 0) return
+
+        storage.insert(
+            StressKey.INSTANCE,
+            amount,
+            appeng.api.config.Actionable.MODULATE,
+            actionSource
+        )
     }
 }

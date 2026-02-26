@@ -27,6 +27,9 @@
     "item.appliedcreate.stress_p2p_tunnel": "应力P2P通道",
     "block.appliedcreate.stress_acceptor": "应力接收器",
     "block.appliedcreate.stress_provider": "应力供应器",
+    "block.appliedcreate.me_blueprint_cannon": "ME蓝图大炮",
+
+    "gui.appliedcreate.slot.upgrades": "升级卡",
 
     "item.appliedcreate.stress_circuit_board": "安山应力电路板",
     "item.appliedcreate.advanced_stress_circuit_board": "黄铜应力电路板",
