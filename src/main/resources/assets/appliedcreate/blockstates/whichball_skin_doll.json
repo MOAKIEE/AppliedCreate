@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "appliedcreate:block/whichball_skin_doll" },
+    "facing=south": { "model": "appliedcreate:block/whichball_skin_doll", "y": 180 },
+    "facing=west": { "model": "appliedcreate:block/whichball_skin_doll", "y": 270 },
+    "facing=east": { "model": "appliedcreate:block/whichball_skin_doll", "y": 90 }
+  }
+}

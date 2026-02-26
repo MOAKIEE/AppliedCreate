@@ -8,6 +8,7 @@ import com.loliball.appliedcreate.energy.KineticEnergyAcceptorBlock
 import com.loliball.appliedcreate.energy.KineticEnergyAcceptorBlockEntity
 import com.loliball.appliedcreate.energy.MEGearboxBlock
 import com.loliball.appliedcreate.energy.MEGearboxBlockEntity
+import com.loliball.appliedcreate.block.BlockFumo
 import net.minecraft.world.level.block.state.BlockBehaviour
 import com.loliball.appliedcreate.block.AndesitePatternProviderBlock
 import com.loliball.appliedcreate.block.BrassPatternProviderBlock
@@ -218,6 +219,15 @@ class AppliedCreate {
                     ME_GEARBOX_BLOCK.get()
                 ).build(null)
             }
+
+        // ── 小萝卜 (Fumo Doll) ──
+        val WHICHBALL_SKIN_DOLL_BLOCK: DeferredHolder<Block, Block> = BLOCKS.register("whichball_skin_doll") { ->
+            BlockFumo()
+        }
+
+        val WHICHBALL_SKIN_DOLL_ITEM: DeferredHolder<Item, Item> = ITEMS.register("whichball_skin_doll") { ->
+            BlockItem(WHICHBALL_SKIN_DOLL_BLOCK.get(), Item.Properties())
+        }
         // ── Stress Storage Cells ──
         val STRESS_CELL_1K: DeferredHolder<Item, Item> = ITEMS.register("stress_storage_cell_1k") { ->
             StressStorageCell(Item.Properties(), 0.5, 1, 8, 1)
@@ -337,6 +347,7 @@ class AppliedCreate {
                     output.accept(ME_BLUEPRINT_CANNON_ITEM.get())
                     output.accept(KINETIC_ENERGY_ACCEPTOR_ITEM.get())
                     output.accept(ME_GEARBOX_ITEM.get())
+                    output.accept(WHICHBALL_SKIN_DOLL_ITEM.get())
                     // Crafting items
                     output.accept(STRESS_CIRCUIT_BOARD.get())
                     output.accept(ADVANCED_STRESS_CIRCUIT_BOARD.get())

@@ -57,5 +57,8 @@
     "appliedcreate.me_gearbox.mode.export": "Export (ME → Kinetic)",
     "appliedcreate.me_gearbox.mode.import": "Import (Kinetic → ME)",
     "appliedcreate.me_gearbox.transfer": "Transfer: ",
-    "appliedcreate.me_gearbox.transfer.unit": " SU/t"
+    "appliedcreate.me_gearbox.transfer.unit": " SU/t",
+
+    "block.appliedcreate.whichball_skin_doll": "Whichball Skin Doll"
+}
 }
