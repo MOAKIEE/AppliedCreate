@@ -23,6 +23,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
+import org.slf4j.LoggerFactory
 import java.util.EnumSet
 
 /**
@@ -44,6 +45,10 @@ class StressProviderBlockEntity(
     pos: BlockPos,
     state: BlockState
 ) : KineticBlockEntity(type, pos, state), IGridConnectedBlockEntity {
+
+    companion object {
+        private val LOGGER = LoggerFactory.getLogger("AppliedCreate/StressProvider")
+    }
 
     // ── AE2 Grid Node (manual composition) ──
 
@@ -101,12 +106,19 @@ class StressProviderBlockEntity(
     /** The input tunnel's position, used as the network key in StressP2PNetwork */
     private var registeredInputPos: BlockPos? = null
 
+    /** Tick counter for early retry of P2P registration (grid may not be online yet) */
+    private var initRetryTicks = 0
+
     fun getRegisteredInputPos(): BlockPos? = registeredInputPos
 
     override fun isCustomConnection(other: KineticBlockEntity, state: BlockState, otherState: BlockState): Boolean {
-        if (other is StressAcceptorBlockEntity) {
+        if (other is StressAcceptorBlockEntity || other is StressProviderBlockEntity) {
             val myKey = registeredInputPos ?: return false
-            val otherKey = other.getRegisteredInputPos() ?: return false
+            val otherKey = when (other) {
+                is StressAcceptorBlockEntity -> other.getRegisteredInputPos()
+                is StressProviderBlockEntity -> other.getRegisteredInputPos()
+                else -> null
+            } ?: return false
             return myKey == otherKey
         }
         return false
@@ -119,10 +131,15 @@ class StressProviderBlockEntity(
     ): MutableList<BlockPos> {
         val key = registeredInputPos
         if (key != null) {
-            for (partnerPos in StressP2PNetwork.getPartners(key, worldPosition)) {
+            val partners = StressP2PNetwork.getPartners(key, worldPosition)
+            for (partnerPos in partners) {
                 if (!neighbours.contains(partnerPos)) {
                     neighbours.add(partnerPos)
                 }
+            }
+            if (partners.isNotEmpty()) {
+                LOGGER.debug("[Provider@{}] addPropagationLocations: key={}, partners={}",
+                    worldPosition, key, partners)
             }
         }
         return super.addPropagationLocations(block, state, neighbours)
@@ -136,10 +153,18 @@ class StressProviderBlockEntity(
         connectedViaAxes: Boolean,
         connectedViaCogs: Boolean
     ): Float {
-        if (target is StressAcceptorBlockEntity) {
+        if (target is StressAcceptorBlockEntity || target is StressProviderBlockEntity) {
             val myKey = registeredInputPos ?: return 0f
-            val otherKey = target.getRegisteredInputPos() ?: return 0f
-            if (myKey == otherKey) return 1f
+            val otherKey = when (target) {
+                is StressAcceptorBlockEntity -> target.getRegisteredInputPos()
+                is StressProviderBlockEntity -> target.getRegisteredInputPos()
+                else -> null
+            } ?: return 0f
+            if (myKey == otherKey) {
+                LOGGER.debug("[Provider@{}] propagateRotationTo {} -> speed modifier 1.0",
+                    worldPosition, target.blockPos)
+                return 1f
+            }
         }
         return 0f
     }
@@ -151,6 +176,16 @@ class StressProviderBlockEntity(
         if (level != null && !level!!.isClientSide) {
             registerWithNetwork()
             mainNode.create(level, worldPosition)
+            LOGGER.debug("[Provider@{}] initialize: registeredInputPos={}",
+                worldPosition, registeredInputPos)
+            if (registeredInputPos != null) {
+                // Re-trigger propagation so partners discover this new connection
+                attachKinetics()
+            } else {
+                // Grid may not be online yet (output tunnel needs grid to find input)
+                // Schedule early retries every tick for the first few ticks
+                initRetryTicks = 10
+            }
         }
     }
 
@@ -158,16 +193,31 @@ class StressProviderBlockEntity(
         super.tick()
         if (level == null || level!!.isClientSide) return
 
+        // Early retry: check registration in the first few ticks after init
+        if (initRetryTicks > 0) {
+            initRetryTicks--
+            val currentInputPos = findInputTunnelPos()
+            if (currentInputPos != null && currentInputPos != registeredInputPos) {
+                LOGGER.debug("[Provider@{}] early retry found tunnel: {}",
+                    worldPosition, currentInputPos)
+                reloadKinetics()
+                initRetryTicks = 0
+            }
+        }
+
         // Periodically check for tunnel changes (e.g., memory card relink)
         if (level!!.gameTime % 20 == 0L) {
             val currentInputPos = findInputTunnelPos()
             if (currentInputPos != registeredInputPos) {
+                LOGGER.debug("[Provider@{}] periodic check: tunnel changed {} -> {}",
+                    worldPosition, registeredInputPos, currentInputPos)
                 reloadKinetics()
             }
         }
     }
 
     override fun remove() {
+        LOGGER.debug("[Provider@{}] remove", worldPosition)
         unregisterFromNetwork()
         mainNode.destroy()
         super.remove()
@@ -198,11 +248,16 @@ class StressProviderBlockEntity(
      */
     fun reloadKinetics() {
         if (level == null || level!!.isClientSide) return
+        LOGGER.debug("[Provider@{}] reloadKinetics: old={}",
+            worldPosition, registeredInputPos)
         unregisterFromNetwork()
         if (hasNetwork()) getOrCreateNetwork().remove(this)
         detachKinetics()
         removeSource()
         registerWithNetwork()
+        LOGGER.debug("[Provider@{}] reloadKinetics: new={}, partners={}",
+            worldPosition, registeredInputPos,
+            registeredInputPos?.let { StressP2PNetwork.getPartners(it, worldPosition) })
         attachKinetics()
     }
 
@@ -238,6 +293,7 @@ class StressProviderBlockEntity(
 
         return if (part.isOutput) {
             // We're adjacent to an output tunnel; get the input's position
+            // NOTE: This requires the ME grid to be online (part.input uses P2PService)
             part.input?.blockEntity?.blockPos
         } else {
             // We're adjacent to the input tunnel directly (unusual for provider)

@@ -26,6 +26,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
+import org.slf4j.LoggerFactory
 import java.util.EnumSet
 import kotlin.math.abs
 
@@ -52,6 +53,10 @@ class StressAcceptorBlockEntity(
     pos: BlockPos,
     state: BlockState
 ) : KineticBlockEntity(type, pos, state), IGridConnectedBlockEntity {
+
+    companion object {
+        private val LOGGER = LoggerFactory.getLogger("AppliedCreate/StressAcceptor")
+    }
 
     // ── AE2 Grid Node (manual composition) ──
 
@@ -109,6 +114,9 @@ class StressAcceptorBlockEntity(
     /** The input tunnel's position, used as the network key in StressP2PNetwork */
     private var registeredInputPos: BlockPos? = null
 
+    /** Tick counter for early retry of P2P registration (grid may not be online yet) */
+    private var initRetryTicks = 0
+
     fun getRegisteredInputPos(): BlockPos? = registeredInputPos
 
     override fun isCustomConnection(other: KineticBlockEntity, state: BlockState, otherState: BlockState): Boolean {
@@ -131,10 +139,15 @@ class StressAcceptorBlockEntity(
     ): MutableList<BlockPos> {
         val key = registeredInputPos
         if (key != null) {
-            for (partnerPos in StressP2PNetwork.getPartners(key, worldPosition)) {
+            val partners = StressP2PNetwork.getPartners(key, worldPosition)
+            for (partnerPos in partners) {
                 if (!neighbours.contains(partnerPos)) {
                     neighbours.add(partnerPos)
                 }
+            }
+            if (partners.isNotEmpty()) {
+                LOGGER.debug("[Acceptor@{}] addPropagationLocations: key={}, partners={}",
+                    worldPosition, key, partners)
             }
         }
         return super.addPropagationLocations(block, state, neighbours)
@@ -155,7 +168,11 @@ class StressAcceptorBlockEntity(
                 is StressProviderBlockEntity -> target.getRegisteredInputPos()
                 else -> null
             } ?: return 0f
-            if (myKey == otherKey) return 1f
+            if (myKey == otherKey) {
+                LOGGER.debug("[Acceptor@{}] propagateRotationTo {} -> speed modifier 1.0",
+                    worldPosition, target.blockPos)
+                return 1f
+            }
         }
         return 0f
     }
@@ -168,6 +185,15 @@ class StressAcceptorBlockEntity(
             registerWithNetwork()
             // Create grid node after level is available
             mainNode.create(level, worldPosition)
+            LOGGER.debug("[Acceptor@{}] initialize: registeredInputPos={}",
+                worldPosition, registeredInputPos)
+            if (registeredInputPos != null) {
+                // Re-trigger propagation so partners discover this new connection
+                attachKinetics()
+            } else {
+                // Grid may not be online yet — schedule early retries
+                initRetryTicks = 5
+            }
         }
     }
 
@@ -175,10 +201,24 @@ class StressAcceptorBlockEntity(
         super.tick()
         if (level == null || level!!.isClientSide) return
 
+        // Early retry: check registration in the first few ticks after init
+        if (initRetryTicks > 0) {
+            initRetryTicks--
+            val currentInputPos = findInputTunnelPos()
+            if (currentInputPos != null && currentInputPos != registeredInputPos) {
+                LOGGER.debug("[Acceptor@{}] early retry found tunnel: {}",
+                    worldPosition, currentInputPos)
+                updateRegistration()
+                initRetryTicks = 0
+            }
+        }
+
         // Periodically check for tunnel changes (e.g., memory card relink)
         if (level!!.gameTime % 20 == 0L) {
             val currentInputPos = findInputTunnelPos()
             if (currentInputPos != registeredInputPos) {
+                LOGGER.debug("[Acceptor@{}] periodic check: tunnel changed {} -> {}",
+                    worldPosition, registeredInputPos, currentInputPos)
                 updateRegistration()
             }
         }
@@ -188,6 +228,7 @@ class StressAcceptorBlockEntity(
     }
 
     override fun remove() {
+        LOGGER.debug("[Acceptor@{}] remove", worldPosition)
         unregisterFromNetwork()
         mainNode.destroy()
         super.remove()
@@ -218,11 +259,16 @@ class StressAcceptorBlockEntity(
      */
     fun updateRegistration() {
         if (level == null || level!!.isClientSide) return
+        LOGGER.debug("[Acceptor@{}] updateRegistration: old={}",
+            worldPosition, registeredInputPos)
         unregisterFromNetwork()
         if (hasNetwork()) getOrCreateNetwork().remove(this)
         detachKinetics()
         removeSource()
         registerWithNetwork()
+        LOGGER.debug("[Acceptor@{}] updateRegistration: new={}, partners={}",
+            worldPosition, registeredInputPos,
+            registeredInputPos?.let { StressP2PNetwork.getPartners(it, worldPosition) })
         attachKinetics()
     }
 
