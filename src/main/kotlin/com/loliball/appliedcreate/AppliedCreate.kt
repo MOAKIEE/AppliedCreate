@@ -528,11 +528,11 @@ class AppliedCreate {
             // Register stress values for ME Gearbox
             // Import mode: stress impact (consumes kinetic energy)
             com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
-                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.STRESS_IMPACT_PER_RPM.toDouble() }
+                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.BASE_STRESS_IMPACT_PER_RPM.toDouble() }
             )
             // Export mode: stress capacity (generates kinetic energy)
             com.simibubi.create.api.stress.BlockStressValues.CAPACITIES.register(
-                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.STRESS_CAPACITY_PER_RPM.toDouble() }
+                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.BASE_STRESS_CAPACITY_PER_RPM.toDouble() }
             )
 
             // Register upgrade cards for ME Blueprint Cannon

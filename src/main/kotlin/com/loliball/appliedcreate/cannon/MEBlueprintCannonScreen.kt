@@ -1,8 +1,6 @@
 package com.loliball.appliedcreate.cannon
 
 import com.loliball.appliedcreate.AppliedCreate
-import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.resources.ResourceLocation
 import com.simibubi.create.content.schematics.cannon.SchematicannonBlockEntity
 import com.simibubi.create.foundation.gui.AllGuiTextures
 import com.simibubi.create.foundation.gui.AllIcons
@@ -19,16 +17,41 @@ import net.minecraft.client.gui.components.AbstractWidget
 import net.minecraft.client.renderer.Rect2i
 import net.minecraft.network.chat.CommonComponents
 import net.minecraft.network.chat.Component
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.player.Inventory
-import net.minecraft.world.item.ItemStack
 import net.neoforged.neoforge.network.PacketDistributor
 import java.util.*
 
 class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory, title: Component) :
     AbstractSimiContainerScreen<MEBlueprintCannonMenu>(menu, inventory, title) {
 
-    private val BG_BOTTOM = AllGuiTextures.SCHEMATICANNON_BOTTOM
-    private val BG_TOP = AllGuiTextures.SCHEMATICANNON_TOP
+    companion object {
+        // Custom GUI texture atlas (256x256)
+        private val GUI_TEXTURE = ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "textures/gui/me_blueprint_cannon.png")
+        private const val TEX_SIZE = 256
+
+        // Main background region: (0,0) -> 213x143
+        private const val BG_W = 213
+        private const val BG_H = 143
+
+        // Progress bar region: (0,150) -> 114x16
+        private const val PROGRESS_U = 0
+        private const val PROGRESS_V = 150
+        private const val PROGRESS_W = 114
+        private const val PROGRESS_H = 16
+
+        // Highlight region: (0,170) -> 26x26
+        private const val HIGHLIGHT_U = 0
+        private const val HIGHLIGHT_V = 170
+        private const val HIGHLIGHT_W = 26
+        private const val HIGHLIGHT_H = 26
+
+        // Title bar decoration region: (0,200) -> 205x15
+        private const val TITLE_U = 0
+        private const val TITLE_V = 200
+        private const val TITLE_W = 205
+        private const val TITLE_H = 15
+    }
 
     private val _showSettings = "gui.schematicannon.showOptions"
     private val _slotSchematic = "gui.schematicannon.slot.schematic"
@@ -58,7 +81,6 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
     private lateinit var viewMaterialsButton: IconButton
 
     private var placementSettingWidgets = ArrayList<AbstractWidget>()
-    private val renderedItem = ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("create", "schematicannon")))
     private var extraAreas: List<Rect2i> = Collections.emptyList()
 
     // Upgrade panel constants (AE2 UpgradesPanel style)
@@ -70,7 +92,7 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
     private var showingMaterials = false
 
     override fun init() {
-        setWindowSize(BG_TOP.width, BG_TOP.height + BG_BOTTOM.height + 2 + AllGuiTextures.PLAYER_INVENTORY.height)
+        setWindowSize(BG_W, BG_H + 2 + AllGuiTextures.PLAYER_INVENTORY.height)
         setWindowOffset(-11, 0)
         super.init()
 
@@ -107,7 +129,7 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
         
         showSettingsIndicator = Indicator(x + 9, y + 111, CommonComponents.EMPTY)
 
-        // View Materials button — replaces old book printer functionality
+        // View Materials button
         viewMaterialsButton = IconButton(x + 134, y + 19, AllIcons.I_VIEW_SCHEDULE)
         viewMaterialsButton.withCallback<IconButton> {
             showingMaterials = !showingMaterials
@@ -119,12 +141,12 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
         addRenderableWidget(viewMaterialsButton)
 
         // Extra areas: upgrade panel on right side
-        val upgradePanelX = x + BG_TOP.width
+        val upgradePanelX = x + BG_W
         val upgradePanelY = y
         val upgradePanelW = UPGRADE_PADDING * 2 + UPGRADE_SLOT_SIZE
         val upgradePanelH = UPGRADE_PADDING * 2 + UPGRADE_SLOTS * UPGRADE_SLOT_SIZE
         extraAreas = listOf(
-            Rect2i(x + BG_TOP.width, y + BG_TOP.height + BG_BOTTOM.height - 62, 84, 92),
+            Rect2i(x + BG_W, y + BG_H - 62, 84, 92),
             Rect2i(upgradePanelX, upgradePanelY, upgradePanelW, upgradePanelH)
         )
         tick()
@@ -271,15 +293,17 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
 
     override fun renderBg(graphics: GuiGraphics, partialTicks: Float, mouseX: Int, mouseY: Int) {
         val invX = getLeftOfCentered(AllGuiTextures.PLAYER_INVENTORY.width)
-        val invY = topPos + BG_TOP.height + BG_BOTTOM.height + 2
+        val invY = topPos + BG_H + 2
         renderPlayerInventory(graphics, invX, invY)
 
         val x = leftPos
         val y = topPos
 
-        BG_TOP.render(graphics, x, y)
-        BG_BOTTOM.render(graphics, x, y + BG_TOP.height)
-        AllGuiTextures.SCHEMATIC_TITLE.render(graphics, x, y - 2)
+        // Render custom background (single 213x143 region from our atlas)
+        graphics.blit(GUI_TEXTURE, x, y, 0f, 0f, BG_W, BG_H, TEX_SIZE, TEX_SIZE)
+
+        // Render title bar decoration (overlaps slightly above background)
+        graphics.blit(GUI_TEXTURE, x, y - 2, TITLE_U.toFloat(), TITLE_V.toFloat(), TITLE_W, TITLE_H, TEX_SIZE, TEX_SIZE)
 
         val be = menu.contentHolder
         renderPrintingProgress(graphics, x, y, be.schematicProgress)
@@ -289,14 +313,10 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
         }
 
         // Render upgrade panel background (right side protrusion)
-        renderUpgradePanel(graphics, x + BG_TOP.width, y)
+        renderUpgradePanel(graphics, x + BG_W, y)
 
-        GuiGameElement.of(renderedItem)
-            .at<GuiGameElement.GuiRenderBuilder>(x + BG_TOP.width.toFloat(), (y + BG_TOP.height + BG_BOTTOM.height - 48).toFloat(), -200f)
-            .scale(5.0)
-            .render(graphics)
-
-        graphics.drawString(font, title, x + (BG_TOP.width - 8 - font.width(title)) / 2, y + 2, 0x505050, false)
+        // Title text (white on dark background for AE2 style)
+        graphics.drawString(font, title, x + (BG_W - 8 - font.width(title)) / 2, y + 4, 0xE0E0E0, false)
 
         val msg = CreateLang.translateDirect("schematicannon.status." + be.statusMsg)
         var stringWidth = font.width(msg)
@@ -323,25 +343,22 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
     }
 
     private fun renderUpgradePanel(graphics: GuiGraphics, panelX: Int, panelY: Int) {
-        // Draw upgrade panel background using simple filled rectangles
-        // Panel dimensions: PADDING + SLOT_SIZE + PADDING wide, PADDING + SLOTS * SLOT_SIZE + PADDING tall
         val w = UPGRADE_PADDING * 2 + UPGRADE_SLOT_SIZE
         val h = UPGRADE_PADDING * 2 + UPGRADE_SLOTS * UPGRADE_SLOT_SIZE
         
-        // Panel background (dark gray, matching AE2 style)
+        // Panel background (MC standard grey)
         graphics.fill(panelX, panelY, panelX + w, panelY + h, 0xFFC6C6C6.toInt())
         
-        // Border
-        graphics.fill(panelX, panelY, panelX + w, panelY + 1, 0xFFFFFFFF.toInt()) // top
-        graphics.fill(panelX, panelY, panelX + 1, panelY + h, 0xFFFFFFFF.toInt()) // left
-        graphics.fill(panelX + w - 1, panelY, panelX + w, panelY + h, 0xFF555555.toInt()) // right
-        graphics.fill(panelX, panelY + h - 1, panelX + w, panelY + h, 0xFF555555.toInt()) // bottom
+        // 3D border
+        graphics.fill(panelX, panelY, panelX + w, panelY + 1, 0xFFFFFFFF.toInt())
+        graphics.fill(panelX, panelY, panelX + 1, panelY + h, 0xFFFFFFFF.toInt())
+        graphics.fill(panelX + w - 1, panelY, panelX + w, panelY + h, 0xFF555555.toInt())
+        graphics.fill(panelX, panelY + h - 1, panelX + w, panelY + h, 0xFF555555.toInt())
 
         // Slot backgrounds
         for (i in 0 until UPGRADE_SLOTS) {
             val slotX = panelX + UPGRADE_PADDING
             val slotY = panelY + UPGRADE_PADDING + i * UPGRADE_SLOT_SIZE
-            // Slot border (inset look)
             graphics.fill(slotX, slotY, slotX + UPGRADE_SLOT_SIZE, slotY + UPGRADE_SLOT_SIZE, 0xFF8B8B8B.toInt())
             graphics.fill(slotX + 1, slotY + 1, slotX + UPGRADE_SLOT_SIZE, slotY + UPGRADE_SLOT_SIZE, 0xFFFFFFFF.toInt())
             graphics.fill(slotX + 1, slotY + 1, slotX + UPGRADE_SLOT_SIZE - 1, slotY + UPGRADE_SLOT_SIZE - 1, 0xFF8B8B8B.toInt())
@@ -352,7 +369,6 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
         val be = menu.contentHolder
         val checklist = be.checklist
 
-        // Overlay background
         val overlayX = guiX + 10
         val overlayY = guiY + 20
         val overlayW = 193
@@ -360,11 +376,9 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
 
         graphics.fill(overlayX, overlayY, overlayX + overlayW, overlayY + overlayH, 0xDD000000.toInt())
 
-        // Title
         val titleText = Component.translatable("gui.appliedcreate.me_blueprint_cannon.materials").withStyle(ChatFormatting.WHITE)
         graphics.drawString(font, titleText, overlayX + 4, overlayY + 4, 0xFFFFFF)
 
-        // Material list
         var lineY = overlayY + 16
         val maxLines = 7
         var lineCount = 0
@@ -388,13 +402,12 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
     }
 
     private fun renderBlueprintHighlight(graphics: GuiGraphics, x: Int, y: Int) {
-        AllGuiTextures.SCHEMATICANNON_HIGHLIGHT.render(graphics, x + 10, y + 60)
+        graphics.blit(GUI_TEXTURE, x + 10, y + 60, HIGHLIGHT_U.toFloat(), HIGHLIGHT_V.toFloat(), HIGHLIGHT_W, HIGHLIGHT_H, TEX_SIZE, TEX_SIZE)
     }
 
     private fun renderPrintingProgress(graphics: GuiGraphics, x: Int, y: Int, progress: Float) {
         val p = progress.coerceIn(0f, 1f)
-        val sprite = AllGuiTextures.SCHEMATICANNON_PROGRESS
-        graphics.blit(sprite.location, x + 44, y + 64, sprite.startX, sprite.startY, (sprite.width * p).toInt(), sprite.height)
+        graphics.blit(GUI_TEXTURE, x + 44, y + 64, PROGRESS_U.toFloat(), PROGRESS_V.toFloat(), (PROGRESS_W * p).toInt(), PROGRESS_H, TEX_SIZE, TEX_SIZE)
     }
 
     override fun renderForeground(graphics: GuiGraphics, mouseX: Int, mouseY: Int, partialTicks: Float) {
@@ -422,7 +435,6 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
     }
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
-        // Close material overlay when clicking outside it
         if (showingMaterials && button == 0) {
             val x = leftPos
             val y = topPos
@@ -431,7 +443,6 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
             val overlayW = 193
             val overlayH = 100
             if (mouseX < overlayX || mouseX > overlayX + overlayW || mouseY < overlayY || mouseY > overlayY + overlayH) {
-                // Check if clicking the viewMaterials button — let it toggle
                 if (!viewMaterialsButton.isMouseOver(mouseX, mouseY)) {
                     showingMaterials = false
                 }

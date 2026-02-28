@@ -7,6 +7,8 @@ import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.network.chat.Component
 import net.minecraft.world.InteractionResult
+import net.minecraft.world.ItemInteractionResult
+import net.minecraft.world.InteractionHand
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.context.BlockPlaceContext
 import net.minecraft.world.level.Level
@@ -15,12 +17,15 @@ import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.phys.BlockHitResult
+import net.minecraft.world.item.ItemStack
+import com.simibubi.create.content.equipment.wrench.WrenchItem
 
 /**
  * ME Gearbox Block — directional kinetic block with shaft.
  * Dual-network block: joins AE2 ME network and Create kinetic network.
  *
- * Right-click (without item) toggles between EXPORT and IMPORT mode.
+ * Shift+Wrench right-click toggles between EXPORT and IMPORT mode.
+ * Stress multiplier is adjusted via Create-style scroll wheel on perpendicular faces.
  * Shaft extends along the FACING axis (both directions).
  * AE2 cable connects on perpendicular sides.
  */
@@ -64,23 +69,31 @@ class MEGearboxBlock : DirectionalKineticBlock(
     }
 
     /**
-     * Right-click without item toggles mode between EXPORT and IMPORT.
+     * Shift+Wrench toggles mode between EXPORT and IMPORT.
+     * Normal wrench (without shift) falls through to Create's default wrench behaviour.
      */
-    override fun useWithoutItem(
+    override fun useItemOn(
+        stack: ItemStack,
         state: BlockState,
         level: Level,
         pos: BlockPos,
         player: Player,
+        hand: InteractionHand,
         hit: BlockHitResult
-    ): InteractionResult {
-        if (level.isClientSide) return InteractionResult.SUCCESS
+    ): ItemInteractionResult {
+        if (stack.item !is WrenchItem) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
+        if (!player.isShiftKeyDown) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
 
-        val be = level.getBlockEntity(pos) as? MEGearboxBlockEntity ?: return InteractionResult.PASS
+        // Shift+Wrench: toggle mode
+        if (level.isClientSide) return ItemInteractionResult.SUCCESS
+
+        val be = level.getBlockEntity(pos) as? MEGearboxBlockEntity ?: return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
         be.toggleMode()
 
         val modeKey = if (be.mode == MEGearboxBlockEntity.Mode.EXPORT) "appliedcreate.me_gearbox.mode.export" else "appliedcreate.me_gearbox.mode.import"
         player.displayClientMessage(Component.translatable("appliedcreate.me_gearbox.mode").append(Component.translatable(modeKey)), true)
 
-        return InteractionResult.SUCCESS
+        return ItemInteractionResult.SUCCESS
     }
+
 }

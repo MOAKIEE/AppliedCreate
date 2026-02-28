@@ -63,5 +63,9 @@
 
     "gui.appliedcreate.me_blueprint_cannon.viewMaterials": "View Materials",
     "gui.appliedcreate.me_blueprint_cannon.materials": "Material Checklist",
-    "gui.appliedcreate.me_blueprint_cannon.noMaterials": "No materials required"
+    "gui.appliedcreate.me_blueprint_cannon.noMaterials": "No materials required",
+
+    "appliedcreate.stress_p2p.companion.present": "Companion: Present ✔",
+    "appliedcreate.stress_p2p.companion.missing": "Companion: Missing ✘"
+    "appliedcreate.me_gearbox.multiplier": "Stress Multiplier",
 }

@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.PoseStack
 import com.simibubi.create.AllPartialModels
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock
 import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer
-import dev.engine_room.flywheel.api.visualization.VisualizationManager
 import net.createmod.catnip.animation.AnimationTickHolder
 import net.createmod.catnip.render.CachedBuffers
 import net.minecraft.client.renderer.MultiBufferSource
@@ -32,7 +31,6 @@ class MEGearboxRenderer(context: BlockEntityRendererProvider.Context) :
         light: Int,
         overlay: Int
     ) {
-        if (VisualizationManager.supportsVisualization(be.level)) return
 
         val state = be.blockState
         val facing = state.getValue(DirectionalKineticBlock.FACING)

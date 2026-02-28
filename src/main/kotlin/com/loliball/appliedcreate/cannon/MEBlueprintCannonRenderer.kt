@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.PoseStack
 import com.simibubi.create.AllPartialModels
 import com.simibubi.create.content.schematics.cannon.LaunchedItem
 import com.simibubi.create.foundation.blockEntity.renderer.SafeBlockEntityRenderer
-import dev.engine_room.flywheel.api.visualization.VisualizationManager
 import net.createmod.catnip.render.CachedBuffers
 import net.createmod.ponder.render.VirtualRenderHelper
 import net.minecraft.client.Minecraft
@@ -36,7 +35,6 @@ class MEBlueprintCannonRenderer(context: BlockEntityRendererProvider.Context) :
             renderLaunchedBlocks(be, partialTicks, ms, buffer, light, overlay)
         }
 
-        if (VisualizationManager.supportsVisualization(be.level)) return
 
         val pos = be.blockPos
         val state = be.blockState
