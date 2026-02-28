@@ -59,6 +59,9 @@
     "appliedcreate.me_gearbox.transfer": "传输: ",
     "appliedcreate.me_gearbox.transfer.unit": " SU/t",
 
-    "block.appliedcreate.whichball_skin_doll": "小萝卜"
-}
+    "block.appliedcreate.whichball_skin_doll": "小萝卜",
+
+    "gui.appliedcreate.me_blueprint_cannon.viewMaterials": "查看材料",
+    "gui.appliedcreate.me_blueprint_cannon.materials": "材料清单",
+    "gui.appliedcreate.me_blueprint_cannon.noMaterials": "无需材料"
 }

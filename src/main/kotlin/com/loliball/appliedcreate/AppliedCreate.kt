@@ -31,6 +31,7 @@ import appeng.api.features.P2PTunnelAttunement
 import appeng.api.stacks.AEKeyTypes
 import appeng.blockentity.AEBaseBlockEntity
 import appeng.helpers.patternprovider.PatternProviderLogicHost
+import appeng.core.definitions.AEItems
 import appeng.menu.MenuOpener
 import appeng.menu.locator.MenuHostLocator
 import appeng.menu.locator.MenuLocators
@@ -343,7 +344,7 @@ class AppliedCreate {
                     output.accept(BRASS_PATTERN_PROVIDER_PART_ITEM.get())
                     output.accept(BRASS_PATTERN_PROVIDER_UPGRADE_ITEM.get())
                     output.accept(STRESS_P2P_TUNNEL_PART_ITEM.get())
-                    output.accept(STRESS_P2P_COMPANION_ITEM.get())
+                    // Companion block hidden from creative tab — auto-placed by P2P tunnel
                     output.accept(ME_BLUEPRINT_CANNON_ITEM.get())
                     output.accept(KINETIC_ENERGY_ACCEPTOR_ITEM.get())
                     output.accept(ME_GEARBOX_ITEM.get())
@@ -483,6 +484,26 @@ class AppliedCreate {
             ME_BLUEPRINT_CANNON_ITEM.get().asItem()
         )
 
+        // Register representative items for Kinetic Energy Acceptor and ME Gearbox
+        // (fixes AE2 network status page showing correct device icons)
+        AEBaseBlockEntity.registerBlockEntityItem(
+            KINETIC_ENERGY_ACCEPTOR_BE.get(),
+            KINETIC_ENERGY_ACCEPTOR_ITEM.get().asItem()
+        )
+        AEBaseBlockEntity.registerBlockEntityItem(
+            ME_GEARBOX_BE.get(),
+            ME_GEARBOX_ITEM.get().asItem()
+        )
+
+        // Reload AE2's igtooltip ServiceLoader to ensure our AppliedCreateTooltipProvider
+        // is discovered (NeoForge module layers may cache ServiceLoader before our mod loads)
+        try {
+            appeng.integration.modules.igtooltip.TooltipProviders.LOADER.reload()
+            LOGGER.debug("Reloaded AE2 igtooltip ServiceLoader")
+        } catch (e: Exception) {
+            LOGGER.warn("Failed to reload AE2 igtooltip ServiceLoader: {}", e.message)
+        }
+
         event.enqueueWork {
             // Register P2P attunement tag — now works because StressP2PPartItem extends PartItem
             P2PTunnelAttunement.registerAttunementTag(STRESS_P2P_TUNNEL_PART_ITEM.get())
@@ -513,6 +534,10 @@ class AppliedCreate {
             com.simibubi.create.api.stress.BlockStressValues.CAPACITIES.register(
                 ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.STRESS_CAPACITY_PER_RPM.toDouble() }
             )
+
+            // Register upgrade cards for ME Blueprint Cannon
+            appeng.api.upgrades.Upgrades.add(AEItems.SPEED_CARD, ME_BLUEPRINT_CANNON_ITEM.get(), 4)
+            appeng.api.upgrades.Upgrades.add(AEItems.CRAFTING_CARD, ME_BLUEPRINT_CANNON_ITEM.get(), 1)
         }
     }
 

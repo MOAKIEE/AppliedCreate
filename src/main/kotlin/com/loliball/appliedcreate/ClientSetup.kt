@@ -3,6 +3,9 @@ package com.loliball.appliedcreate
 import com.loliball.appliedcreate.client.StressKeyRenderHandler
 import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
 import com.loliball.appliedcreate.cannon.MEBlueprintCannonMenu
+import com.loliball.appliedcreate.cannon.MEBlueprintCannonRenderer
+import com.loliball.appliedcreate.energy.KineticEnergyAcceptorRenderer
+import com.loliball.appliedcreate.energy.MEGearboxRenderer
 import com.loliball.appliedcreate.cannon.MEBlueprintCannonScreen
 import com.loliball.appliedcreate.storage.StressStorageCell
 
@@ -15,6 +18,7 @@ import net.minecraft.world.entity.player.Inventory
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.api.distmarker.OnlyIn
 import net.neoforged.bus.api.IEventBus
+import net.neoforged.neoforge.client.event.EntityRenderersEvent
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent
 @OnlyIn(Dist.CLIENT)
@@ -23,6 +27,7 @@ object ClientSetup {
     fun register(bus: IEventBus) {
         bus.addListener(::onRegisterMenuScreens)
         bus.addListener(::onRegisterItemColors)
+        bus.addListener(::onRegisterRenderers)
     }
 
     private fun onRegisterMenuScreens(event: RegisterMenuScreensEvent) {
@@ -50,5 +55,11 @@ object ClientSetup {
             { stack, tintIndex -> StressStorageCell.getColor(stack, tintIndex) },
             *cellItems
         )
+    }
+
+    private fun onRegisterRenderers(event: EntityRenderersEvent.RegisterRenderers) {
+        event.registerBlockEntityRenderer(AppliedCreate.ME_BLUEPRINT_CANNON_BE.get(), ::MEBlueprintCannonRenderer)
+        event.registerBlockEntityRenderer(AppliedCreate.KINETIC_ENERGY_ACCEPTOR_BE.get(), ::KineticEnergyAcceptorRenderer)
+        event.registerBlockEntityRenderer(AppliedCreate.ME_GEARBOX_BE.get(), ::MEGearboxRenderer)
     }
 }

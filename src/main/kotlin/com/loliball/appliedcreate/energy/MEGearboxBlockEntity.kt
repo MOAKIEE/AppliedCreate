@@ -121,8 +121,8 @@ class MEGearboxBlockEntity(
     // ── Stress ──
 
     override fun calculateAddedStressCapacity(): Float {
-        if (mode == Mode.EXPORT) {
-            // As a generator, provide stress capacity
+        if (mode == Mode.EXPORT && hasStressSupply) {
+            // As a generator, provide stress capacity only when ME has stress
             return STRESS_CAPACITY_PER_RPM * abs(GENERATED_SPEED)
         }
         return 0f

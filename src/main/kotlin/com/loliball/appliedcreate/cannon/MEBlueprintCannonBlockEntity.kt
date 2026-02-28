@@ -13,7 +13,6 @@ import com.google.common.collect.ImmutableSet
 import com.simibubi.create.AllDataComponents
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.resources.ResourceLocation
-import appeng.api.networking.security.IActionHost
 import appeng.api.orientation.BlockOrientation
 import appeng.api.stacks.AEItemKey
 import appeng.api.storage.StorageHelper
@@ -27,7 +26,6 @@ import com.loliball.appliedcreate.AppliedCreate
 import com.simibubi.create.AllSoundEvents
 import com.simibubi.create.content.kinetics.belt.BeltBlock
 import com.simibubi.create.content.kinetics.belt.BeltBlockEntity
-import com.simibubi.create.content.kinetics.belt.BeltPart
 import com.simibubi.create.content.schematics.SchematicPrinter
 import com.simibubi.create.content.schematics.cannon.LaunchedItem
 import com.simibubi.create.content.schematics.cannon.MaterialChecklist
@@ -43,7 +41,6 @@ import net.minecraft.core.Direction
 import net.minecraft.core.registries.Registries
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.ListTag
-import net.minecraft.nbt.Tag
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerLevel
@@ -52,19 +49,21 @@ import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.inventory.AbstractContainerMenu
 import net.minecraft.world.item.ItemStack
-import net.minecraft.world.item.Items
 import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
-import net.minecraft.world.phys.AABB
 import net.neoforged.neoforge.items.ItemStackHandler
 import java.util.EnumSet
 import java.util.LinkedList
-import java.util.function.Consumer
 
 class MEBlueprintCannonBlockEntity(type: BlockEntityType<*>, pos: BlockPos, state: BlockState) :
     SmartBlockEntity(type, pos, state), MenuProvider, IGridConnectedBlockEntity, ICraftingRequester {
+
+    companion object {
+        /** AE power cost per block placement (5 AE per shot). */
+        const val AE_POWER_PER_SHOT = 5.0
+    }
 
     // ── AE2 Grid Node ──
     @Suppress("UNCHECKED_CAST")
@@ -79,10 +78,10 @@ class MEBlueprintCannonBlockEntity(type: BlockEntityType<*>, pos: BlockPos, stat
 
     private val actionSource = MachineSource(this)
     private val craftingTracker = MultiCraftingTracker(this, 9)
-    val upgradeInventory = UpgradeInventories.forMachine(AppliedCreate.ME_BLUEPRINT_CANNON_ITEM.get(), 4) { this.setChanged() }
+    val upgradeInventory = UpgradeInventories.forMachine(AppliedCreate.ME_BLUEPRINT_CANNON_ITEM.get(), 5) { this.setChanged() }
 
     // ── Schematicannon Fields ──
-    val inventory = object : ItemStackHandler(5) {
+    val inventory = object : ItemStackHandler(2) {
         override fun onContentsChanged(slot: Int) {
             super.onContentsChanged(slot)
             this@MEBlueprintCannonBlockEntity.setChanged()
@@ -91,10 +90,7 @@ class MEBlueprintCannonBlockEntity(type: BlockEntityType<*>, pos: BlockPos, stat
         override fun isItemValid(slot: Int, stack: ItemStack): Boolean {
             return when (slot) {
                 0 -> stack.item == BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("create", "schematic"))
-                1 -> false
-                2 -> stack.item == BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("create", "clipboard")) || stack.`is`(Items.BOOK) || stack.`is`(Items.WRITTEN_BOOK)
-                3 -> false
-                4 -> false // Upgrade display / Unused
+                1 -> false // Blueprint output
                 else -> super.isItemValid(slot, stack)
             }
         }
@@ -108,14 +104,13 @@ class MEBlueprintCannonBlockEntity(type: BlockEntityType<*>, pos: BlockPos, stat
     var missingItem: ItemStack? = null
     var positionNotLoaded = false
     var sendUpdate = false
-    var dontUpdateChecklist = false
+    var dontUpdateChecklist = false  // kept for updateChecklist() logic
     var neighbourCheckCooldown = 0
     private var printerCooldown = 0
     private var skipsLeft = 0
     private var blockSkipped = false
     var previousTarget: BlockPos? = null
     var schematicProgress = 0f
-    var bookPrintingProgress = 0f
     var blocksPlaced = 0
     var blocksToPlace = 0
     var replaceMode = 2
@@ -123,7 +118,6 @@ class MEBlueprintCannonBlockEntity(type: BlockEntityType<*>, pos: BlockPos, stat
     var replaceBlockEntities = false
     var firstRenderTick = false
     var defaultYaw = 0f
-    var remainingFuel = 0
     val hasCreativeCrate = false // Always false for ME Cannon
 
     // ── Initialization ──
@@ -199,8 +193,8 @@ class MEBlueprintCannonBlockEntity(type: BlockEntityType<*>, pos: BlockPos, stat
 
         if (level!!.isClientSide) return
 
-        tickPaperPrinter()
-        refillFuelIfPossible()
+
+        // AE power is consumed per-shot in tickPrinter()
 
         skipsLeft = 1000
         blockSkipped = true
@@ -230,43 +224,21 @@ class MEBlueprintCannonBlockEntity(type: BlockEntityType<*>, pos: BlockPos, stat
         flyingBlocks.removeAll(toRemove)
     }
 
-    private fun refillFuelIfPossible() {
-        val shotsPerFuel = AllConfigs.server().schematics.schematicannonShotsPerGunpowder.get()
-        
-        if (remainingFuel > shotsPerFuel) {
-            remainingFuel = shotsPerFuel
-            sendUpdate = true
-            return
+    /**
+     * Try to extract AE power for one shot. Returns true if power was available.
+     */
+    private fun tryConsumeAEPower(): Boolean {
+        val grid = mainNode.grid ?: return false
+        val energyService = grid.energyService ?: return false
+        val costPerShot = AE_POWER_PER_SHOT
+        if (energyService.extractAEPower(costPerShot, Actionable.SIMULATE, PowerMultiplier.CONFIG) >= costPerShot) {
+            energyService.extractAEPower(costPerShot, Actionable.MODULATE, PowerMultiplier.CONFIG)
+            return true
         }
-        
-        if (remainingFuel > 0) return
-
-        val grid = mainNode.grid ?: return
-        val energyService = grid.energyService ?: return
-        
-        // Cost: ~100 AE per refill (equivalent to 1 gunpowder giving 20 shots)
-        // Adjust cost as needed. Let's say 10 AE per shot.
-        val cost = 100.0 
-        
-        if (energyService.extractAEPower(cost, Actionable.SIMULATE, PowerMultiplier.CONFIG) >= cost) {
-            energyService.extractAEPower(cost, Actionable.MODULATE, PowerMultiplier.CONFIG)
-            remainingFuel += shotsPerFuel
-            
-            if (statusMsg == "noAEPower") {
-                if (blocksPlaced > 0) state = SchematicannonBlockEntity.State.RUNNING
-                statusMsg = "ready"
-            }
-            sendUpdate = true
-        } else {
-             if (state == SchematicannonBlockEntity.State.RUNNING) {
-                state = SchematicannonBlockEntity.State.PAUSED
-                statusMsg = "noAEPower"
-                sendUpdate = true
-            }
-        }
+        return false
     }
 
-    fun getShotsPerGunpowder(): Int = AllConfigs.server().schematics.schematicannonShotsPerGunpowder.get()
+
 
     private fun tickPrinter() {
         val blueprint = inventory.getStackInSlot(0)
@@ -284,7 +256,7 @@ class MEBlueprintCannonBlockEntity(type: BlockEntityType<*>, pos: BlockPos, stat
             return
         }
 
-        if (state == SchematicannonBlockEntity.State.PAUSED && !positionNotLoaded && missingItem == null && remainingFuel > 0) return
+        if (state == SchematicannonBlockEntity.State.PAUSED && !positionNotLoaded && missingItem == null && statusMsg != "noAEPower") return
 
         if (!printer.isLoaded) {
             initializePrinter(blueprint)
@@ -296,14 +268,11 @@ class MEBlueprintCannonBlockEntity(type: BlockEntityType<*>, pos: BlockPos, stat
             return
         }
 
-        if (remainingFuel <= 0) {
-            refillFuelIfPossible()
-            if (remainingFuel <= 0) {
-                state = SchematicannonBlockEntity.State.PAUSED
-                statusMsg = "noAEPower"
-                sendUpdate = true
-                return
-            }
+        if (!tryConsumeAEPower()) {
+            state = SchematicannonBlockEntity.State.PAUSED
+            statusMsg = "noAEPower"
+            sendUpdate = true
+            return
         }
 
         if (missingItem == null && !positionNotLoaded) {
@@ -377,7 +346,7 @@ class MEBlueprintCannonBlockEntity(type: BlockEntityType<*>, pos: BlockPos, stat
         }
         
         printerCooldown = delay
-        remainingFuel -= 1
+        // AE power already consumed above — no remainingFuel decrement needed
         sendUpdate = true
         missingItem = null
     }
@@ -422,38 +391,7 @@ class MEBlueprintCannonBlockEntity(type: BlockEntityType<*>, pos: BlockPos, stat
         return false
     }
 
-    private fun tickPaperPrinter() {
-        val bookInput = 2
-        val bookOutput = 3
-        val blueprint = inventory.getStackInSlot(0)
-        val paper = inventory.extractItem(bookInput, 1, true)
-        val outputFull = inventory.getStackInSlot(bookOutput).count == inventory.getSlotLimit(bookOutput)
-
-        if (printer.isErrored) return
-        if (!printer.isLoaded) {
-            if (!blueprint.isEmpty) initializePrinter(blueprint)
-            return
-        }
-        if (paper.isEmpty || outputFull) {
-            if (bookPrintingProgress != 0f) sendUpdate = true
-            bookPrintingProgress = 0f
-            dontUpdateChecklist = false
-            return
-        }
-        if (bookPrintingProgress >= 1) {
-            bookPrintingProgress = 0f
-            if (!dontUpdateChecklist) updateChecklist()
-            dontUpdateChecklist = true
-            val extractItem = inventory.extractItem(bookInput, 1, false)
-            val stack = if (extractItem.item == BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("create", "clipboard"))) checklist.createWrittenClipboard() else checklist.createWrittenBook()
-            stack.count = inventory.getStackInSlot(bookOutput).count + 1
-            inventory.setStackInSlot(bookOutput, stack)
-            sendUpdate = true
-            return
-        }
-        bookPrintingProgress += 0.05f
-        sendUpdate = true
-    }
+    // tickPaperPrinter removed — book printing functionality replaced by View Materials button
 
     private fun initializePrinter(blueprint: ItemStack) {
         if (!blueprint.has(AllDataComponents.SCHEMATIC_ANCHOR)) {
@@ -637,8 +575,7 @@ class MEBlueprintCannonBlockEntity(type: BlockEntityType<*>, pos: BlockPos, stat
         
         // Gui info
         compound.putFloat("Progress", schematicProgress)
-        compound.putFloat("PaperProgress", bookPrintingProgress)
-        compound.putInt("RemainingFuel", remainingFuel)
+        // PaperProgress and RemainingFuel removed — no longer used
         compound.putString("Status", statusMsg)
         compound.putString("State", state.name)
         compound.putInt("AmountPlaced", blocksPlaced)
@@ -671,8 +608,7 @@ class MEBlueprintCannonBlockEntity(type: BlockEntityType<*>, pos: BlockPos, stat
         
         statusMsg = compound.getString("Status").ifEmpty { "idle" }
         schematicProgress = compound.getFloat("Progress")
-        bookPrintingProgress = compound.getFloat("PaperProgress")
-        remainingFuel = compound.getInt("RemainingFuel")
+        // Backward compat: ignore PaperProgress and RemainingFuel if present in old saves
         state = try { SchematicannonBlockEntity.State.valueOf(compound.getString("State")) } catch(e: Exception) { SchematicannonBlockEntity.State.STOPPED }
         blocksPlaced = compound.getInt("AmountPlaced")
         blocksToPlace = compound.getInt("AmountToPlace")

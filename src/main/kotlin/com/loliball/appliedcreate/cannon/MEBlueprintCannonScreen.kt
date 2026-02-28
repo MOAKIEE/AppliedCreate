@@ -30,12 +30,8 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
     private val BG_BOTTOM = AllGuiTextures.SCHEMATICANNON_BOTTOM
     private val BG_TOP = AllGuiTextures.SCHEMATICANNON_TOP
 
-    private val listPrinter = CreateLang.translateDirect("gui.schematicannon.listPrinter")
     private val _showSettings = "gui.schematicannon.showOptions"
-    private val _slotListPrinter = "gui.schematicannon.slot.listPrinter"
     private val _slotSchematic = "gui.schematicannon.slot.schematic"
-    
-    // Custom translation keys or reuse Create's? Reuse Create's generic ones, but custom for upgrades.
     private val _slotUpgrades = "gui.appliedcreate.slot.upgrades"
 
     private val optionEnabled = CreateLang.translateDirect("gui.schematicannon.optionEnabled")
@@ -59,10 +55,19 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
     private lateinit var confirmButton: IconButton
     private lateinit var showSettingsButton: IconButton
     private lateinit var showSettingsIndicator: Indicator
+    private lateinit var viewMaterialsButton: IconButton
 
     private var placementSettingWidgets = ArrayList<AbstractWidget>()
     private val renderedItem = ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("create", "schematicannon")))
     private var extraAreas: List<Rect2i> = Collections.emptyList()
+
+    // Upgrade panel constants (AE2 UpgradesPanel style)
+    private val UPGRADE_SLOT_SIZE = 18
+    private val UPGRADE_PADDING = 7
+    private val UPGRADE_SLOTS = 5
+
+    // Material checklist display state
+    private var showingMaterials = false
 
     override fun init() {
         setWindowSize(BG_TOP.width, BG_TOP.height + BG_BOTTOM.height + 2 + AllGuiTextures.PLAYER_INVENTORY.height)
@@ -101,9 +106,27 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
         addRenderableWidget(showSettingsButton)
         
         showSettingsIndicator = Indicator(x + 9, y + 111, CommonComponents.EMPTY)
-        // addRenderableWidget(showSettingsIndicator)
 
-        extraAreas = listOf(Rect2i(x + BG_TOP.width, y + BG_TOP.height + BG_BOTTOM.height - 62, 84, 92))
+        // View Materials button — replaces old book printer functionality
+        viewMaterialsButton = IconButton(x + 134, y + 19, AllIcons.I_VIEW_SCHEDULE)
+        viewMaterialsButton.withCallback<IconButton> {
+            showingMaterials = !showingMaterials
+            if (showingMaterials) {
+                menu.contentHolder.dontUpdateChecklist = false
+            }
+        }
+        viewMaterialsButton.setToolTip(Component.translatable("gui.appliedcreate.me_blueprint_cannon.viewMaterials"))
+        addRenderableWidget(viewMaterialsButton)
+
+        // Extra areas: upgrade panel on right side
+        val upgradePanelX = x + BG_TOP.width
+        val upgradePanelY = y
+        val upgradePanelW = UPGRADE_PADDING * 2 + UPGRADE_SLOT_SIZE
+        val upgradePanelH = UPGRADE_PADDING * 2 + UPGRADE_SLOTS * UPGRADE_SLOT_SIZE
+        extraAreas = listOf(
+            Rect2i(x + BG_TOP.width, y + BG_TOP.height + BG_BOTTOM.height - 62, 84, 92),
+            Rect2i(upgradePanelX, upgradePanelY, upgradePanelW, upgradePanelH)
+        )
         tick()
     }
 
@@ -127,29 +150,12 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
             CreateLang.translateDirect("gui.schematicannon.option.replaceWithEmpty")
         )
         
-        // Map index to Option enum
         val options = listOf(
-            ConfigureMECannonPayload.Option.DONT_REPLACE, // 0
-            ConfigureMECannonPayload.Option.REPLACE_SOLID, // 1
-            ConfigureMECannonPayload.Option.REPLACE_ANY, // 2
-            ConfigureMECannonPayload.Option.REPLACE_EMPTY // 3
+            ConfigureMECannonPayload.Option.DONT_REPLACE,
+            ConfigureMECannonPayload.Option.REPLACE_SOLID,
+            ConfigureMECannonPayload.Option.REPLACE_ANY,
+            ConfigureMECannonPayload.Option.REPLACE_EMPTY
         )
-        // Wait, check BE logic for mapping.
-        // SchematicannonBlockEntity: 
-        // 0: DONT_REPLACE (actually replaceMode=0) -> checking logic in BE
-        // 1: REPLACE_SOLID (actually replaceMode=1)
-        // 2: REPLACE_ANY (replaceMode=2)
-        // 3: REPLACE_EMPTY (replaceMode=3)
-        // The icons list order in SchematicannonScreen matches this?
-        // SchematicannonScreen:
-        // icons: DONT_REPLACE, REPLACE_SOLID, REPLACE_ANY, REPLACE_EMPTY
-        // indices: 0, 1, 2, 3
-        // BE.replaceMode checks:
-        // replaceMode == 3 -> REPLACE_EMPTY (implied from shouldPlace logic, returns true immediately)
-        // replaceMode == 2 -> REPLACE_ANY
-        // replaceMode == 1 -> REPLACE_SOLID
-        // replaceMode == 0 -> DONT_REPLACE
-        // So the mapping is correct.
 
         for (i in 0..3) {
             replaceLevelIndicators.add(Indicator(x + 33 + i * 18, y + 111, CommonComponents.EMPTY))
@@ -277,19 +283,13 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
 
         val be = menu.contentHolder
         renderPrintingProgress(graphics, x, y, be.schematicProgress)
-        
-        // Render AE power bar instead of gunpowder
-        // Use a different texture or color?
-        // For now reuse gunpowder bar but maybe tint it?
-        // Or just render it normally as "fuel"
-        val amount = be.remainingFuel / (be.getShotsPerGunpowder().toFloat().coerceAtLeast(1f)) // Avoid div by zero
-        renderFuelBar(graphics, x, y, amount.coerceIn(0f, 1f))
-        
-        renderChecklistPrinterProgress(graphics, x, y, be.bookPrintingProgress)
 
         if (!be.inventory.getStackInSlot(0).isEmpty) {
             renderBlueprintHighlight(graphics, x, y)
         }
+
+        // Render upgrade panel background (right side protrusion)
+        renderUpgradePanel(graphics, x + BG_TOP.width, y)
 
         GuiGameElement.of(renderedItem)
             .at<GuiGameElement.GuiRenderBuilder>(x + BG_TOP.width.toFloat(), (y + BG_TOP.height + BG_BOTTOM.height - 48).toFloat(), -200f)
@@ -315,6 +315,76 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
             graphics.drawString(font, CreateLang.translateDirect("schematicannon.status.schematicErroredCheckLogs"),
                 x + 103 - stringWidth / 2, y + 65, 0xDDEEFF)
         }
+
+        // Render material checklist overlay if showing
+        if (showingMaterials) {
+            renderMaterialChecklist(graphics, x, y)
+        }
+    }
+
+    private fun renderUpgradePanel(graphics: GuiGraphics, panelX: Int, panelY: Int) {
+        // Draw upgrade panel background using simple filled rectangles
+        // Panel dimensions: PADDING + SLOT_SIZE + PADDING wide, PADDING + SLOTS * SLOT_SIZE + PADDING tall
+        val w = UPGRADE_PADDING * 2 + UPGRADE_SLOT_SIZE
+        val h = UPGRADE_PADDING * 2 + UPGRADE_SLOTS * UPGRADE_SLOT_SIZE
+        
+        // Panel background (dark gray, matching AE2 style)
+        graphics.fill(panelX, panelY, panelX + w, panelY + h, 0xFFC6C6C6.toInt())
+        
+        // Border
+        graphics.fill(panelX, panelY, panelX + w, panelY + 1, 0xFFFFFFFF.toInt()) // top
+        graphics.fill(panelX, panelY, panelX + 1, panelY + h, 0xFFFFFFFF.toInt()) // left
+        graphics.fill(panelX + w - 1, panelY, panelX + w, panelY + h, 0xFF555555.toInt()) // right
+        graphics.fill(panelX, panelY + h - 1, panelX + w, panelY + h, 0xFF555555.toInt()) // bottom
+
+        // Slot backgrounds
+        for (i in 0 until UPGRADE_SLOTS) {
+            val slotX = panelX + UPGRADE_PADDING
+            val slotY = panelY + UPGRADE_PADDING + i * UPGRADE_SLOT_SIZE
+            // Slot border (inset look)
+            graphics.fill(slotX, slotY, slotX + UPGRADE_SLOT_SIZE, slotY + UPGRADE_SLOT_SIZE, 0xFF8B8B8B.toInt())
+            graphics.fill(slotX + 1, slotY + 1, slotX + UPGRADE_SLOT_SIZE, slotY + UPGRADE_SLOT_SIZE, 0xFFFFFFFF.toInt())
+            graphics.fill(slotX + 1, slotY + 1, slotX + UPGRADE_SLOT_SIZE - 1, slotY + UPGRADE_SLOT_SIZE - 1, 0xFF8B8B8B.toInt())
+        }
+    }
+
+    private fun renderMaterialChecklist(graphics: GuiGraphics, guiX: Int, guiY: Int) {
+        val be = menu.contentHolder
+        val checklist = be.checklist
+
+        // Overlay background
+        val overlayX = guiX + 10
+        val overlayY = guiY + 20
+        val overlayW = 193
+        val overlayH = 100
+
+        graphics.fill(overlayX, overlayY, overlayX + overlayW, overlayY + overlayH, 0xDD000000.toInt())
+
+        // Title
+        val titleText = Component.translatable("gui.appliedcreate.me_blueprint_cannon.materials").withStyle(ChatFormatting.WHITE)
+        graphics.drawString(font, titleText, overlayX + 4, overlayY + 4, 0xFFFFFF)
+
+        // Material list
+        var lineY = overlayY + 16
+        val maxLines = 7
+        var lineCount = 0
+
+        for ((key, value) in checklist.required) {
+            if (lineCount >= maxLines) {
+                graphics.drawString(font, "...", overlayX + 4, lineY, 0xAAAAAA)
+                break
+            }
+            val gathered = checklist.gathered.getOrDefault(key, 0)
+            val color = if (gathered >= value) 0x55FF55 else 0xFF5555
+            val text = "${key.descriptionId.substringAfterLast('.')}: $gathered / $value"
+            graphics.drawString(font, text, overlayX + 4, lineY, color)
+            lineY += 11
+            lineCount++
+        }
+
+        if (checklist.required.isEmpty()) {
+            graphics.drawString(font, Component.translatable("gui.appliedcreate.me_blueprint_cannon.noMaterials").withStyle(ChatFormatting.GRAY), overlayX + 4, lineY, 0xAAAAAA)
+        }
     }
 
     private fun renderBlueprintHighlight(graphics: GuiGraphics, x: Int, y: Int) {
@@ -327,35 +397,16 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
         graphics.blit(sprite.location, x + 44, y + 64, sprite.startX, sprite.startY, (sprite.width * p).toInt(), sprite.height)
     }
 
-    private fun renderChecklistPrinterProgress(graphics: GuiGraphics, x: Int, y: Int, progress: Float) {
-        val sprite = AllGuiTextures.SCHEMATICANNON_CHECKLIST_PROGRESS
-        graphics.blit(sprite.location, x + 154, y + 20, sprite.startX, sprite.startY, (sprite.width * progress).toInt(), sprite.height)
-    }
-
-    private fun renderFuelBar(graphics: GuiGraphics, x: Int, y: Int, amount: Float) {
-        // Reuse schematicannon fuel bar for now, maybe in future use a custom AE energy bar
-        val sprite = AllGuiTextures.SCHEMATICANNON_FUEL
-        graphics.blit(sprite.location, x + 36, y + 19, sprite.startX, sprite.startY, (sprite.width * amount).toInt(), sprite.height)
-    }
-
     override fun renderForeground(graphics: GuiGraphics, mouseX: Int, mouseY: Int, partialTicks: Float) {
         val be = menu.contentHolder
         val x = leftPos
         val y = topPos
 
-        val fuelX = x + 36
-        val fuelY = y + 19
-        if (mouseX >= fuelX && mouseY >= fuelY && mouseX <= fuelX + AllGuiTextures.SCHEMATICANNON_FUEL.width && mouseY <= fuelY + AllGuiTextures.SCHEMATICANNON_FUEL.height) {
-            val tooltip = getFuelLevelTooltip(be)
-            graphics.renderComponentTooltip(font, tooltip, mouseX, mouseY)
-        }
-
+        // Slot tooltips for empty slots
         if (hoveredSlot != null && !hoveredSlot!!.hasItem()) {
             if (hoveredSlot!!.index == 0)
                 graphics.renderComponentTooltip(font, TooltipHelper.cutTextComponent(CreateLang.translateDirect(_slotSchematic), FontHelper.Palette.GRAY_AND_BLUE), mouseX, mouseY)
-            if (hoveredSlot!!.index == 2)
-                graphics.renderComponentTooltip(font, TooltipHelper.cutTextComponent(CreateLang.translateDirect(_slotListPrinter), FontHelper.Palette.GRAY_AND_BLUE), mouseX, mouseY)
-            if (hoveredSlot!!.index == 4)
+            if (hoveredSlot!!.index in 2..6)
                 graphics.renderComponentTooltip(font, TooltipHelper.cutTextComponent(Component.translatable(_slotUpgrades), FontHelper.Palette.GRAY_AND_BLUE), mouseX, mouseY)
         }
 
@@ -367,21 +418,26 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
             }
         }
 
-        val paperX = x + 112
-        val paperY = y + 19
-        if (mouseX >= paperX && mouseY >= paperY && mouseX <= paperX + 16 && mouseY <= paperY + 16)
-            graphics.renderTooltip(font, listPrinter, mouseX, mouseY)
-
         super.renderForeground(graphics, mouseX, mouseY, partialTicks)
     }
 
-    private fun getFuelLevelTooltip(be: MEBlueprintCannonBlockEntity): List<Component> {
-        val shotsLeft = be.remainingFuel
-        val tooltip = ArrayList<Component>()
-        // Simple tooltip for AE power
-        tooltip.add(Component.literal("AE Power Buffer: $shotsLeft shots").withStyle(ChatFormatting.BLUE))
-        // Add more details if needed
-        return tooltip
+    override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
+        // Close material overlay when clicking outside it
+        if (showingMaterials && button == 0) {
+            val x = leftPos
+            val y = topPos
+            val overlayX = x + 10
+            val overlayY = y + 20
+            val overlayW = 193
+            val overlayH = 100
+            if (mouseX < overlayX || mouseX > overlayX + overlayW || mouseY < overlayY || mouseY > overlayY + overlayH) {
+                // Check if clicking the viewMaterials button — let it toggle
+                if (!viewMaterialsButton.isMouseOver(mouseX, mouseY)) {
+                    showingMaterials = false
+                }
+            }
+        }
+        return super.mouseClicked(mouseX, mouseY, button)
     }
 
     private fun sendOptionUpdate(option: ConfigureMECannonPayload.Option, set: Boolean) {

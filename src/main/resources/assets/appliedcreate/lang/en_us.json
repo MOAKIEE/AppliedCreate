@@ -59,6 +59,9 @@
     "appliedcreate.me_gearbox.transfer": "Transfer: ",
     "appliedcreate.me_gearbox.transfer.unit": " SU/t",
 
-    "block.appliedcreate.whichball_skin_doll": "Whichball Skin Doll"
-}
+    "block.appliedcreate.whichball_skin_doll": "Whichball Skin Doll",
+
+    "gui.appliedcreate.me_blueprint_cannon.viewMaterials": "View Materials",
+    "gui.appliedcreate.me_blueprint_cannon.materials": "Material Checklist",
+    "gui.appliedcreate.me_blueprint_cannon.noMaterials": "No materials required"
 }

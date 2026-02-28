@@ -35,12 +35,14 @@ class MEBlueprintCannonMenu : MenuBase<MEBlueprintCannonBlockEntity> {
         addSlot(SlotItemHandler(contentHolder.inventory, 0, x + 15, y + 65))
         // 1: Blueprint Output
         addSlot(SlotItemHandler(contentHolder.inventory, 1, x + 171, y + 65))
-        // 2: Book Input
-        addSlot(SlotItemHandler(contentHolder.inventory, 2, x + 134, y + 19))
-        // 3: Book Output
-        addSlot(SlotItemHandler(contentHolder.inventory, 3, x + 174, y + 19))
-        // 4: Upgrade Card Slot (Replaces Gunpowder)
-        addSlot(SlotItemHandler(contentHolder.upgradeInventory.toItemHandler(), 0, x + 15, y + 19))
+
+        // 2-6: Upgrade Card Slots (right-side panel, AE2 UpgradesPanel style)
+        // Panel starts at x = BG_TOP.width (213) + PADDING (7) = 220
+        // Slots stacked vertically, SLOT_SIZE = 18
+        val upgradeHandler = contentHolder.upgradeInventory.toItemHandler()
+        for (i in 0 until 5) {
+            addSlot(SlotItemHandler(upgradeHandler, i, x + 220, y + 7 + i * 18))
+        }
 
         addPlayerSlots(37, 161)
     }
@@ -63,11 +65,13 @@ class MEBlueprintCannonMenu : MenuBase<MEBlueprintCannonBlockEntity> {
         if (!clickedSlot.hasItem()) return ItemStack.EMPTY
         val stack = clickedSlot.item
 
-        if (index < 5) {
-            moveItemStackTo(stack, 5, slots.size, true)
+        if (index < 7) {
+            // Container slots (0-1 inventory, 2-6 upgrades) -> player inventory
+            moveItemStackTo(stack, 7, slots.size, true)
         } else {
-            if (moveItemStackTo(stack, 0, 1, false) || moveItemStackTo(stack, 2, 3, false) || moveItemStackTo(stack, 4, 5, false)) {
-                // moved
+            // Player inventory -> try blueprint slot first, then upgrade slots
+            if (!moveItemStackTo(stack, 0, 1, false)) {
+                moveItemStackTo(stack, 2, 7, false)
             }
         }
 
