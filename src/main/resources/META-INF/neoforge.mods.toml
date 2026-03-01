@@ -8,6 +8,7 @@ license="${mod_license}"
     displayName="${mod_name}"
     authors="${mod_authors}"
     description='''${mod_description}'''
+    logoFile="appliedcreate_icon.png"
 
 [[dependencies.${mod_id}]]
     modId="neoforge"
