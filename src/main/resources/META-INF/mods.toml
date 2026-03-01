@@ -4,6 +4,7 @@ license="MIT"
 
 [[mods]]
 modId="appliedcreate"
+logoFile="appliedcreate_icon.png"
 version="${file.jarVersion}"
 displayName="Applied Create"
 authors="loliball"

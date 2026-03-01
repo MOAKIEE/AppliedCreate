@@ -2,14 +2,22 @@ package com.loliball.appliedcreate
 
 import com.loliball.appliedcreate.client.StressKeyRenderHandler
 import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
+import com.loliball.appliedcreate.cannon.MEBlueprintCannonMenu
+import com.loliball.appliedcreate.cannon.MEBlueprintCannonRenderer
+import com.loliball.appliedcreate.cannon.MEBlueprintCannonScreen
+import com.loliball.appliedcreate.energy.KineticEnergyAcceptorRenderer
+import com.loliball.appliedcreate.energy.MEGearboxRenderer
+import com.loliball.appliedcreate.kinetic.StressP2PCompanionRenderer
 import com.loliball.appliedcreate.storage.StressStorageCell
 import appeng.client.gui.implementations.PatternProviderScreen
 import appeng.client.gui.style.ScreenStyle
 import appeng.init.client.InitScreens
+import net.minecraft.client.gui.screens.MenuScreens
 import net.minecraft.network.chat.Component
 import net.minecraft.world.entity.player.Inventory
 import net.minecraftforge.api.distmarker.Dist
 import net.minecraftforge.api.distmarker.OnlyIn
+import net.minecraftforge.client.event.EntityRenderersEvent
 import net.minecraftforge.client.event.RegisterColorHandlersEvent
 import net.minecraftforge.eventbus.api.IEventBus
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent
@@ -20,6 +28,7 @@ object ClientSetup {
     fun register(bus: IEventBus) {
         bus.addListener(::onClientSetup)
         bus.addListener(::onRegisterItemColors)
+        bus.addListener(::onRegisterRenderers)
     }
 
     private fun onClientSetup(event: FMLClientSetupEvent) {
@@ -30,6 +39,11 @@ object ClientSetup {
                     PatternProviderScreen(menu, inv, title, style)
                 },
                 "/screens/appliedcreate/brass_pattern_provider.json"
+            )
+
+            MenuScreens.register(
+                AppliedCreate.ME_BLUEPRINT_CANNON_MENU.get(),
+                ::MEBlueprintCannonScreen
             )
 
             // Register StressKey render handler for ME terminal display
@@ -44,5 +58,12 @@ object ClientSetup {
             { stack, tintIndex -> StressStorageCell.getColor(stack, tintIndex) },
             *cellItems
         )
+    }
+
+    private fun onRegisterRenderers(event: EntityRenderersEvent.RegisterRenderers) {
+        event.registerBlockEntityRenderer(AppliedCreate.ME_BLUEPRINT_CANNON_BE.get(), ::MEBlueprintCannonRenderer)
+        event.registerBlockEntityRenderer(AppliedCreate.KINETIC_ENERGY_ACCEPTOR_BE.get(), ::KineticEnergyAcceptorRenderer)
+        event.registerBlockEntityRenderer(AppliedCreate.ME_GEARBOX_BE.get(), ::MEGearboxRenderer)
+        event.registerBlockEntityRenderer(AppliedCreate.STRESS_P2P_COMPANION_BE.get(), ::StressP2PCompanionRenderer)
     }
 }

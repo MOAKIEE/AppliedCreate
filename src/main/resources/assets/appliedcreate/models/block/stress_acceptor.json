@@ -1,8 +1,0 @@
-{
-    "parent": "minecraft:block/cube_bottom_top",
-    "textures": {
-        "bottom": "appliedcreate:block/stress_acceptor_bottom",
-        "side": "appliedcreate:block/stress_acceptor_side",
-        "top": "appliedcreate:block/stress_acceptor_top"
-    }
-}

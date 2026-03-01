@@ -89,7 +89,7 @@ dependencies {
     // extends VirtualBlockEntity from the Ponder library
     compileOnly(fg.deobf("net.createmod.ponder:Ponder-Forge-${project.extra["minecraft_version"]}:${project.extra["ponder_version"]}"))
 
-    compileOnly(fg.deobf("net.createmod.catnip:Catnip-Forge-${project.extra["minecraft_version"]}:0.8.42"))
+    compileOnly(fg.deobf("net.createmod.catnip:Catnip-Forge-${project.extra["minecraft_version"]}:0.8.44"))
 
     compileOnly(fg.deobf("appeng:appliedenergistics2-forge:${project.extra["ae2_version"]}"))
 }

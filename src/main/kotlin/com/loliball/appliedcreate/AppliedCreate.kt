@@ -1,18 +1,23 @@
 package com.loliball.appliedcreate
 
 import com.loliball.appliedcreate.block.AndesitePatternProviderBlock
+import com.loliball.appliedcreate.block.BlockFumo
 import com.loliball.appliedcreate.block.BrassPatternProviderBlock
 import com.loliball.appliedcreate.block.entity.AndesitePatternProviderBlockEntity
 import com.loliball.appliedcreate.block.entity.BrassPatternProviderBlockEntity
-import appeng.blockentity.AEBaseBlockEntity
-
+import com.loliball.appliedcreate.cannon.ConfigureMECannonPacket
+import com.loliball.appliedcreate.cannon.MEBlueprintCannonBlock
+import com.loliball.appliedcreate.cannon.MEBlueprintCannonBlockEntity
+import com.loliball.appliedcreate.cannon.MEBlueprintCannonMenu
+import com.loliball.appliedcreate.energy.KineticEnergyAcceptorBlock
+import com.loliball.appliedcreate.energy.KineticEnergyAcceptorBlockEntity
+import com.loliball.appliedcreate.energy.MEGearboxBlock
+import com.loliball.appliedcreate.energy.MEGearboxBlockEntity
 import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
 import com.loliball.appliedcreate.item.BrassPatternProviderUpgradeItem
 import com.loliball.appliedcreate.item.MechanicalCraftingPartItem
-import com.loliball.appliedcreate.kinetic.StressAcceptorBlock
-import com.loliball.appliedcreate.kinetic.StressAcceptorBlockEntity
-import com.loliball.appliedcreate.kinetic.StressProviderBlock
-import com.loliball.appliedcreate.kinetic.StressProviderBlockEntity
+import com.loliball.appliedcreate.kinetic.StressP2PCompanionBlock
+import com.loliball.appliedcreate.kinetic.StressP2PCompanionBlockEntity
 import com.loliball.appliedcreate.part.AndesitePatternProviderPart
 import com.loliball.appliedcreate.part.BrassPatternProviderPart
 import com.loliball.appliedcreate.p2p.StressP2PTunnelPart
@@ -20,12 +25,14 @@ import com.loliball.appliedcreate.storage.StressKeyType
 import com.loliball.appliedcreate.storage.StressStorageCell
 import appeng.api.features.P2PTunnelAttunement
 import appeng.api.stacks.AEKeyTypes
+import appeng.blockentity.AEBaseBlockEntity
 import appeng.helpers.patternprovider.PatternProviderLogicHost
 import appeng.menu.MenuOpener
 import appeng.menu.locator.MenuLocator
 import appeng.menu.locator.MenuLocators
 import net.minecraft.core.registries.Registries
 import net.minecraft.network.chat.Component
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.SimpleMenuProvider
 import net.minecraft.world.entity.player.Player
@@ -35,12 +42,15 @@ import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Item
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.entity.BlockEntityType
+import net.minecraft.world.level.block.state.BlockBehaviour
 import net.minecraftforge.common.extensions.IForgeMenuType
 import net.minecraftforge.eventbus.api.IEventBus
 import net.minecraftforge.fml.common.Mod
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent
 import net.minecraftforge.fml.loading.FMLEnvironment
 import net.minecraftforge.network.NetworkHooks
+import net.minecraftforge.network.NetworkRegistry
+import net.minecraftforge.network.simple.SimpleChannel
 import net.minecraftforge.registries.DeferredRegister
 import net.minecraftforge.registries.ForgeRegistries
 import net.minecraftforge.registries.RegistryObject
@@ -60,6 +70,14 @@ class AppliedCreate {
         val MENU_TYPES: DeferredRegister<MenuType<*>> = DeferredRegister.create(ForgeRegistries.MENU_TYPES, MOD_ID)
         val CREATIVE_TABS: DeferredRegister<CreativeModeTab> = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MOD_ID)
 
+        // ── Network Channel ──
+        private const val PROTOCOL_VERSION = "1"
+        val CHANNEL: SimpleChannel = NetworkRegistry.newSimpleChannel(
+            ResourceLocation(MOD_ID, "main"),
+            { PROTOCOL_VERSION },
+            { it == PROTOCOL_VERSION },
+            { it == PROTOCOL_VERSION }
+        )
 
         // ── Andesite Pattern Provider ──
         val ANDESITE_PATTERN_PROVIDER_BLOCK: RegistryObject<Block> = BLOCKS.register("andesite_pattern_provider") {
@@ -131,40 +149,101 @@ class AppliedCreate {
             ) { partItem -> StressP2PTunnelPart(partItem) }
         }
 
-        // ── Stress P2P Companion Blocks ──
-        val STRESS_ACCEPTOR_BLOCK: RegistryObject<Block> = BLOCKS.register("stress_acceptor") {
-            StressAcceptorBlock()
+        // ── Stress P2P Companion Block ──
+        val STRESS_P2P_COMPANION_BLOCK: RegistryObject<Block> = BLOCKS.register("stress_p2p_companion") {
+            StressP2PCompanionBlock()
         }
 
-        val STRESS_ACCEPTOR_ITEM: RegistryObject<Item> = ITEMS.register("stress_acceptor") {
-            BlockItem(STRESS_ACCEPTOR_BLOCK.get(), Item.Properties())
-        }
-
-        @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-        val STRESS_ACCEPTOR_BE: RegistryObject<BlockEntityType<StressAcceptorBlockEntity>> =
-            BLOCK_ENTITY_TYPES.register("stress_acceptor") {
-                BlockEntityType.Builder.of(
-                    ::StressAcceptorBlockEntity,
-                    STRESS_ACCEPTOR_BLOCK.get()
-                ).build(null)
-            }
-
-        val STRESS_PROVIDER_BLOCK: RegistryObject<Block> = BLOCKS.register("stress_provider") {
-            StressProviderBlock()
-        }
-
-        val STRESS_PROVIDER_ITEM: RegistryObject<Item> = ITEMS.register("stress_provider") {
-            BlockItem(STRESS_PROVIDER_BLOCK.get(), Item.Properties())
+        val STRESS_P2P_COMPANION_ITEM: RegistryObject<Item> = ITEMS.register("stress_p2p_companion") {
+            BlockItem(STRESS_P2P_COMPANION_BLOCK.get(), Item.Properties())
         }
 
         @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-        val STRESS_PROVIDER_BE: RegistryObject<BlockEntityType<StressProviderBlockEntity>> =
-            BLOCK_ENTITY_TYPES.register("stress_provider") {
+        lateinit var STRESS_P2P_COMPANION_BE: RegistryObject<BlockEntityType<StressP2PCompanionBlockEntity>>
+
+        // ── ME Blueprint Cannon ──
+        val ME_BLUEPRINT_CANNON_BLOCK: RegistryObject<Block> = BLOCKS.register("me_blueprint_cannon") {
+            MEBlueprintCannonBlock(BlockBehaviour.Properties.of().strength(3.5f).noOcclusion())
+        }
+
+        val ME_BLUEPRINT_CANNON_ITEM: RegistryObject<Item> = ITEMS.register("me_blueprint_cannon") {
+            BlockItem(ME_BLUEPRINT_CANNON_BLOCK.get(), Item.Properties())
+        }
+
+        @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
+        lateinit var ME_BLUEPRINT_CANNON_BE: RegistryObject<BlockEntityType<MEBlueprintCannonBlockEntity>>
+
+        lateinit var ME_BLUEPRINT_CANNON_MENU: RegistryObject<MenuType<MEBlueprintCannonMenu>>
+        
+        // First init block: register things that self-reference (lateinit vars)
+        // Note: RegistryObject.get() lambdas only run at registry time, not here.
+        init {
+            STRESS_P2P_COMPANION_BE = BLOCK_ENTITY_TYPES.register("stress_p2p_companion") {
                 BlockEntityType.Builder.of(
-                    ::StressProviderBlockEntity,
-                    STRESS_PROVIDER_BLOCK.get()
+                    { pos, state -> StressP2PCompanionBlockEntity(STRESS_P2P_COMPANION_BE.get(), pos, state) },
+                    STRESS_P2P_COMPANION_BLOCK.get()
                 ).build(null)
             }
+            ME_BLUEPRINT_CANNON_BE = BLOCK_ENTITY_TYPES.register("me_blueprint_cannon") {
+                BlockEntityType.Builder.of(
+                    { pos, state -> MEBlueprintCannonBlockEntity(ME_BLUEPRINT_CANNON_BE.get(), pos, state) },
+                    ME_BLUEPRINT_CANNON_BLOCK.get()
+                ).build(null)
+            }
+            ME_BLUEPRINT_CANNON_MENU = MENU_TYPES.register("me_blueprint_cannon") {
+                IForgeMenuType.create { windowId, inv, buf ->
+                    MEBlueprintCannonMenu(ME_BLUEPRINT_CANNON_MENU.get(), windowId, inv, buf)
+                }
+            }
+        }
+
+        // ── Kinetic Energy Acceptor ──
+        val KINETIC_ENERGY_ACCEPTOR_BLOCK: RegistryObject<Block> = BLOCKS.register("kinetic_energy_acceptor") {
+            KineticEnergyAcceptorBlock()
+        }
+
+        val KINETIC_ENERGY_ACCEPTOR_ITEM: RegistryObject<Item> = ITEMS.register("kinetic_energy_acceptor") {
+            BlockItem(KINETIC_ENERGY_ACCEPTOR_BLOCK.get(), Item.Properties())
+        }
+
+        @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
+        lateinit var KINETIC_ENERGY_ACCEPTOR_BE: RegistryObject<BlockEntityType<KineticEnergyAcceptorBlockEntity>>
+
+        // ── ME Gearbox ──
+        val ME_GEARBOX_BLOCK: RegistryObject<Block> = BLOCKS.register("me_gearbox") {
+            MEGearboxBlock()
+        }
+
+        val ME_GEARBOX_ITEM: RegistryObject<Item> = ITEMS.register("me_gearbox") {
+            BlockItem(ME_GEARBOX_BLOCK.get(), Item.Properties())
+        }
+
+        @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
+        lateinit var ME_GEARBOX_BE: RegistryObject<BlockEntityType<MEGearboxBlockEntity>>
+
+        init {
+            KINETIC_ENERGY_ACCEPTOR_BE = BLOCK_ENTITY_TYPES.register("kinetic_energy_acceptor") {
+                BlockEntityType.Builder.of(
+                    { pos, state -> KineticEnergyAcceptorBlockEntity(KINETIC_ENERGY_ACCEPTOR_BE.get(), pos, state) },
+                    KINETIC_ENERGY_ACCEPTOR_BLOCK.get()
+                ).build(null)
+            }
+            ME_GEARBOX_BE = BLOCK_ENTITY_TYPES.register("me_gearbox") {
+                BlockEntityType.Builder.of(
+                    { pos, state -> MEGearboxBlockEntity(ME_GEARBOX_BE.get(), pos, state) },
+                    ME_GEARBOX_BLOCK.get()
+                ).build(null)
+            }
+        }
+
+        // ── 小萝卜 (Fumo Doll) ──
+        val WHICHBALL_SKIN_DOLL_BLOCK: RegistryObject<Block> = BLOCKS.register("whichball_skin_doll") {
+            BlockFumo()
+        }
+
+        val WHICHBALL_SKIN_DOLL_ITEM: RegistryObject<Item> = ITEMS.register("whichball_skin_doll") {
+            BlockItem(WHICHBALL_SKIN_DOLL_BLOCK.get(), Item.Properties())
+        }
 
         // ── Stress Storage Crafting Items ──
         val STRESS_CIRCUIT_BOARD: RegistryObject<Item> = ITEMS.register("stress_circuit_board") {
@@ -271,8 +350,11 @@ class AppliedCreate {
                     output.accept(BRASS_PATTERN_PROVIDER_PART_ITEM.get())
                     output.accept(BRASS_PATTERN_PROVIDER_UPGRADE_ITEM.get())
                     output.accept(STRESS_P2P_TUNNEL_PART_ITEM.get())
-                    output.accept(STRESS_ACCEPTOR_ITEM.get())
-                    output.accept(STRESS_PROVIDER_ITEM.get())
+                    // Companion block hidden from creative tab — auto-placed by P2P tunnel
+                    output.accept(ME_BLUEPRINT_CANNON_ITEM.get())
+                    output.accept(KINETIC_ENERGY_ACCEPTOR_ITEM.get())
+                    output.accept(ME_GEARBOX_ITEM.get())
+                    output.accept(WHICHBALL_SKIN_DOLL_ITEM.get())
                     // Crafting items
                     output.accept(STRESS_CIRCUIT_BOARD.get())
                     output.accept(ADVANCED_STRESS_CIRCUIT_BOARD.get())
@@ -346,6 +428,16 @@ class AppliedCreate {
         MENU_TYPES.register(bus)
         CREATIVE_TABS.register(bus)
 
+        // Register network packets
+        var packetId = 0
+        CHANNEL.registerMessage(
+            packetId++,
+            ConfigureMECannonPacket::class.java,
+            ConfigureMECannonPacket::encode,
+            ConfigureMECannonPacket.Companion::decode,
+            ConfigureMECannonPacket::handle
+        )
+
         // Register part models manually since Kotlin companion object @PartModels annotations
         // are not discoverable by AE2's Java reflection-based PartModelsHelper scanner
         appeng.api.parts.PartModels.registerModels(
@@ -397,6 +489,27 @@ class AppliedCreate {
             BRASS_PATTERN_PROVIDER_BE.get(),
             BRASS_PATTERN_PROVIDER_ITEM.get()
         )
+        AEBaseBlockEntity.registerBlockEntityItem(
+            ME_BLUEPRINT_CANNON_BE.get(),
+            ME_BLUEPRINT_CANNON_ITEM.get()
+        )
+        AEBaseBlockEntity.registerBlockEntityItem(
+            KINETIC_ENERGY_ACCEPTOR_BE.get(),
+            KINETIC_ENERGY_ACCEPTOR_ITEM.get()
+        )
+        AEBaseBlockEntity.registerBlockEntityItem(
+            ME_GEARBOX_BE.get(),
+            ME_GEARBOX_ITEM.get()
+        )
+
+        // Reload AE2's igtooltip ServiceLoader to ensure our AppliedCreateTooltipProvider
+        // is discovered (Forge module layers may cache ServiceLoader before our mod loads)
+        try {
+            appeng.integration.modules.igtooltip.TooltipProviders.LOADER.reload()
+            LOGGER.debug("Reloaded AE2 igtooltip ServiceLoader")
+        } catch (e: Exception) {
+            LOGGER.warn("Failed to reload AE2 igtooltip ServiceLoader: {}", e.message)
+        }
 
         event.enqueueWork {
             // Register our custom AE key type so AE2 recognizes StressKey in storage
@@ -412,9 +525,30 @@ class AppliedCreate {
                 )
             }
 
-            // Register stress values for companion blocks
+            // Register stress value for companion block
             com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
-                STRESS_ACCEPTOR_BLOCK.get(), { 0.0 }
+                STRESS_P2P_COMPANION_BLOCK.get(), { 0.0 }
+            )
+
+            // Register stress value for kinetic energy acceptor
+            com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
+                KINETIC_ENERGY_ACCEPTOR_BLOCK.get(), { KineticEnergyAcceptorBlockEntity.MAX_STRESS_SU / 256.0 }
+            )
+
+            // Register stress values for ME Gearbox
+            com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
+                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.BASE_STRESS_IMPACT_PER_RPM.toDouble() }
+            )
+            com.simibubi.create.api.stress.BlockStressValues.CAPACITIES.register(
+                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.BASE_STRESS_CAPACITY_PER_RPM.toDouble() }
+            )
+
+            // Register upgrade cards for ME Blueprint Cannon
+            appeng.api.upgrades.Upgrades.add(
+                appeng.core.definitions.AEItems.SPEED_CARD, ME_BLUEPRINT_CANNON_ITEM.get(), 4
+            )
+            appeng.api.upgrades.Upgrades.add(
+                appeng.core.definitions.AEItems.CRAFTING_CARD, ME_BLUEPRINT_CANNON_ITEM.get(), 1
             )
         }
     }

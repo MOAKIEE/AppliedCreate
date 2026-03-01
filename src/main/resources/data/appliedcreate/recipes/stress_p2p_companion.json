@@ -1,0 +1,17 @@
+{
+    "type": "create:mechanical_crafting",
+    "pattern": [
+        "ACA",
+        "ASA",
+        "AAA"
+    ],
+    "key": {
+        "A": { "item": "create:andesite_alloy" },
+        "C": { "item": "ae2:fluix_crystal" },
+        "S": { "item": "create:shaft" }
+    },
+    "result": {
+        "item": "appliedcreate:stress_p2p_companion",
+        "count": 1
+    }
+}

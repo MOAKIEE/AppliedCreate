@@ -1,8 +1,0 @@
-{
-    "parent": "minecraft:block/cube_bottom_top",
-    "textures": {
-        "bottom": "appliedcreate:block/stress_provider_bottom",
-        "side": "appliedcreate:block/stress_provider_side",
-        "top": "appliedcreate:block/stress_provider_top"
-    }
-}

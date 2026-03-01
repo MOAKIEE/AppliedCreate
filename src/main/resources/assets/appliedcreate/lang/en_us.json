@@ -25,8 +25,27 @@
     "item.appliedcreate.stress_storage_cell_256m": "256M Stress Storage Cell",
 
     "item.appliedcreate.stress_p2p_tunnel": "Stress P2P Tunnel",
-    "block.appliedcreate.stress_acceptor": "Stress Acceptor",
-    "block.appliedcreate.stress_provider": "Stress Provider",
+    "block.appliedcreate.stress_p2p_companion": "Stress P2P Companion",
+    "block.appliedcreate.me_blueprint_cannon": "ME Blueprint Cannon",
+    "block.appliedcreate.kinetic_energy_acceptor": "Kinetic Energy Acceptor",
+    "block.appliedcreate.me_gearbox": "ME Gearbox",
+    "block.appliedcreate.whichball_skin_doll": "Whichball Skin Doll",
+
+    "gui.appliedcreate.slot.upgrades": "Upgrade Cards",
+    "gui.appliedcreate.me_blueprint_cannon.viewMaterials": "View Materials",
+    "gui.appliedcreate.me_blueprint_cannon.materials": "Material Checklist",
+    "gui.appliedcreate.me_blueprint_cannon.noMaterials": "No materials required",
+
+    "appliedcreate.me_gearbox.title": "ME Gearbox",
+    "appliedcreate.me_gearbox.mode": "Mode: ",
+    "appliedcreate.me_gearbox.mode.export": "Export (ME → Kinetic)",
+    "appliedcreate.me_gearbox.mode.import": "Import (Kinetic → ME)",
+    "appliedcreate.me_gearbox.transfer": "Transfer: ",
+    "appliedcreate.me_gearbox.transfer.unit": " SU/t",
+    "appliedcreate.me_gearbox.multiplier": "Stress Multiplier",
+
+    "appliedcreate.stress_p2p.companion.present": "Companion: Present ✔",
+    "appliedcreate.stress_p2p.companion.missing": "Companion: Missing ✘",
 
     "item.appliedcreate.stress_circuit_board": "Andesite Stress Circuit Board",
     "item.appliedcreate.advanced_stress_circuit_board": "Brass Stress Circuit Board",
