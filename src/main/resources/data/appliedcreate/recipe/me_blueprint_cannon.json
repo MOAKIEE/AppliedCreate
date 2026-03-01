@@ -1,5 +1,6 @@
 {
   "type": "create:mechanical_crafting",
+  "accept_mirrored": false,
   "pattern": [
     " C ",
     "FSA",
@@ -24,6 +25,5 @@
   },
   "result": {
     "id": "appliedcreate:me_blueprint_cannon"
-  },
-  "acceptMirrored": false
+  }
 }
