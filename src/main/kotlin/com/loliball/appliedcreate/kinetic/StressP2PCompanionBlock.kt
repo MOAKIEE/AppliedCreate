@@ -2,6 +2,7 @@ package com.loliball.appliedcreate.kinetic
 
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock
 import com.simibubi.create.foundation.block.IBE
+import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.world.item.context.BlockPlaceContext
@@ -28,7 +29,7 @@ class StressP2PCompanionBlock : DirectionalKineticBlock(
     Properties.of()
         .strength(3.5f)
         .noOcclusion()
-), IBE<StressP2PCompanionBlockEntity> {
+), IBE<StressP2PCompanionBlockEntity>, ICogWheel {
 
     override fun getRotationAxis(state: BlockState): Direction.Axis {
         return state.getValue(FACING).axis
