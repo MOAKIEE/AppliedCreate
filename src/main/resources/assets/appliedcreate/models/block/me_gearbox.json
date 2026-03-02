@@ -1,4 +1,5 @@
 {
+    "render_type": "cutout",
     "credit": "ME Gearbox — Create-style encased gearbox model",
     "parent": "block/block",
     "textures": {
