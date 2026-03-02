@@ -1,6 +1,5 @@
 package com.loliball.appliedcreate.cannon
 
-import com.loliball.appliedcreate.AppliedCreate
 import com.simibubi.create.content.schematics.cannon.SchematicannonBlockEntity
 import com.simibubi.create.foundation.gui.AllGuiTextures
 import com.simibubi.create.foundation.gui.AllIcons
@@ -9,7 +8,6 @@ import com.simibubi.create.foundation.gui.widget.IconButton
 import com.simibubi.create.foundation.gui.widget.Indicator
 import com.simibubi.create.foundation.item.TooltipHelper
 import com.simibubi.create.foundation.utility.CreateLang
-import net.createmod.catnip.gui.element.GuiGameElement
 import net.createmod.catnip.lang.FontHelper
 import net.minecraft.ChatFormatting
 import net.minecraft.client.gui.GuiGraphics
@@ -17,7 +15,6 @@ import net.minecraft.client.gui.components.AbstractWidget
 import net.minecraft.client.renderer.Rect2i
 import net.minecraft.network.chat.CommonComponents
 import net.minecraft.network.chat.Component
-import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.player.Inventory
 import net.neoforged.neoforge.network.PacketDistributor
 import java.util.*
@@ -26,25 +23,8 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
     AbstractSimiContainerScreen<MEBlueprintCannonMenu>(menu, inventory, title) {
 
     companion object {
-        // Custom GUI texture atlas (256x256)
-        private val GUI_TEXTURE = ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "textures/gui/me_blueprint_cannon.png")
-        private const val TEX_SIZE = 256
-
-        // Main background region: (0,0) -> 176x166
-        private const val BG_W = 176
-        private const val BG_H = 166
-
-        // Progress bar region: (0,170) -> 162x5
-        private const val PROGRESS_U = 0
-        private const val PROGRESS_V = 170
-        private const val PROGRESS_W = 162
-        private const val PROGRESS_H = 5
-
-        // Highlight region: (0,180) -> 26x26
-        private const val HIGHLIGHT_U = 0
-        private const val HIGHLIGHT_V = 180
-        private const val HIGHLIGHT_W = 26
-        private const val HIGHLIGHT_H = 26
+        private val BG_TOP = AllGuiTextures.SCHEMATICANNON_TOP
+        private val BG_BOTTOM = AllGuiTextures.SCHEMATICANNON_BOTTOM
     }
 
     private val _showSettings = "gui.schematicannon.showOptions"
@@ -77,54 +57,56 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
     private var placementSettingWidgets = ArrayList<AbstractWidget>()
     private var extraAreas: List<Rect2i> = Collections.emptyList()
 
-    // Upgrade panel constants (AE2 UpgradesPanel style)
+
     private val UPGRADE_SLOT_SIZE = 18
     private val UPGRADE_PADDING = 7
     private val UPGRADE_SLOTS = 5
 
-    // Material checklist display state
+
     private var showingMaterials = false
 
     override fun init() {
-        setWindowSize(BG_W, BG_H + 2 + AllGuiTextures.PLAYER_INVENTORY.height)
-        setWindowOffset(0, 0)
+        setWindowSize(BG_TOP.width, BG_TOP.height + BG_BOTTOM.height + 2 + AllGuiTextures.PLAYER_INVENTORY.height)
+        setWindowOffset(-11, 0)
         super.init()
 
         val x = leftPos
         val y = topPos
 
-        // Play Pause Stop
-        playButton = IconButton(x + 40, y + 65, AllIcons.I_PLAY)
+
+        playButton = IconButton(x + 75, y + 85, AllIcons.I_PLAY)
         playButton.withCallback<IconButton> { sendOptionUpdate(ConfigureMECannonPayload.Option.PLAY, true) }
-        playIndicator = Indicator(x + 40, y + 59, CommonComponents.EMPTY)
-        
-        pauseButton = IconButton(x + 58, y + 65, AllIcons.I_PAUSE)
+        playIndicator = Indicator(x + 75, y + 79, CommonComponents.EMPTY)
+
+        pauseButton = IconButton(x + 93, y + 85, AllIcons.I_PAUSE)
         pauseButton.withCallback<IconButton> { sendOptionUpdate(ConfigureMECannonPayload.Option.PAUSE, true) }
-        pauseIndicator = Indicator(x + 58, y + 59, CommonComponents.EMPTY)
-        
-        resetButton = IconButton(x + 76, y + 65, AllIcons.I_STOP)
+        pauseIndicator = Indicator(x + 93, y + 79, CommonComponents.EMPTY)
+
+        resetButton = IconButton(x + 111, y + 85, AllIcons.I_STOP)
         resetButton.withCallback<IconButton> { sendOptionUpdate(ConfigureMECannonPayload.Option.STOP, true) }
-        resetIndicator = Indicator(x + 76, y + 59, CommonComponents.EMPTY)
+        resetIndicator = Indicator(x + 111, y + 79, CommonComponents.EMPTY)
         resetIndicator.state = Indicator.State.RED
-        
+
         addRenderableWidgets(playButton, playIndicator, pauseButton, pauseIndicator, resetButton, resetIndicator)
 
-        confirmButton = IconButton(x + 151, y + 65, AllIcons.I_CONFIRM)
+
+        confirmButton = IconButton(x + 180, y + 111, AllIcons.I_CONFIRM)
         confirmButton.withCallback<IconButton> { minecraft!!.player!!.closeContainer() }
         addRenderableWidget(confirmButton)
-        
-        showSettingsButton = IconButton(x + 7, y + 65, AllIcons.I_PLACEMENT_SETTINGS)
+
+
+        showSettingsButton = IconButton(x + 8, y + 111, AllIcons.I_PLACEMENT_SETTINGS)
         showSettingsButton.withCallback<IconButton> {
             showSettingsIndicator.state = if (placementSettingsHidden()) Indicator.State.GREEN else Indicator.State.OFF
             initPlacementSettings()
         }
         showSettingsButton.setToolTip(CreateLang.translateDirect(_showSettings))
         addRenderableWidget(showSettingsButton)
-        
-        showSettingsIndicator = Indicator(x + 7, y + 59, CommonComponents.EMPTY)
 
-        // View Materials button
-        viewMaterialsButton = IconButton(x + 130, y + 65, AllIcons.I_VIEW_SCHEDULE)
+        showSettingsIndicator = Indicator(x + 9, y + 111, CommonComponents.EMPTY)
+
+
+        viewMaterialsButton = IconButton(x + 154, y + 19, AllIcons.I_VIEW_SCHEDULE)
         viewMaterialsButton.withCallback<IconButton> {
             showingMaterials = !showingMaterials
             if (showingMaterials) {
@@ -134,8 +116,8 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
         viewMaterialsButton.setToolTip(Component.translatable("gui.appliedcreate.me_blueprint_cannon.viewMaterials"))
         addRenderableWidget(viewMaterialsButton)
 
-        // Extra areas: upgrade panel on right side
-        val upgradePanelX = x + BG_W
+
+        val upgradePanelX = x + BG_TOP.width
         val upgradePanelY = y
         val upgradePanelW = UPGRADE_PADDING * 2 + UPGRADE_SLOT_SIZE
         val upgradePanelH = UPGRADE_PADDING * 2 + UPGRADE_SLOTS * UPGRADE_SLOT_SIZE
@@ -154,7 +136,7 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
         val x = leftPos
         val y = topPos
 
-        // Replace settings
+
         replaceLevelButtons = Vector(4)
         replaceLevelIndicators = Vector(4)
         val icons = listOf(AllIcons.I_DONT_REPLACE, AllIcons.I_REPLACE_SOLID, AllIcons.I_REPLACE_ANY, AllIcons.I_REPLACE_EMPTY)
@@ -164,7 +146,7 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
             CreateLang.translateDirect("gui.schematicannon.option.replaceWithAny"),
             CreateLang.translateDirect("gui.schematicannon.option.replaceWithEmpty")
         )
-        
+
         val options = listOf(
             ConfigureMECannonPayload.Option.DONT_REPLACE,
             ConfigureMECannonPayload.Option.REPLACE_SOLID,
@@ -173,8 +155,8 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
         )
 
         for (i in 0..3) {
-            replaceLevelIndicators.add(Indicator(x + 7 + i * 18, y + 79, CommonComponents.EMPTY))
-            val replaceLevelButton = IconButton(x + 7 + i * 18, y + 85, icons[i])
+            replaceLevelIndicators.add(Indicator(x + 33 + i * 18, y + 111, CommonComponents.EMPTY))
+            val replaceLevelButton = IconButton(x + 33 + i * 18, y + 111, icons[i])
             val replaceMode = i
             replaceLevelButton.withCallback<IconButton> {
                 if (menu.contentHolder.replaceMode != replaceMode) {
@@ -186,21 +168,22 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
         }
         placementSettingWidgets.addAll(replaceLevelButtons)
 
-        // Other Settings
-        skipMissingButton = IconButton(x + 90, y + 85, AllIcons.I_SKIP_MISSING)
+
+        skipMissingButton = IconButton(x + 111, y + 111, AllIcons.I_SKIP_MISSING)
         skipMissingButton.withCallback<IconButton> {
             sendOptionUpdate(ConfigureMECannonPayload.Option.SKIP_MISSING, !menu.contentHolder.skipMissing)
         }
         skipMissingButton.setToolTip(CreateLang.translateDirect("gui.schematicannon.option.skipMissing"))
-        skipMissingIndicator = Indicator(x + 90, y + 79, CommonComponents.EMPTY)
+        skipMissingIndicator = Indicator(x + 111, y + 111, CommonComponents.EMPTY)
         placementSettingWidgets.add(skipMissingButton)
 
-        skipBlockEntitiesButton = IconButton(x + 108, y + 85, AllIcons.I_SKIP_BLOCK_ENTITIES)
+
+        skipBlockEntitiesButton = IconButton(x + 135, y + 111, AllIcons.I_SKIP_BLOCK_ENTITIES)
         skipBlockEntitiesButton.withCallback<IconButton> {
             sendOptionUpdate(ConfigureMECannonPayload.Option.SKIP_BLOCK_ENTITIES, !menu.contentHolder.replaceBlockEntities)
         }
         skipBlockEntitiesButton.setToolTip(CreateLang.translateDirect("gui.schematicannon.option.skipBlockEntities"))
-        skipBlockEntitiesIndicator = Indicator(x + 108, y + 79, CommonComponents.EMPTY)
+        skipBlockEntitiesIndicator = Indicator(x + 129, y + 111, CommonComponents.EMPTY)
         placementSettingWidgets.add(skipBlockEntitiesButton)
 
         addRenderableWidgets(placementSettingWidgets)
@@ -286,46 +269,62 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
 
     override fun renderBg(graphics: GuiGraphics, partialTicks: Float, mouseX: Int, mouseY: Int) {
         val invX = getLeftOfCentered(AllGuiTextures.PLAYER_INVENTORY.width)
-        val invY = topPos + BG_H + 2
+        val invY = topPos + BG_TOP.height + BG_BOTTOM.height + 2
         renderPlayerInventory(graphics, invX, invY)
 
         val x = leftPos
         val y = topPos
 
-        // Render custom background (single 176x166 region from our atlas)
-        graphics.blit(GUI_TEXTURE, x, y, 0f, 0f, BG_W, BG_H, TEX_SIZE, TEX_SIZE)
+
+        BG_TOP.render(graphics, x, y)
+        BG_BOTTOM.render(graphics, x, y + BG_TOP.height)
+
+
+        val bgColor = 0xFFd3d3d3.toInt()
+        graphics.fill(x + 13, y + 17, x + 33, y + 37, bgColor)
+        graphics.fill(x + 34, y + 17, x + 85, y + 37, bgColor)
+
+
+        graphics.fill(x + 112, y + 17, x + 153, y + 37, bgColor)
+
+
 
         val be = menu.contentHolder
+
+
         renderPrintingProgress(graphics, x, y, be.schematicProgress)
+
 
         if (!be.inventory.getStackInSlot(0).isEmpty) {
             renderBlueprintHighlight(graphics, x, y)
         }
 
-        // Render upgrade panel background (right side protrusion)
-        renderUpgradePanel(graphics, x + BG_W, y)
 
-        // Title text (white on dark background for AE2 style)
-        graphics.drawString(font, title, x + (BG_W - font.width(title)) / 2, y + 4, 0xE0E0E0, false)
+        renderUpgradePanel(graphics, x + BG_TOP.width, y)
+
+
+        graphics.drawString(font, title, x + (BG_TOP.width - 8 - font.width(title)) / 2, y + 2, 0x505050, false)
+
 
         val msg = CreateLang.translateDirect("schematicannon.status." + be.statusMsg)
         var stringWidth = font.width(msg)
 
         if (be.missingItem != null) {
             stringWidth += 16
-            GuiGameElement.of(be.missingItem)
-                .at<GuiGameElement.GuiRenderBuilder>((x + 88 + stringWidth / 2 - 16).toFloat(), (y + 40).toFloat(), 100f)
+            net.createmod.catnip.gui.element.GuiGameElement.of(be.missingItem)
+                .at<net.createmod.catnip.gui.element.GuiGameElement.GuiRenderBuilder>((x + 128).toFloat(), (y + 49).toFloat(), 100f)
                 .scale(1.0)
                 .render(graphics)
         }
 
-        graphics.drawString(font, msg, x + 88 - stringWidth / 2, y + 44, 0xDDEEFF)
+        graphics.drawString(font, msg, x + 103 - stringWidth / 2, y + 53, 0xDDEEFF)
 
         if ("schematicErrored" == be.statusMsg) {
             val errorMsg = CreateLang.translateDirect("schematicannon.status.schematicErroredCheckLogs")
-            graphics.drawString(font, errorMsg, x + 88 - font.width(errorMsg) / 2, y + 150, 0xDDEEFF)
+            graphics.drawString(font, errorMsg, x + 103 - font.width(errorMsg) / 2, y + 65, 0xDDEEFF)
         }
-        // Render material checklist overlay if showing
+
+
         if (showingMaterials) {
             renderMaterialChecklist(graphics, x, y)
         }
@@ -334,16 +333,16 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
     private fun renderUpgradePanel(graphics: GuiGraphics, panelX: Int, panelY: Int) {
         val w = UPGRADE_PADDING * 2 + UPGRADE_SLOT_SIZE
         val h = UPGRADE_PADDING * 2 + UPGRADE_SLOTS * UPGRADE_SLOT_SIZE
-        
+
         // Panel background (MC standard grey)
         graphics.fill(panelX, panelY, panelX + w, panelY + h, 0xFFC6C6C6.toInt())
-        
+
         // Outer dark border
         graphics.fill(panelX, panelY, panelX + w, panelY + 1, 0xFF373737.toInt())
         graphics.fill(panelX, panelY, panelX + 1, panelY + h, 0xFF373737.toInt())
         graphics.fill(panelX + w - 1, panelY, panelX + w, panelY + h, 0xFF373737.toInt())
         graphics.fill(panelX, panelY + h - 1, panelX + w, panelY + h, 0xFF373737.toInt())
-        
+
         // 3D inner border
         graphics.fill(panelX + 1, panelY + 1, panelX + w - 1, panelY + 2, 0xFFFFFFFF.toInt())
         graphics.fill(panelX + 1, panelY + 1, panelX + 2, panelY + h - 1, 0xFFFFFFFF.toInt())
@@ -371,8 +370,8 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
 
         val overlayX = guiX + 8
         val overlayY = guiY + 16
-        val overlayW = 160
-        val overlayH = 130
+        val overlayW = 197
+        val overlayH = 120
         graphics.fill(overlayX, overlayY, overlayX + overlayW, overlayY + overlayH, 0xDD000000.toInt())
 
         val titleText = Component.translatable("gui.appliedcreate.me_blueprint_cannon.materials").withStyle(ChatFormatting.WHITE)
@@ -401,20 +400,19 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
     }
 
     private fun renderBlueprintHighlight(graphics: GuiGraphics, x: Int, y: Int) {
-        graphics.blit(GUI_TEXTURE, x + 3, y + 13, HIGHLIGHT_U.toFloat(), HIGHLIGHT_V.toFloat(), HIGHLIGHT_W, HIGHLIGHT_H, TEX_SIZE, TEX_SIZE)
+        AllGuiTextures.SCHEMATICANNON_HIGHLIGHT.render(graphics, x + 10, y + 60)
     }
 
     private fun renderPrintingProgress(graphics: GuiGraphics, x: Int, y: Int, progress: Float) {
         val p = progress.coerceIn(0f, 1f)
-        graphics.blit(GUI_TEXTURE, x + 7, y + 56, PROGRESS_U.toFloat(), PROGRESS_V.toFloat(), (PROGRESS_W * p).toInt(), PROGRESS_H, TEX_SIZE, TEX_SIZE)
+        val sprite = AllGuiTextures.SCHEMATICANNON_PROGRESS
+        graphics.blit(sprite.location, x + 44, y + 64, sprite.startX, sprite.startY, (sprite.width * p).toInt(), sprite.height)
     }
 
     override fun renderForeground(graphics: GuiGraphics, mouseX: Int, mouseY: Int, partialTicks: Float) {
         val be = menu.contentHolder
-        val x = leftPos
-        val y = topPos
 
-        // Slot tooltips for empty slots
+
         if (hoveredSlot != null && !hoveredSlot!!.hasItem()) {
             if (hoveredSlot!!.index == 0)
                 graphics.renderComponentTooltip(font, TooltipHelper.cutTextComponent(CreateLang.translateDirect(_slotSchematic), FontHelper.Palette.GRAY_AND_BLUE), mouseX, mouseY)
@@ -423,10 +421,10 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
         }
 
         if (be.missingItem != null) {
-            val msg = CreateLang.translateDirect("schematicannon.status." + be.statusMsg)
-            val stringWidth = font.width(msg) + 16
-            val missingBlockX = x + 88 + stringWidth / 2 - 16
-            val missingBlockY = y + 40
+            val x = leftPos
+            val y = topPos
+            val missingBlockX = x + 128
+            val missingBlockY = y + 49
             if (mouseX >= missingBlockX && mouseY >= missingBlockY && mouseX <= missingBlockX + 16 && mouseY <= missingBlockY + 16) {
                 graphics.renderTooltip(font, be.missingItem!!, mouseX, mouseY)
             }
@@ -441,8 +439,8 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
             val y = topPos
             val overlayX = x + 8
             val overlayY = y + 16
-            val overlayW = 160
-            val overlayH = 130
+            val overlayW = 197
+            val overlayH = 120
             if (mouseX < overlayX || mouseX > overlayX + overlayW || mouseY < overlayY || mouseY > overlayY + overlayH) {
                 if (!viewMaterialsButton.isMouseOver(mouseX, mouseY)) {
                     showingMaterials = false

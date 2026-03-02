@@ -28,17 +28,18 @@ class MEBlueprintCannonMenu : MenuBase<MEBlueprintCannonBlockEntity> {
     override fun initAndReadInventory(contentHolder: MEBlueprintCannonBlockEntity) {}
 
     override fun addSlots() {
-        // 0: Blueprint at (7, 17)
-        addSlot(SlotItemHandler(contentHolder.inventory, 0, 7, 17))
-        // 1: Output at (151, 17)
-        addSlot(SlotItemHandler(contentHolder.inventory, 1, 151, 17))
-        // 2-6: Upgrade slots at (183, 7+i*18)
+        // Match SchematicannonMenu slot positions (relative to background origin)
+        // 0: Blueprint input at (15, 65)
+        addSlot(SlotItemHandler(contentHolder.inventory, 0, 15, 65))
+        // 1: Output at (171, 65)
+        addSlot(SlotItemHandler(contentHolder.inventory, 1, 171, 65))
+        // 2-6: Upgrade slots on right side panel
         val upgradeHandler = contentHolder.upgradeInventory.toItemHandler()
         for (i in 0 until 5) {
-            addSlot(SlotItemHandler(upgradeHandler, i, 183, 7 + i * 18))
+            addSlot(SlotItemHandler(upgradeHandler, i, 221, 7 + i * 18))
         }
-        // Player inventory at (8, 168)
-        addPlayerSlots(8, 168)
+        // Player inventory at (37, 161) — matching Schematicannon
+        addPlayerSlots(37, 161)
     }
 
     override fun saveData(contentHolder: MEBlueprintCannonBlockEntity) {}
