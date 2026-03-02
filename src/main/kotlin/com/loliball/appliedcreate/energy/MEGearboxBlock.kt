@@ -8,24 +8,19 @@ import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.network.chat.Component
 import net.minecraft.world.InteractionResult
-import net.minecraft.world.ItemInteractionResult
-import net.minecraft.world.InteractionHand
-import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.context.BlockPlaceContext
-import net.minecraft.world.level.Level
+import net.minecraft.world.item.context.UseOnContext
 import net.minecraft.world.level.LevelReader
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
-import net.minecraft.world.phys.BlockHitResult
-import net.minecraft.world.item.ItemStack
-import com.simibubi.create.content.equipment.wrench.WrenchItem
 
 /**
  * ME Gearbox Block — directional kinetic block with shaft.
  * Dual-network block: joins AE2 ME network and Create kinetic network.
  *
  * Shift+Wrench right-click toggles between EXPORT and IMPORT mode.
+ * Normal wrench rotates the block (default Create behaviour via IWrenchable).
  * Stress multiplier is adjusted via Create-style scroll wheel on perpendicular faces.
  * Shaft extends along the FACING axis (both directions).
  * AE2 cable connects on perpendicular sides.
@@ -71,30 +66,23 @@ class MEGearboxBlock : DirectionalKineticBlock(
 
     /**
      * Shift+Wrench toggles mode between EXPORT and IMPORT.
-     * Normal wrench (without shift) falls through to Create's default wrench behaviour.
+     * Called by Create's WrenchItem.useOn() → IWrenchable.onSneakWrenched().
+     * Overrides default behaviour which would pick up and drop the block.
      */
-    override fun useItemOn(
-        stack: ItemStack,
-        state: BlockState,
-        level: Level,
-        pos: BlockPos,
-        player: Player,
-        hand: InteractionHand,
-        hit: BlockHitResult
-    ): ItemInteractionResult {
-        if (stack.item !is WrenchItem) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
-        if (!player.isShiftKeyDown) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
+    override fun onSneakWrenched(state: BlockState, context: UseOnContext): InteractionResult {
+        val level = context.level
+        val pos = context.clickedPos
+        val player = context.player ?: return InteractionResult.PASS
 
-        // Shift+Wrench: toggle mode
-        if (level.isClientSide) return ItemInteractionResult.SUCCESS
+        if (level.isClientSide) return InteractionResult.SUCCESS
 
-        val be = level.getBlockEntity(pos) as? MEGearboxBlockEntity ?: return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
+        val be = level.getBlockEntity(pos) as? MEGearboxBlockEntity ?: return InteractionResult.PASS
         be.toggleMode()
 
         val modeKey = if (be.mode == MEGearboxBlockEntity.Mode.EXPORT) "appliedcreate.me_gearbox.mode.export" else "appliedcreate.me_gearbox.mode.import"
         player.displayClientMessage(Component.translatable("appliedcreate.me_gearbox.mode").append(Component.translatable(modeKey)), true)
 
-        return ItemInteractionResult.SUCCESS
+        return InteractionResult.SUCCESS
     }
 
 }
