@@ -28,23 +28,17 @@ class MEBlueprintCannonMenu : MenuBase<MEBlueprintCannonBlockEntity> {
     override fun initAndReadInventory(contentHolder: MEBlueprintCannonBlockEntity) {}
 
     override fun addSlots() {
-        val x = 0
-        val y = 0
-
-        // 0: Blueprint
-        addSlot(SlotItemHandler(contentHolder.inventory, 0, x + 15, y + 65))
-        // 1: Blueprint Output
-        addSlot(SlotItemHandler(contentHolder.inventory, 1, x + 171, y + 65))
-
-        // 2-6: Upgrade Card Slots (right-side panel, AE2 UpgradesPanel style)
-        // Panel starts at x = BG_TOP.width (213) + PADDING (7) = 220
-        // Slots stacked vertically, SLOT_SIZE = 18
+        // 0: Blueprint at (7, 17)
+        addSlot(SlotItemHandler(contentHolder.inventory, 0, 7, 17))
+        // 1: Output at (151, 17)
+        addSlot(SlotItemHandler(contentHolder.inventory, 1, 151, 17))
+        // 2-6: Upgrade slots at (183, 7+i*18)
         val upgradeHandler = contentHolder.upgradeInventory.toItemHandler()
         for (i in 0 until 5) {
-            addSlot(SlotItemHandler(upgradeHandler, i, x + 220, y + 7 + i * 18))
+            addSlot(SlotItemHandler(upgradeHandler, i, 183, 7 + i * 18))
         }
-
-        addPlayerSlots(37, 161)
+        // Player inventory at (8, 168)
+        addPlayerSlots(8, 168)
     }
 
     override fun saveData(contentHolder: MEBlueprintCannonBlockEntity) {}

@@ -1,8 +1,49 @@
 {
-    "parent": "minecraft:block/cube_bottom_top",
+    "credit": "Stress P2P Companion — Create-style encased shaft model",
+    "parent": "block/block",
     "textures": {
+        "top": "appliedcreate:block/stress_p2p_companion_top",
         "bottom": "appliedcreate:block/stress_p2p_companion_bottom",
         "side": "appliedcreate:block/stress_p2p_companion_side",
-        "top": "appliedcreate:block/stress_p2p_companion_top"
-    }
+        "particle": "appliedcreate:block/stress_p2p_companion_side"
+    },
+    "elements": [
+        {
+            "name": "Bottom",
+            "from": [0, 0, 0],
+            "to": [16, 2, 16],
+            "faces": {
+                "north": {"uv": [0, 14, 16, 16], "texture": "#side"},
+                "east":  {"uv": [0, 14, 16, 16], "texture": "#side"},
+                "south": {"uv": [0, 14, 16, 16], "texture": "#side"},
+                "west":  {"uv": [0, 14, 16, 16], "texture": "#side"},
+                "up":    {"uv": [0, 0, 16, 16], "texture": "#bottom"},
+                "down":  {"uv": [0, 0, 16, 16], "texture": "#bottom", "cullface": "down"}
+            }
+        },
+        {
+            "name": "Core",
+            "from": [0.95, 2, 0.95],
+            "to": [15.05, 14, 15.05],
+            "faces": {
+                "north": {"uv": [1, 2, 15, 14], "texture": "#side"},
+                "east":  {"uv": [1, 2, 15, 14], "texture": "#side"},
+                "south": {"uv": [1, 2, 15, 14], "texture": "#side"},
+                "west":  {"uv": [1, 2, 15, 14], "texture": "#side"}
+            }
+        },
+        {
+            "name": "Top",
+            "from": [0, 14, 0],
+            "to": [16, 16, 16],
+            "faces": {
+                "north": {"uv": [0, 0, 16, 2], "texture": "#side"},
+                "east":  {"uv": [0, 0, 16, 2], "texture": "#side"},
+                "south": {"uv": [0, 0, 16, 2], "texture": "#side"},
+                "west":  {"uv": [0, 0, 16, 2], "texture": "#side"},
+                "up":    {"uv": [0, 0, 16, 16], "texture": "#top", "cullface": "up"},
+                "down":  {"uv": [0, 0, 16, 16], "texture": "#top"}
+            }
+        }
+    ]
 }

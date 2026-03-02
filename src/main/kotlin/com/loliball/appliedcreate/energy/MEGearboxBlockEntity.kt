@@ -147,8 +147,9 @@ class MEGearboxBlockEntity(
 
     override fun calculateAddedStressCapacity(): Float {
         if (mode == Mode.EXPORT && hasStressSupply) {
-            // As a generator, provide stress capacity scaled by multiplier
-            return BASE_STRESS_CAPACITY_PER_RPM * getMultiplier() * abs(GENERATED_SPEED)
+            // As a generator, provide stress capacity per RPM, scaled by multiplier
+            // Network multiplies this by abs(generatedSpeed) to get total SU capacity
+            return BASE_STRESS_CAPACITY_PER_RPM * getMultiplier()
         }
         return 0f
     }

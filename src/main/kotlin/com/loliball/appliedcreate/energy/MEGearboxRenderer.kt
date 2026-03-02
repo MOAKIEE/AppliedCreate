@@ -4,21 +4,21 @@ import com.mojang.blaze3d.vertex.PoseStack
 import com.simibubi.create.AllPartialModels
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock
 import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer
-import net.createmod.catnip.animation.AnimationTickHolder
+import dev.engine_room.flywheel.api.visualization.VisualizationManager
 import net.createmod.catnip.render.CachedBuffers
+import net.createmod.catnip.render.SuperByteBuffer
 import net.minecraft.client.renderer.MultiBufferSource
 import net.minecraft.client.renderer.RenderType
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider
 import net.minecraft.core.Direction
+import net.minecraft.world.level.block.state.BlockState
 
 /**
  * Renderer for the ME Gearbox block.
  *
- * Renders:
- * - SHAFT_HALF on both ends of the FACING axis (front/back shaft stubs, rotating)
- * - SHAFTLESS_COGWHEEL on 4 perpendicular faces (small gear inside block, rotating)
- *
- * Pattern follows Create's GearboxRenderer + EncasedCogRenderer.
+ * Follows Create's EncasedCogRenderer pattern:
+ * - The cogwheel is rendered by the parent class via getRotatedModel() (single SHAFTLESS_COGWHEEL on axis)
+ * - SHAFT_HALF is rendered on both ends of the FACING axis (front/back shaft stubs)
  */
 class MEGearboxRenderer(context: BlockEntityRendererProvider.Context) :
     KineticBlockEntityRenderer<MEGearboxBlockEntity>(context) {
@@ -31,43 +31,34 @@ class MEGearboxRenderer(context: BlockEntityRendererProvider.Context) :
         light: Int,
         overlay: Int
     ) {
+        // Let the parent render the cogwheel via getRotatedModel()
+        super.renderSafe(be, partialTicks, ms, buffer, light, overlay)
 
-        val state = be.blockState
-        val facing = state.getValue(DirectionalKineticBlock.FACING)
-        val shaftAxis = facing.axis
-        val speed = be.speed
-        val time = AnimationTickHolder.getRenderTime(be.level!!)
-        val vb = buffer.getBuffer(RenderType.solid())
+        // Render shaft halves on both ends of the FACING axis
+        if (!VisualizationManager.supportsVisualization(be.level!!)) {
+            val state = be.blockState
+            val facing = state.getValue(DirectionalKineticBlock.FACING)
+            val shaftAxis = facing.axis
+            val angle = getAngleForBe(be, be.blockPos, shaftAxis)
+            val vb = buffer.getBuffer(RenderType.solid())
 
-        // ── Shaft halves on both ends of the FACING axis ──
-        for (dir in Direction.entries) {
-            if (dir.axis != shaftAxis) continue
+            for (dir in Direction.entries) {
+                if (dir.axis != shaftAxis) continue
 
-            val shaftHalf = CachedBuffers.partialFacing(AllPartialModels.SHAFT_HALF, state, dir)
-            val offset = getRotationOffsetForPosition(be, be.blockPos, shaftAxis)
-            val angle = ((time * speed * 3f / 10f + offset) % 360f) / 180f * Math.PI.toFloat()
-            kineticRotationTransform(shaftHalf, be, shaftAxis, angle, light)
-            shaftHalf.renderInto(ms, vb)
-        }
-
-        // ── Cogwheels on 4 perpendicular faces ──
-        for (dir in Direction.entries) {
-            if (dir.axis == shaftAxis) continue
-
-            val cogwheel = CachedBuffers.partialFacing(AllPartialModels.SHAFTLESS_COGWHEEL, state, dir)
-            val axis = dir.axis
-            val offset = getRotationOffsetForPosition(be, be.blockPos, axis)
-            var angle = ((time * speed * 3f / 10f + offset) % 360f)
-
-            // Gearbox meshing convention: negative-facing directions get reversed rotation
-            if (dir.axisDirection == Direction.AxisDirection.NEGATIVE) {
-                angle = -angle
+                val shaftHalf = CachedBuffers.partialFacing(AllPartialModels.SHAFT_HALF, state, dir)
+                kineticRotationTransform(shaftHalf, be, shaftAxis, angle, light)
+                shaftHalf.renderInto(ms, vb)
             }
-
-            angle = angle / 180f * Math.PI.toFloat()
-            kineticRotationTransform(cogwheel, be, axis, angle, light)
-            cogwheel.renderInto(ms, vb)
         }
+    }
+
+    override fun getRotatedModel(be: MEGearboxBlockEntity, state: BlockState): SuperByteBuffer {
+        val facing = state.getValue(DirectionalKineticBlock.FACING)
+        return CachedBuffers.partialFacingVertical(
+            AllPartialModels.SHAFTLESS_COGWHEEL,
+            state,
+            Direction.fromAxisAndDirection(facing.axis, Direction.AxisDirection.POSITIVE)
+        )
     }
 
     override fun shouldRenderOffScreen(be: MEGearboxBlockEntity): Boolean = false
