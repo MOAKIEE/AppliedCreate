@@ -16,6 +16,7 @@ import com.loliball.appliedcreate.energy.MEGearboxBlockEntity
 import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
 import com.loliball.appliedcreate.item.BrassPatternProviderUpgradeItem
 import com.loliball.appliedcreate.item.MechanicalCraftingPartItem
+import com.loliball.appliedcreate.item.StressP2PPartItem
 import com.loliball.appliedcreate.kinetic.StressP2PCompanionBlock
 import com.loliball.appliedcreate.kinetic.StressP2PCompanionBlockEntity
 import com.loliball.appliedcreate.part.AndesitePatternProviderPart
@@ -144,7 +145,7 @@ class AppliedCreate {
 
         // ── Stress P2P Tunnel ──
         val STRESS_P2P_TUNNEL_PART_ITEM: RegistryObject<Item> = ITEMS.register("stress_p2p_tunnel") {
-            MechanicalCraftingPartItem(
+            StressP2PPartItem(
                 Item.Properties(),
                 StressP2PTunnelPart::class.java
             ) { partItem -> StressP2PTunnelPart(partItem) }
