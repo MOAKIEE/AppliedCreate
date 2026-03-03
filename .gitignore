@@ -27,3 +27,9 @@ Thumbs.db
 # Logs
 logs/
 *.log
+
+# Build artifacts
+bin/
+
+# Eclipse
+.eclipse/
