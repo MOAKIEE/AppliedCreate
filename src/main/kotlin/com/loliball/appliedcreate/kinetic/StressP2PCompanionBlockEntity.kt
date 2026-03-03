@@ -182,7 +182,17 @@ class StressP2PCompanionBlockEntity(
         val inputPos = findInputTunnelPos()
         registeredInputPos = inputPos
         if (inputPos != null) {
+            // Get existing partners BEFORE registering self
+            val existingPartners = StressP2PNetwork.getPartners(inputPos, worldPosition)
             StressP2PNetwork.register(inputPos, worldPosition)
+            // Notify existing partners to rediscover connections (so they see us immediately)
+            val lvl = level ?: return
+            for (partnerPos in existingPartners) {
+                val be = lvl.getBlockEntity(partnerPos) as? StressP2PCompanionBlockEntity ?: continue
+                LOGGER.debug("[Companion@{}] notifying existing partner @{} to reload kinetics",
+                    worldPosition, partnerPos)
+                be.reloadKinetics()
+            }
         }
     }
 
