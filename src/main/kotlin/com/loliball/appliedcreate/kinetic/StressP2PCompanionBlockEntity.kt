@@ -46,6 +46,9 @@ class StressP2PCompanionBlockEntity(
     /** Guard flag to prevent kinetic cascades during block removal/unload */
     private var isRemoving = false
 
+    /** Guard flag to prevent recursive reloadKinetics cascades */
+    private var isReloading = false
+
     fun getRegisteredInputPos(): BlockPos? = registeredInputPos
 
     override fun isCustomConnection(other: KineticBlockEntity, state: BlockState, otherState: BlockState): Boolean {
@@ -164,18 +167,23 @@ class StressP2PCompanionBlockEntity(
      */
     fun reloadKinetics() {
         if (level == null || level!!.isClientSide) return
-        if (isRemoving) return
-        LOGGER.debug("[Companion@{}] reloadKinetics: old={}",
-            worldPosition, registeredInputPos)
-        unregisterFromNetwork()
-        if (hasNetwork()) getOrCreateNetwork().remove(this)
-        detachKinetics()
-        removeSource()
-        registerWithNetwork()
-        LOGGER.debug("[Companion@{}] reloadKinetics: new={}, partners={}",
-            worldPosition, registeredInputPos,
-            registeredInputPos?.let { StressP2PNetwork.getPartners(it, worldPosition) })
-        attachKinetics()
+        if (isRemoving || isReloading) return
+        isReloading = true
+        try {
+            LOGGER.debug("[Companion@{}] reloadKinetics: old={}",
+                worldPosition, registeredInputPos)
+            unregisterFromNetwork()
+            if (hasNetwork()) getOrCreateNetwork().remove(this)
+            detachKinetics()
+            removeSource()
+            registerWithNetwork()
+            LOGGER.debug("[Companion@{}] reloadKinetics: new={}, partners={}",
+                worldPosition, registeredInputPos,
+                registeredInputPos?.let { StressP2PNetwork.getPartners(it, worldPosition) })
+            attachKinetics()
+        } finally {
+            isReloading = false
+        }
     }
 
     private fun registerWithNetwork() {
