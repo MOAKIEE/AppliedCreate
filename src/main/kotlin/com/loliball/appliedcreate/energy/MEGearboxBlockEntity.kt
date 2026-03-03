@@ -58,7 +58,15 @@ class MEGearboxBlockEntity(
         stressMultiplier.between(1, MAX_MULTIPLIER)
         stressMultiplier.value = 1
         stressMultiplier.withCallback { _ ->
-            if (mode == Mode.EXPORT) updateGeneratedRotation()
+            if (mode == Mode.EXPORT) {
+                updateGeneratedRotation()
+            } else if (mode == Mode.IMPORT && hasNetwork()) {
+                // In IMPORT mode, updateGeneratedRotation() won't update stress
+                // because getGeneratedSpeed() returns 0. Directly update the network.
+                val network = getOrCreateNetwork()
+                network.updateStressFor(this, calculateStressApplied())
+                network.updateStress()
+            }
             notifyUpdate()
         }
         behaviours.add(stressMultiplier)

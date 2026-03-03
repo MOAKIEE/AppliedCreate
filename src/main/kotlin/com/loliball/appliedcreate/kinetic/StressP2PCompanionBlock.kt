@@ -8,20 +8,37 @@ import net.minecraft.world.item.context.BlockPlaceContext
 import net.minecraft.world.level.LevelReader
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.entity.BlockEntityType
+import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel
 import net.minecraft.world.level.block.state.BlockState
 import com.loliball.appliedcreate.AppliedCreate
 
+/**
+ * Stress P2P Companion Block — placed adjacent to a Stress P2P Tunnel (input OR output side).
+ *
+ * This is a unified KineticBlock that bridges Create kinetic networks through AE2 P2P tunnels.
+ * It auto-detects whether it sits next to an input or output tunnel and participates in the
+ * virtual kinetic network accordingly.
+ *
+ * The FACING direction points toward the cable containing the P2P tunnel.
+ * The shaft accepts/outputs rotation from BOTH directions on the facing axis
+ * (critical for Create's RotationPropagator to discover the custom connection).
+ *
+ * Replaces the former StressAcceptorBlock and StressProviderBlock with a single block type.
+ */
 class StressP2PCompanionBlock : DirectionalKineticBlock(
     Properties.of()
         .strength(3.5f)
         .noOcclusion()
-), IBE<StressP2PCompanionBlockEntity> {
+), IBE<StressP2PCompanionBlockEntity>, ICogWheel {
 
     override fun getRotationAxis(state: BlockState): Direction.Axis {
         return state.getValue(FACING).axis
     }
 
     override fun hasShaftTowards(world: LevelReader, pos: BlockPos, state: BlockState, face: Direction): Boolean {
+        // Must return true for BOTH directions on the axis so Create's RotationPropagator
+        // can discover the custom connection through the virtual kinetic network.
+        // This matches CreateEnderTransmission's EnergyTransmitterBlock pattern.
         return face.axis == state.getValue(FACING).axis
     }
 

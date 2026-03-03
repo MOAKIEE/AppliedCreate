@@ -26,26 +26,9 @@
 
     "item.appliedcreate.stress_p2p_tunnel": "应力P2P通道",
     "block.appliedcreate.stress_p2p_companion": "应力P2P伴侣方块",
-    "block.appliedcreate.me_blueprint_cannon": "ME蓝图大炮",
-    "block.appliedcreate.kinetic_energy_acceptor": "动能接收器",
-    "block.appliedcreate.me_gearbox": "ME齿轮箱",
-    "block.appliedcreate.whichball_skin_doll": "小萝卜",
+    "block.appliedcreate.me_blueprint_cannon": "ME蓝图加农炮",
 
     "gui.appliedcreate.slot.upgrades": "升级卡",
-    "gui.appliedcreate.me_blueprint_cannon.viewMaterials": "查看材料",
-    "gui.appliedcreate.me_blueprint_cannon.materials": "材料清单",
-    "gui.appliedcreate.me_blueprint_cannon.noMaterials": "无需材料",
-
-    "appliedcreate.me_gearbox.title": "ME齿轮箱",
-    "appliedcreate.me_gearbox.mode": "模式: ",
-    "appliedcreate.me_gearbox.mode.export": "输出 (ME → 动力)",
-    "appliedcreate.me_gearbox.mode.import": "输入 (动力 → ME)",
-    "appliedcreate.me_gearbox.transfer": "传输: ",
-    "appliedcreate.me_gearbox.transfer.unit": " SU/t",
-    "appliedcreate.me_gearbox.multiplier": "应力倍率",
-
-    "appliedcreate.stress_p2p.companion.present": "伴侣方块: 已连接 ✔",
-    "appliedcreate.stress_p2p.companion.missing": "伴侣方块: 缺失 ✘",
 
     "item.appliedcreate.stress_circuit_board": "安山应力电路板",
     "item.appliedcreate.advanced_stress_circuit_board": "黄铜应力电路板",
@@ -64,5 +47,25 @@
     "item.appliedcreate.stress_storage_component_256m": "256M应力存储组件",
 
     "item.appliedcreate.andesite_stress_cell_housing": "安山应力元件外壳",
-    "item.appliedcreate.brass_stress_cell_housing": "黄铜应力元件外壳"
+    "item.appliedcreate.brass_stress_cell_housing": "黄铜应力元件外壳",
+
+    "block.appliedcreate.kinetic_energy_acceptor": "动能接收器",
+    "block.appliedcreate.me_gearbox": "ME齿轮箱",
+
+    "appliedcreate.me_gearbox.title": "ME齿轮箱",
+    "appliedcreate.me_gearbox.mode": "模式: ",
+    "appliedcreate.me_gearbox.mode.export": "输出 (ME → 动力)",
+    "appliedcreate.me_gearbox.mode.import": "输入 (动力 → ME)",
+    "appliedcreate.me_gearbox.transfer": "传输: ",
+    "appliedcreate.me_gearbox.transfer.unit": " SU/t",
+
+    "block.appliedcreate.whichball_skin_doll": "小萝卜",
+
+    "gui.appliedcreate.me_blueprint_cannon.viewMaterials": "查看材料",
+    "gui.appliedcreate.me_blueprint_cannon.materials": "材料清单",
+    "gui.appliedcreate.me_blueprint_cannon.noMaterials": "无需材料",
+
+    "appliedcreate.stress_p2p.companion.present": "伴侣方块: 已连接 ✔",
+    "appliedcreate.stress_p2p.companion.missing": "伴侣方块: 缺失 ✘",
+    "appliedcreate.me_gearbox.multiplier": "应力倍率"
 }

@@ -54,6 +54,7 @@ import net.minecraftforge.network.simple.SimpleChannel
 import net.minecraftforge.registries.DeferredRegister
 import net.minecraftforge.registries.ForgeRegistries
 import net.minecraftforge.registries.RegistryObject
+import net.minecraftforge.registries.RegisterEvent
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import thedarkcolour.kotlinforforge.forge.MOD_BUS
@@ -470,6 +471,17 @@ class AppliedCreate {
             appeng.api.parts.PartModels.registerModels(*model.models.toTypedArray())
         }
 
+        // Register AE key type during RegisterEvent (before registries freeze)
+        // Must NOT be in FMLCommonSetupEvent — Forge registry is already frozen by then
+        bus.addListener { event: RegisterEvent ->
+            val keyTypesRegistryKey = net.minecraft.resources.ResourceKey.createRegistryKey<appeng.api.stacks.AEKeyType>(
+                ResourceLocation("ae2", "keytypes")
+            )
+            if (event.registryKey == keyTypesRegistryKey) {
+                AEKeyTypes.register(StressKeyType.TYPE)
+            }
+        }
+
         bus.addListener(::onCommonSetup)
 
         if (FMLEnvironment.dist.isClient) {
@@ -512,9 +524,7 @@ class AppliedCreate {
         }
 
         event.enqueueWork {
-            // Register our custom AE key type so AE2 recognizes StressKey in storage
-            AEKeyTypes.register(StressKeyType.TYPE)
-
+            // Note: AEKeyTypes.register is now in RegisterEvent listener (init block)
             // Register P2P attunement for stress tunnel
             P2PTunnelAttunement.registerAttunementTag(STRESS_P2P_TUNNEL_PART_ITEM.get())
 
