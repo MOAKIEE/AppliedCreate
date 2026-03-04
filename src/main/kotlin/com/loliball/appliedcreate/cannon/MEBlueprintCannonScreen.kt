@@ -7,8 +7,8 @@ import com.simibubi.create.foundation.gui.AllIcons
 import com.simibubi.create.foundation.gui.menu.AbstractSimiContainerScreen
 import com.simibubi.create.foundation.gui.widget.IconButton
 import com.simibubi.create.foundation.gui.widget.Indicator
-import net.createmod.catnip.utility.FontHelper
-import net.createmod.catnip.utility.lang.LangBuilder
+import net.createmod.catnip.lang.FontHelper
+import net.createmod.catnip.lang.LangBuilder
 import net.createmod.catnip.gui.element.GuiGameElement
 import net.minecraft.ChatFormatting
 import net.minecraft.client.gui.GuiGraphics

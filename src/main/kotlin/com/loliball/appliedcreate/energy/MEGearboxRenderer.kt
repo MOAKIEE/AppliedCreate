@@ -5,7 +5,7 @@ import com.simibubi.create.AllPartialModels
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock
 import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer
 import net.createmod.catnip.render.CachedBuffers
-import net.createmod.catnip.utility.AnimationTickHolder
+import net.createmod.catnip.animation.AnimationTickHolder
 import net.minecraft.client.renderer.MultiBufferSource
 import net.minecraft.client.renderer.RenderType
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider

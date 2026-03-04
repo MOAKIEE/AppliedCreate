@@ -11,9 +11,9 @@ import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform
 import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollValueBehaviour
-import net.createmod.catnip.utility.lang.LangBuilder
-import net.createmod.catnip.utility.lang.LangNumberFormat
-import net.createmod.catnip.utility.VecHelper
+import net.createmod.catnip.lang.LangBuilder
+import net.createmod.catnip.lang.LangNumberFormat
+import net.createmod.catnip.math.VecHelper
 import net.minecraft.ChatFormatting
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction

@@ -83,13 +83,10 @@ dependencies {
 
     implementation(fg.deobf("com.simibubi.create:create-${project.extra["minecraft_version"]}:${project.extra["create_version"]}:slim"))
 
-    implementation(fg.deobf("dev.engine-room.flywheel:flywheel-forge-${project.extra["minecraft_version"]}:1.0.0-beta-195"))
+    implementation(fg.deobf("dev.engine-room.flywheel:flywheel-forge-${project.extra["minecraft_version"]}:1.0.4"))
 
-    // Ponder is needed because Create's MechanicalCrafterBlockEntity
-    // extends VirtualBlockEntity from the Ponder library
+    // Ponder bundles Catnip — no need for standalone Catnip dependency
     implementation(fg.deobf("net.createmod.ponder:Ponder-Forge-${project.extra["minecraft_version"]}:${project.extra["ponder_version"]}"))
-
-    implementation(fg.deobf("net.createmod.catnip:Catnip-Forge-${project.extra["minecraft_version"]}:0.8.44"))
 
     implementation(fg.deobf("appeng:appliedenergistics2-forge:${project.extra["ae2_version"]}"))
 }

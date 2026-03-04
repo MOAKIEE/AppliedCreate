@@ -4,8 +4,8 @@ import appeng.api.networking.energy.IPassiveEnergyGenerator
 import appeng.api.orientation.BlockOrientation
 import com.loliball.appliedcreate.AppliedCreate
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock
-import net.createmod.catnip.utility.lang.LangBuilder
-import net.createmod.catnip.utility.lang.LangNumberFormat
+import net.createmod.catnip.lang.LangBuilder
+import net.createmod.catnip.lang.LangNumberFormat
 import net.minecraft.ChatFormatting
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
