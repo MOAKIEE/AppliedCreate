@@ -6,7 +6,6 @@ import com.loliball.appliedcreate.cannon.MEBlueprintCannonMenu
 import com.loliball.appliedcreate.cannon.MEBlueprintCannonRenderer
 import com.loliball.appliedcreate.energy.KineticEnergyAcceptorRenderer
 import com.loliball.appliedcreate.energy.MEGearboxRenderer
-import com.loliball.appliedcreate.kinetic.StressP2PCompanionRenderer
 import com.loliball.appliedcreate.cannon.MEBlueprintCannonScreen
 import com.loliball.appliedcreate.storage.StressStorageCell
 
@@ -62,6 +61,5 @@ object ClientSetup {
         event.registerBlockEntityRenderer(AppliedCreate.ME_BLUEPRINT_CANNON_BE.get(), ::MEBlueprintCannonRenderer)
         event.registerBlockEntityRenderer(AppliedCreate.KINETIC_ENERGY_ACCEPTOR_BE.get(), ::KineticEnergyAcceptorRenderer)
         event.registerBlockEntityRenderer(AppliedCreate.ME_GEARBOX_BE.get(), ::MEGearboxRenderer)
-        event.registerBlockEntityRenderer(AppliedCreate.STRESS_P2P_COMPANION_BE.get(), ::StressP2PCompanionRenderer)
     }
 }

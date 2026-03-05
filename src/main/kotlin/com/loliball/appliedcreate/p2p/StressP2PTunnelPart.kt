@@ -6,114 +6,48 @@ import appeng.items.parts.PartModels
 import appeng.parts.p2p.P2PModels
 import appeng.parts.p2p.P2PTunnelPart
 import com.loliball.appliedcreate.AppliedCreate
-import com.loliball.appliedcreate.kinetic.StressP2PCompanionBlock
-import com.loliball.appliedcreate.kinetic.StressP2PCompanionBlockEntity
-import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock
+import com.simibubi.create.content.kinetics.base.KineticBlockEntity
+import net.minecraft.core.BlockPos
 import net.minecraft.resources.ResourceLocation
 import org.slf4j.LoggerFactory
+
 /**
  * Stress P2P Tunnel Part — bridges Create kinetic networks through AE2 ME networks.
  *
  * This P2P tunnel does NOT extend CapabilityP2PTunnelPart because Create's rotation system
  * is NOT capability-based — it uses adjacency-based RotationPropagator.
  *
- * Instead, StressP2PCompanion blocks sit adjacent to the cable bus containing this
- * P2P part. They participate in Create's custom connection system to bridge kinetic
- * networks through the tunnel.
+ * Instead of using physical companion blocks, this tunnel part registers virtual edges
+ * in [KineticBridgeRegistry]. The [com.loliball.appliedcreate.mixin.RotationPropagatorMixin]
+ * makes Create's propagation BFS traverse these virtual edges, bridging kinetic networks
+ * through the P2P link without any intermediary blocks.
  *
- * Flow: Kinetic Network → StressP2PCompanion → StressP2PTunnelPart → (P2P link) → StressP2PCompanion → Kinetic Network
- *
- * Companion blocks handle the kinetic bridging via Create's custom connection system.
- * This tunnel part just manages the P2P link and notifies companions of changes.
+ * Flow: Kinetic Block → [adjacent to cable bus] → RotationPropagatorMixin → [virtual edge] → Kinetic Block
  */
 class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunnelPart>(partItem) {
 
     private val logger = LoggerFactory.getLogger("AppliedCreate/StressP2PTunnel")
 
+    /** The input tunnel pos this part is registered under in KineticBridgeRegistry */
+    private var registeredInputPos: BlockPos? = null
+
+    /** The kinetic block pos registered in KineticBridgeRegistry */
+    private var registeredKineticPos: BlockPos? = null
+
     override fun getStaticModels(): IPartModel {
         return MODELS.getModel(this.isPowered, this.isActive)
     }
 
-    // ── Auto-placement of companion block ──
+    // ── Lifecycle: Register/unregister virtual kinetic edges ──
 
-    /**
-     * Auto-place companion block when this P2P tunnel is added to the world.
-     * The companion is placed one block out from the cable bus, facing back toward it.
-     */
     override fun addToWorld() {
         super.addToWorld()
-        tryPlaceCompanion()
+        registerKineticBridge()
     }
 
-    /**
-     * Auto-remove companion block when this P2P tunnel is removed from the world.
-     */
     override fun removeFromWorld() {
-        tryRemoveCompanion()
+        unregisterKineticBridge()
         super.removeFromWorld()
-    }
-
-    private fun tryPlaceCompanion() {
-        val level = blockEntity.level ?: return
-        if (level.isClientSide) return
-        val cableBusPos = blockEntity.blockPos
-        val companionPos = cableBusPos.relative(this.side)
-
-        // Only place if the target position is air/replaceable
-        val existingState = level.getBlockState(companionPos)
-        if (!existingState.isAir && !existingState.canBeReplaced()) {
-            logger.warn("[StressP2P@{}] Cannot auto-place companion at {} — block already present: {}",
-                cableBusPos, companionPos, existingState.block)
-            return
-        }
-
-        val companionBlock = AppliedCreate.STRESS_P2P_COMPANION_BLOCK.get()
-        // FACING points toward the cable bus = opposite of the tunnel's outward side
-        val companionState = companionBlock.defaultBlockState()
-            .setValue(DirectionalKineticBlock.FACING, this.side.opposite)
-        level.setBlock(companionPos, companionState, 3)
-        logger.debug("[StressP2P@{}] Auto-placed companion at {} facing {}",
-            cableBusPos, companionPos, this.side.opposite)
-    }
-
-    private fun tryRemoveCompanion() {
-        val level = blockEntity.level ?: return
-        if (level.isClientSide) return
-        val cableBusPos = blockEntity.blockPos
-        val companionPos = cableBusPos.relative(this.side)
-
-        val state = level.getBlockState(companionPos)
-        if (state.block is StressP2PCompanionBlock) {
-            level.removeBlock(companionPos, false)
-            logger.debug("[StressP2P@{}] Auto-removed companion at {}",
-                cableBusPos, companionPos)
-        }
-    }
-
-    // ── P2P Network Notifications ──
-
-    /**
-     * Notify all output-side companion blocks to update their registration.
-     */
-    private fun notifyOutputs() {
-        for (output in getOutputs()) {
-            output.notifyCompanion()
-        }
-    }
-
-    /**
-     * Notify the adjacent companion block to update its registration.
-     */
-    fun notifyCompanion() {
-        val level = blockEntity.level ?: return
-        val pos = blockEntity.blockPos
-        val side = this.side
-        val companionPos = pos.relative(side)
-        val be = level.getBlockEntity(companionPos)
-
-        if (be is StressP2PCompanionBlockEntity) {
-            be.reloadKinetics()
-        }
     }
 
     override fun onTunnelNetworkChange() {
@@ -123,9 +57,116 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         val level = blockEntity.level ?: return
         if (level.isClientSide) return
 
-        // When P2P network changes (new outputs linked, etc.), notify all companions
-        notifyCompanion() // Update own companion
-        notifyOutputs()   // Update outputs' companions
+        // When P2P network changes (new outputs linked, etc.), re-register all bridges
+        reRegisterBridge()
+
+        // Also re-register all outputs
+        for (output in getOutputs()) {
+            output.reRegisterBridge()
+        }
+    }
+
+    // ── Bridge Registration ──
+
+    private fun registerKineticBridge() {
+        val level = blockEntity.level ?: return
+        if (level.isClientSide) return
+
+        val inputPos = findInputTunnelPos() ?: return
+        val kineticPos = blockEntity.blockPos.relative(this.side)
+
+        // Verify there's actually a kinetic block at the adjacent position
+        val be = level.getBlockEntity(kineticPos)
+        if (be !is KineticBlockEntity) {
+            logger.debug("[StressP2P@{}] No kinetic block at {} — skipping registration",
+                blockEntity.blockPos, kineticPos)
+            return
+        }
+
+        KineticBridgeRegistry.register(inputPos, kineticPos)
+        registeredInputPos = inputPos
+        registeredKineticPos = kineticPos
+
+        logger.debug("[StressP2P@{}] Registered bridge: inputTunnel={}, kinetic={}",
+            blockEntity.blockPos, inputPos, kineticPos)
+
+        // Trigger re-propagation so the kinetic network discovers the new virtual edges
+        KineticBridgeRegistry.triggerRepropagation(inputPos, level)
+    }
+
+    private fun unregisterKineticBridge() {
+        val level = blockEntity.level ?: return
+        if (level.isClientSide) return
+
+        val inputPos = registeredInputPos ?: return
+        val kineticPos = registeredKineticPos ?: return
+
+        KineticBridgeRegistry.unregister(inputPos, kineticPos)
+
+        logger.debug("[StressP2P@{}] Unregistered bridge: inputTunnel={}, kinetic={}",
+            blockEntity.blockPos, inputPos, kineticPos)
+
+        // Trigger re-propagation so partners update their networks
+        KineticBridgeRegistry.triggerRepropagation(inputPos, level)
+
+        registeredInputPos = null
+        registeredKineticPos = null
+    }
+
+    /**
+     * Re-register bridge: unregister old, register new.
+     * Called when P2P tunnel network changes (memory card, etc.)
+     */
+    internal fun reRegisterBridge() {
+        val level = blockEntity.level ?: return
+        if (level.isClientSide) return
+
+        val oldInputPos = registeredInputPos
+        val oldKineticPos = registeredKineticPos
+        val newInputPos = findInputTunnelPos()
+        val newKineticPos = blockEntity.blockPos.relative(this.side)
+
+        // Skip if nothing changed
+        if (oldInputPos == newInputPos && oldKineticPos == newKineticPos) return
+
+        // Unregister old
+        if (oldInputPos != null && oldKineticPos != null) {
+            KineticBridgeRegistry.unregister(oldInputPos, oldKineticPos)
+            KineticBridgeRegistry.triggerRepropagation(oldInputPos, level)
+        }
+
+        // Register new (if kinetic block exists)
+        if (newInputPos != null) {
+            val be = level.getBlockEntity(newKineticPos)
+            if (be is KineticBlockEntity) {
+                KineticBridgeRegistry.register(newInputPos, newKineticPos)
+                registeredInputPos = newInputPos
+                registeredKineticPos = newKineticPos
+                KineticBridgeRegistry.triggerRepropagation(newInputPos, level)
+                logger.debug("[StressP2P@{}] Re-registered bridge: inputTunnel={}, kinetic={}",
+                    blockEntity.blockPos, newInputPos, newKineticPos)
+                return
+            }
+        }
+
+        registeredInputPos = null
+        registeredKineticPos = null
+    }
+
+    /**
+     * Find the P2P input tunnel's BlockPos.
+     * For input tunnels: this IS the input — return own cable bus pos.
+     * For output tunnels: follow the P2P link back to the input tunnel's pos.
+     */
+    private fun findInputTunnelPos(): BlockPos? {
+        return if (!this.isOutput) {
+            // This IS the input tunnel
+            blockEntity.blockPos
+        } else {
+            // This is an output tunnel; follow P2P link to get input's position
+            // NOTE: Requires ME grid to be online (input uses P2PService)
+            this.input?.blockEntity?.blockPos
+        }
     }
 
     companion object {

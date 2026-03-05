@@ -2,7 +2,6 @@
     "replace": false,
     "values": [
         "appliedcreate:andesite_pattern_provider",
-        "appliedcreate:brass_pattern_provider",
-        "appliedcreate:stress_p2p_companion"
+        "appliedcreate:brass_pattern_provider"
     ]
 }
