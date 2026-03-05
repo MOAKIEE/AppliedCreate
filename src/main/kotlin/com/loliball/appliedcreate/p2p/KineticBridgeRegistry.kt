@@ -1,5 +1,6 @@
 package com.loliball.appliedcreate.p2p
 
+import com.simibubi.create.content.kinetics.RotationPropagator
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity
 import net.minecraft.core.BlockPos
 import net.minecraft.world.level.Level
@@ -114,9 +115,11 @@ object KineticBridgeRegistry {
         for (pos in endpoints.toList()) { // toList to avoid concurrent modification
             val be = level.getBlockEntity(pos) as? KineticBlockEntity ?: continue
             LOGGER.debug("[KineticBridge] Triggering re-propagation at {}", pos)
-            be.detachKinetics()
-            be.removeSource()
-            be.attachKinetics()
+            // Use Create's proper network rebuild entry points instead of
+            // detachKinetics/removeSource/attachKinetics which doesn't trigger
+            // RotationPropagator's full propagation BFS.
+            RotationPropagator.handleRemoved(level, pos, be)
+            RotationPropagator.handleAdded(level, pos, be)
         }
     }
 

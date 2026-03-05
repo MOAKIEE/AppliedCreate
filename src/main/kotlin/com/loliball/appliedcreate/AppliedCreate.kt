@@ -25,6 +25,7 @@ import com.loliball.appliedcreate.item.StressP2PPartItem
 import com.loliball.appliedcreate.part.AndesitePatternProviderPart
 import com.loliball.appliedcreate.part.BrassPatternProviderPart
 import com.loliball.appliedcreate.p2p.StressP2PTunnelPart
+import com.loliball.appliedcreate.p2p.KineticBridgeRegistry
 import com.loliball.appliedcreate.storage.StressKeyType
 import com.loliball.appliedcreate.storage.StressStorageCell
 import appeng.api.AECapabilities
@@ -55,6 +56,8 @@ import net.neoforged.neoforge.registries.DeferredHolder
 import net.neoforged.neoforge.registries.DeferredRegister
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent
+import net.neoforged.neoforge.common.NeoForge
+import net.neoforged.neoforge.event.server.ServerStoppingEvent
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import thedarkcolour.kotlinforforge.neoforge.forge.MOD_BUS
@@ -473,6 +476,12 @@ class AppliedCreate {
 
         if (FMLEnvironment.dist.isClient) {
             ClientSetup.register(bus)
+        }
+
+        // Clear kinetic bridge registry on server shutdown to prevent stale data
+        NeoForge.EVENT_BUS.addListener { _: ServerStoppingEvent ->
+            KineticBridgeRegistry.clear()
+            LOGGER.debug("Cleared KineticBridgeRegistry on server stop")
         }
 
         LOGGER.info("Applied Create loaded")

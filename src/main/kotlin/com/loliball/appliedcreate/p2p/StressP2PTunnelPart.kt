@@ -9,6 +9,8 @@ import com.loliball.appliedcreate.AppliedCreate
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity
 import net.minecraft.core.BlockPos
 import net.minecraft.resources.ResourceLocation
+import net.minecraft.server.TickTask
+import net.minecraft.server.level.ServerLevel
 import org.slf4j.LoggerFactory
 
 /**
@@ -33,6 +35,24 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
 
     /** The kinetic block pos registered in KineticBridgeRegistry */
     private var registeredKineticPos: BlockPos? = null
+
+    /** Number of deferred registration retry attempts remaining */
+    private var retryAttemptsRemaining = 0
+
+    companion object {
+        /** Max number of tick-deferred retries for registration when grid isn't ready */
+        private const val MAX_RETRY_ATTEMPTS = 5
+
+        private val MODELS = P2PModels(
+            ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "part/p2p/p2p_tunnel_stress")
+        )
+
+        @JvmStatic
+        @PartModels
+        fun getModels(): List<IPartModel> {
+            return MODELS.models
+        }
+    }
 
     override fun getStaticModels(): IPartModel {
         return MODELS.getModel(this.isPowered, this.isActive)
@@ -72,7 +92,14 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         val level = blockEntity.level ?: return
         if (level.isClientSide) return
 
-        val inputPos = findInputTunnelPos() ?: return
+        val inputPos = findInputTunnelPos()
+        if (inputPos == null) {
+            // Grid not ready yet (common for output tunnels on world load).
+            // Schedule a tick-deferred retry.
+            scheduleRetry()
+            return
+        }
+
         val kineticPos = blockEntity.blockPos.relative(this.side)
 
         // Verify there's actually a kinetic block at the adjacent position
@@ -86,6 +113,7 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         KineticBridgeRegistry.register(inputPos, kineticPos)
         registeredInputPos = inputPos
         registeredKineticPos = kineticPos
+        retryAttemptsRemaining = 0
 
         logger.debug("[StressP2P@{}] Registered bridge: inputTunnel={}, kinetic={}",
             blockEntity.blockPos, inputPos, kineticPos)
@@ -169,15 +197,35 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         }
     }
 
-    companion object {
-        private val MODELS = P2PModels(
-            ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "part/p2p/p2p_tunnel_stress")
-        )
-
-        @JvmStatic
-        @PartModels
-        fun getModels(): List<IPartModel> {
-            return MODELS.models
+    /**
+     * Schedule a tick-deferred retry for bridge registration.
+     * This handles the case where output tunnels are added to world before
+     * the ME grid is fully online (findInputTunnelPos returns null).
+     */
+    private fun scheduleRetry() {
+        if (retryAttemptsRemaining <= 0) {
+            retryAttemptsRemaining = MAX_RETRY_ATTEMPTS
         }
+        val level = blockEntity.level as? ServerLevel ?: return
+        val server = level.server
+        retryAttemptsRemaining--
+        val attemptsLeft = retryAttemptsRemaining
+        logger.debug("[StressP2P@{}] Grid not ready, scheduling retry ({} attempts left)",
+            blockEntity.blockPos, attemptsLeft)
+        server.tell(TickTask(server.tickCount + 1) {
+            // Verify part is still in world (may have been removed during the tick delay)
+            if (registeredInputPos != null) return@TickTask  // Already registered by onTunnelNetworkChange
+            if (blockEntity.isRemoved) return@TickTask
+            val inputPos = findInputTunnelPos()
+            if (inputPos != null) {
+                registerKineticBridge()
+            } else if (attemptsLeft > 0) {
+                scheduleRetry()
+            } else {
+                logger.debug("[StressP2P@{}] Giving up registration retry — grid never came online",
+                    blockEntity.blockPos)
+            }
+        })
     }
+
 }
