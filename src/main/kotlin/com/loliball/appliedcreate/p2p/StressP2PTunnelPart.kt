@@ -70,26 +70,31 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
     override fun addToWorld() {
         super.addToWorld()
         initialLoadComplete = false
+        logger.info("[StressP2P@{}] >>> addToWorld (isOutput={}, initialLoadComplete={})",
+            blockEntity.blockPos, isOutput, initialLoadComplete)
         registerKineticBridge()
     }
 
     override fun removeFromWorld() {
+        logger.info("[StressP2P@{}] >>> removeFromWorld (isOutput={})",
+            blockEntity.blockPos, isOutput)
         unregisterKineticBridge()
         super.removeFromWorld()
     }
 
     override fun onMainNodeStateChanged(reason: IGridNodeListener.State) {
         super.onMainNodeStateChanged(reason)
+        logger.info("[StressP2P@{}] >>> onMainNodeStateChanged reason={}, isActive={}, initialLoadComplete={}, isOutput={}",
+            blockEntity.blockPos, reason, isActive, initialLoadComplete, isOutput)
 
-        // During world load, kinetic networks are already restored from NBT.
-        // The first non-GRID_BOOT state change marks the grid as fully online —
-        // only after that should we react to channel/power changes.
         if (!initialLoadComplete) {
             if (reason != IGridNodeListener.State.GRID_BOOT) {
                 initialLoadComplete = true
-                // First CHANNEL event after boot — just register the bridge if needed,
-                // but don't unregister (the network is freshly booted, not losing channels).
+                logger.info("[StressP2P@{}]   -> initialLoadComplete set to true, calling registerKineticBridge",
+                    blockEntity.blockPos)
                 registerKineticBridge()
+            } else {
+                logger.info("[StressP2P@{}]   -> skipped (GRID_BOOT during init)", blockEntity.blockPos)
             }
             return
         }
@@ -98,8 +103,10 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         if (level.isClientSide) return
 
         if (isActive) {
+            logger.info("[StressP2P@{}]   -> isActive=true, calling registerKineticBridge", blockEntity.blockPos)
             registerKineticBridge()
         } else {
+            logger.info("[StressP2P@{}]   -> isActive=false, calling unregisterKineticBridge", blockEntity.blockPos)
             unregisterKineticBridge()
         }
     }
@@ -108,16 +115,16 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         val level = blockEntity.level ?: return
         if (level.isClientSide) return
 
-        // During initial world load, the grid fires onTunnelNetworkChange as it
-        // discovers P2P links. Since kinetic networks are already restored from NBT,
-        // triggering re-propagation here would cause stress overload on the output.
-        // Just register the bridge edges silently (no propagation).
+        logger.info("[StressP2P@{}] >>> onTunnelNetworkChange (isOutput={}, initialLoadComplete={}, registeredInputPos={})",
+            blockEntity.blockPos, isOutput, initialLoadComplete, registeredInputPos)
+
         if (!initialLoadComplete) {
+            logger.info("[StressP2P@{}]   -> during init load, silent registerKineticBridge only", blockEntity.blockPos)
             registerKineticBridge()
             return
         }
 
-        // Runtime P2P config change — full re-register with propagation
+        logger.info("[StressP2P@{}]   -> runtime change, calling reRegisterBridge + outputs", blockEntity.blockPos)
         reRegisterBridge()
 
         for (output in getOutputs()) {
@@ -133,19 +140,23 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
 
         val inputPos = findInputTunnelPos()
         if (inputPos == null) {
-            // Grid not ready yet (common for output tunnels on world load).
-            // Schedule a tick-deferred retry.
+            logger.info("[StressP2P@{}]   registerKineticBridge: inputPos=null, scheduling retry", blockEntity.blockPos)
             scheduleRetry()
             return
         }
 
         val kineticPos = blockEntity.blockPos.relative(this.side)
 
-        // Verify there's actually a kinetic block at the adjacent position
         val be = level.getBlockEntity(kineticPos)
         if (be !is KineticBlockEntity) {
-            logger.debug("[StressP2P@{}] No kinetic block at {} — skipping registration",
-                blockEntity.blockPos, kineticPos)
+            logger.info("[StressP2P@{}]   registerKineticBridge: no KineticBE at {}", blockEntity.blockPos, kineticPos)
+            return
+        }
+
+        // Skip if already registered with same positions
+        if (registeredInputPos == inputPos && registeredKineticPos == kineticPos) {
+            logger.info("[StressP2P@{}]   registerKineticBridge: already registered (input={}, kinetic={})",
+                blockEntity.blockPos, inputPos, kineticPos)
             return
         }
 
@@ -154,13 +165,8 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         registeredKineticPos = kineticPos
         retryAttemptsRemaining = 0
 
-        logger.debug("[StressP2P@{}] Registered bridge: inputTunnel={}, kinetic={}",
+        logger.info("[StressP2P@{}]   registerKineticBridge: REGISTERED inputTunnel={}, kinetic={}",
             blockEntity.blockPos, inputPos, kineticPos)
-
-        // Note: Do NOT trigger re-propagation here. During world load, kinetic networks
-        // are already correctly restored from NBT — calling triggerRepropagation would tear
-        // them down and cause stress overload on the output side. Runtime P2P changes are
-        // handled by onTunnelNetworkChange → reRegisterBridge which does trigger re-propagation.
     }
 
     private fun unregisterKineticBridge() {
@@ -170,40 +176,27 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         val inputPos = registeredInputPos ?: return
         val kineticPos = registeredKineticPos ?: return
 
-        // Phase 1: handleRemoved on the kinetic block being disconnected.
-        // This MUST happen BEFORE unregister so virtual edges still exist —
-        // Create's handleRemoved iterates getPotentialNeighbourLocations (which
-        // includes virtual neighbors via our mixin) and calls propagateMissingSource
-        // on any neighbor whose source was this block.
+        logger.info("[StressP2P@{}]   unregisterKineticBridge: input={}, kinetic={}",
+            blockEntity.blockPos, inputPos, kineticPos)
+
         val be = level.getBlockEntity(kineticPos) as? KineticBlockEntity
         if (be != null && be.getTheoreticalSpeed() != 0f) {
+            logger.info("[StressP2P@{}]   Phase 1: handleRemoved (speed={})", blockEntity.blockPos, be.getTheoreticalSpeed())
             RotationPropagator.handleRemoved(level, kineticPos, be)
-            // handleRemoved only clears neighbors whose source == kineticPos.
-            // The BE itself still retains its speed/source (Create assumes the block
-            // is physically gone). Since the block is still present, manually clear it.
             if (be.hasSource()) {
                 be.removeSource()
                 be.sendData()
             }
         }
 
-        // Phase 2: Remove virtual edges from the registry.
         KineticBridgeRegistry.unregister(inputPos, kineticPos)
 
-        logger.debug("[StressP2P@{}] Unregistered bridge: inputTunnel={}, kinetic={}",
-            blockEntity.blockPos, inputPos, kineticPos)
-
-        // Phase 3: Re-add remaining partners so they can rebuild their networks
-        // without the disconnected endpoint.
         val remainingEndpoints = KineticBridgeRegistry.getEndpoints(inputPos)
         for (partnerPos in remainingEndpoints) {
             val partnerBE = level.getBlockEntity(partnerPos) as? KineticBlockEntity ?: continue
             RotationPropagator.handleAdded(level, partnerPos, partnerBE)
         }
 
-        // Phase 4: Let the disconnected kinetic block re-discover local sources.
-        // After virtual edges are removed, handleAdded will only find physical neighbors.
-        // If any neighbor is a source (e.g. waterwheel), the gear joins that local network.
         if (be != null) {
             RotationPropagator.handleAdded(level, kineticPos, be)
         }
@@ -225,25 +218,28 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         val newInputPos = findInputTunnelPos()
         val newKineticPos = blockEntity.blockPos.relative(this.side)
 
-        // Skip if nothing changed
-        if (oldInputPos == newInputPos && oldKineticPos == newKineticPos) return
+        logger.info("[StressP2P@{}]   reRegisterBridge: old=({},{}), new=({},{})",
+            blockEntity.blockPos, oldInputPos, oldKineticPos, newInputPos, newKineticPos)
 
-        // Unregister old
+        if (oldInputPos == newInputPos && oldKineticPos == newKineticPos) {
+            logger.info("[StressP2P@{}]   reRegisterBridge: nothing changed, skip", blockEntity.blockPos)
+            return
+        }
+
         if (oldInputPos != null && oldKineticPos != null) {
             KineticBridgeRegistry.unregister(oldInputPos, oldKineticPos)
+            logger.info("[StressP2P@{}]   reRegisterBridge: triggerRepropagation on old", blockEntity.blockPos)
             KineticBridgeRegistry.triggerRepropagation(oldInputPos, level)
         }
 
-        // Register new (if kinetic block exists)
         if (newInputPos != null) {
             val be = level.getBlockEntity(newKineticPos)
             if (be is KineticBlockEntity) {
                 KineticBridgeRegistry.register(newInputPos, newKineticPos)
                 registeredInputPos = newInputPos
                 registeredKineticPos = newKineticPos
+                logger.info("[StressP2P@{}]   reRegisterBridge: triggerRepropagation on new", blockEntity.blockPos)
                 KineticBridgeRegistry.triggerRepropagation(newInputPos, level)
-                logger.debug("[StressP2P@{}] Re-registered bridge: inputTunnel={}, kinetic={}",
-                    blockEntity.blockPos, newInputPos, newKineticPos)
                 return
             }
         }
@@ -281,20 +277,22 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         val server = level.server
         retryAttemptsRemaining--
         val attemptsLeft = retryAttemptsRemaining
-        logger.debug("[StressP2P@{}] Grid not ready, scheduling retry ({} attempts left)",
+        logger.info("[StressP2P@{}] scheduleRetry ({} attempts left)",
             blockEntity.blockPos, attemptsLeft)
         server.tell(TickTask(server.tickCount + 1) {
-            // Verify part is still in world (may have been removed during the tick delay)
-            if (registeredInputPos != null) return@TickTask  // Already registered by onTunnelNetworkChange
+            if (registeredInputPos != null) {
+                logger.info("[StressP2P@{}] retry: already registered, skip", blockEntity.blockPos)
+                return@TickTask
+            }
             if (blockEntity.isRemoved) return@TickTask
             val inputPos = findInputTunnelPos()
             if (inputPos != null) {
+                logger.info("[StressP2P@{}] retry: grid ready, calling registerKineticBridge", blockEntity.blockPos)
                 registerKineticBridge()
             } else if (attemptsLeft > 0) {
                 scheduleRetry()
             } else {
-                logger.debug("[StressP2P@{}] Giving up registration retry — grid never came online",
-                    blockEntity.blockPos)
+                logger.info("[StressP2P@{}] retry: giving up — grid never came online", blockEntity.blockPos)
             }
         })
     }
