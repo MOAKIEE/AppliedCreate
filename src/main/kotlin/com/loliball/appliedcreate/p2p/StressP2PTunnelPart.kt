@@ -6,6 +6,7 @@ import appeng.items.parts.PartModels
 import appeng.parts.p2p.P2PModels
 import appeng.parts.p2p.P2PTunnelPart
 import com.loliball.appliedcreate.AppliedCreate
+import com.simibubi.create.content.kinetics.RotationPropagator
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity
 import net.minecraft.core.BlockPos
 import net.minecraft.resources.ResourceLocation
@@ -131,13 +132,29 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         val inputPos = registeredInputPos ?: return
         val kineticPos = registeredKineticPos ?: return
 
+        // Phase 1: handleRemoved on the kinetic block being disconnected.
+        // This MUST happen BEFORE unregister so virtual edges still exist —
+        // Create's handleRemoved iterates getPotentialNeighbourLocations (which
+        // includes virtual neighbors via our mixin) and calls propagateMissingSource
+        // on any neighbor whose source was this block.
+        val be = level.getBlockEntity(kineticPos) as? KineticBlockEntity
+        if (be != null && be.getTheoreticalSpeed() != 0f) {
+            RotationPropagator.handleRemoved(level, kineticPos, be)
+        }
+
+        // Phase 2: Remove virtual edges from the registry.
         KineticBridgeRegistry.unregister(inputPos, kineticPos)
 
         logger.debug("[StressP2P@{}] Unregistered bridge: inputTunnel={}, kinetic={}",
             blockEntity.blockPos, inputPos, kineticPos)
 
-        // Trigger re-propagation so partners update their networks
-        KineticBridgeRegistry.triggerRepropagation(inputPos, level)
+        // Phase 3: Re-add remaining partners so they can rebuild their networks
+        // without the disconnected endpoint.
+        val remainingEndpoints = KineticBridgeRegistry.getEndpoints(inputPos)
+        for (partnerPos in remainingEndpoints) {
+            val partnerBE = level.getBlockEntity(partnerPos) as? KineticBlockEntity ?: continue
+            RotationPropagator.handleAdded(level, partnerPos, partnerBE)
+        }
 
         registeredInputPos = null
         registeredKineticPos = null
