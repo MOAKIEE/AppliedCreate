@@ -74,6 +74,12 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
 
     override fun onMainNodeStateChanged(reason: IGridNodeListener.State) {
         super.onMainNodeStateChanged(reason)
+
+        // Skip grid boot — during world load, kinetic networks are already restored
+        // from NBT. Re-registering here would trigger duplicate propagation and cause
+        // stress overload on the output side.
+        if (reason == IGridNodeListener.State.GRID_BOOT) return
+
         val level = blockEntity.level ?: return
         if (level.isClientSide) return
 
