@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -31,7 +32,7 @@ public abstract class RotationPropagatorMixin {
      * We add our bridged remote positions so RotationPropagator's BFS can traverse them.
      */
     @Inject(
-            method = "getPotentialNeighbourLocations",
+            method = "getPotentialNeighbourLocations(Lcom/simibubi/create/content/kinetics/base/KineticBlockEntity;)Ljava/util/List;",
             at = @At("TAIL"),
             cancellable = true
     )
@@ -41,12 +42,14 @@ public abstract class RotationPropagatorMixin {
     ) {
         Set<BlockPos> remotePositions = KineticBridgeRegistry.INSTANCE.getRemotePositions(be.getBlockPos());
         if (remotePositions != null && !remotePositions.isEmpty()) {
-            List<BlockPos> result = cir.getReturnValue();
+            // Defensively copy the list in case Create returns an unmodifiable list
+            List<BlockPos> result = new ArrayList<>(cir.getReturnValue());
             for (BlockPos remote : remotePositions) {
                 if (!result.contains(remote)) {
                     result.add(remote);
                 }
             }
+            cir.setReturnValue(result);
         }
     }
 
@@ -56,7 +59,7 @@ public abstract class RotationPropagatorMixin {
      * without running Create's normal connection checks.
      */
     @Inject(
-            method = "isConnected",
+            method = "isConnected(Lcom/simibubi/create/content/kinetics/base/KineticBlockEntity;Lcom/simibubi/create/content/kinetics/base/KineticBlockEntity;)Z",
             at = @At("HEAD"),
             cancellable = true
     )
@@ -67,6 +70,7 @@ public abstract class RotationPropagatorMixin {
     ) {
         if (KineticBridgeRegistry.INSTANCE.areBridged(from.getBlockPos(), to.getBlockPos())) {
             cir.setReturnValue(true);
+            return;
         }
     }
 
@@ -75,7 +79,7 @@ public abstract class RotationPropagatorMixin {
      * This ensures bridged kinetic blocks transmit rotation at the same speed.
      */
     @Inject(
-            method = "getRotationSpeedModifier",
+            method = "getRotationSpeedModifier(Lcom/simibubi/create/content/kinetics/base/KineticBlockEntity;Lcom/simibubi/create/content/kinetics/base/KineticBlockEntity;)F",
             at = @At("HEAD"),
             cancellable = true
     )
@@ -86,6 +90,7 @@ public abstract class RotationPropagatorMixin {
     ) {
         if (KineticBridgeRegistry.INSTANCE.areBridged(from.getBlockPos(), to.getBlockPos())) {
             cir.setReturnValue(1.0f);
+            return;
         }
     }
 }
