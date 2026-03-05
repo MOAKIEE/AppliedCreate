@@ -110,7 +110,7 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
             return
         }
 
-        KineticBridgeRegistry.register(inputPos, kineticPos)
+        KineticBridgeRegistry.register(inputPos, kineticPos, level as ServerLevel)
         registeredInputPos = inputPos
         registeredKineticPos = kineticPos
         retryAttemptsRemaining = 0
@@ -137,7 +137,7 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
             blockEntity.blockPos, inputPos, kineticPos)
 
         // Trigger re-propagation so partners update their networks
-        KineticBridgeRegistry.triggerRepropagation(inputPos, level)
+        KineticBridgeRegistry.triggerRepropagation(inputPos)
 
         registeredInputPos = null
         registeredKineticPos = null
@@ -162,17 +162,17 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         // Unregister old
         if (oldInputPos != null && oldKineticPos != null) {
             KineticBridgeRegistry.unregister(oldInputPos, oldKineticPos)
-            KineticBridgeRegistry.triggerRepropagation(oldInputPos, level)
+            KineticBridgeRegistry.triggerRepropagation(oldInputPos)
         }
 
         // Register new (if kinetic block exists)
         if (newInputPos != null) {
             val be = level.getBlockEntity(newKineticPos)
             if (be is KineticBlockEntity) {
-                KineticBridgeRegistry.register(newInputPos, newKineticPos)
+                KineticBridgeRegistry.register(newInputPos, newKineticPos, level as ServerLevel)
                 registeredInputPos = newInputPos
                 registeredKineticPos = newKineticPos
-                KineticBridgeRegistry.triggerRepropagation(newInputPos, level)
+                KineticBridgeRegistry.triggerRepropagation(newInputPos)
                 logger.debug("[StressP2P@{}] Re-registered bridge: inputTunnel={}, kinetic={}",
                     blockEntity.blockPos, newInputPos, newKineticPos)
                 return
