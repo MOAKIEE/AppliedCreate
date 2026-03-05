@@ -65,5 +65,18 @@
     "gui.appliedcreate.me_blueprint_cannon.materials": "Material Checklist",
     "gui.appliedcreate.me_blueprint_cannon.noMaterials": "No materials required",
 
-    "appliedcreate.me_gearbox.multiplier": "Stress Multiplier"
+    "appliedcreate.me_gearbox.multiplier": "Stress Multiplier",
+
+    "block.appliedcreate.spatial_assembler": "Spatial Assembler",
+    "gui.appliedcreate.spatial_assembler.input": "Input",
+    "gui.appliedcreate.spatial_assembler.output": "Output",
+    "gui.appliedcreate.spatial_assembler.status.idle": "Idle",
+    "gui.appliedcreate.spatial_assembler.status.noCell": "No Spatial Cell",
+    "gui.appliedcreate.spatial_assembler.status.outputFull": "Output Full",
+    "gui.appliedcreate.spatial_assembler.status.noGrid": "No Grid Connection",
+    "gui.appliedcreate.spatial_assembler.status.noGlue": "No Glued Region Found",
+    "gui.appliedcreate.spatial_assembler.status.tooLarge": "Region Too Large",
+    "gui.appliedcreate.spatial_assembler.status.noPower": "Insufficient Power",
+    "gui.appliedcreate.spatial_assembler.status.transitionDone": "Transition Complete",
+    "gui.appliedcreate.spatial_assembler.status.transitionFailed": "Transition Failed"
 }

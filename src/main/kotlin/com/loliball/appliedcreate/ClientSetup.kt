@@ -7,6 +7,7 @@ import com.loliball.appliedcreate.cannon.MEBlueprintCannonRenderer
 import com.loliball.appliedcreate.energy.KineticEnergyAcceptorRenderer
 import com.loliball.appliedcreate.energy.MEGearboxRenderer
 import com.loliball.appliedcreate.cannon.MEBlueprintCannonScreen
+import com.loliball.appliedcreate.spatial.SpatialAssemblerScreen
 import com.loliball.appliedcreate.storage.StressStorageCell
 
 import appeng.client.gui.style.ScreenStyle
@@ -42,6 +43,10 @@ object ClientSetup {
         event.register(
             AppliedCreate.ME_BLUEPRINT_CANNON_MENU.get(),
             ::MEBlueprintCannonScreen
+        )
+        event.register(
+            AppliedCreate.SPATIAL_ASSEMBLER_MENU.get(),
+            ::SpatialAssemblerScreen
         )
 
         // Register StressKey render handler for ME terminal display

@@ -4,6 +4,9 @@ import com.loliball.appliedcreate.cannon.MEBlueprintCannonBlock
 import com.loliball.appliedcreate.cannon.MEBlueprintCannonBlockEntity
 import com.loliball.appliedcreate.cannon.MEBlueprintCannonMenu
 import com.loliball.appliedcreate.cannon.ConfigureMECannonPayload
+import com.loliball.appliedcreate.spatial.SpatialAssemblerBlock
+import com.loliball.appliedcreate.spatial.SpatialAssemblerBlockEntity
+import com.loliball.appliedcreate.spatial.SpatialAssemblerMenu
 import com.loliball.appliedcreate.energy.KineticEnergyAcceptorBlock
 import com.loliball.appliedcreate.energy.KineticEnergyAcceptorBlockEntity
 import com.loliball.appliedcreate.energy.MEGearboxBlock
@@ -241,6 +244,31 @@ class AppliedCreate {
             StressStorageCell(Item.Properties(), 5.0, 262144, 8, 1)
         }
 
+        // ── Spatial Assembler ──
+        val SPATIAL_ASSEMBLER_BLOCK: DeferredHolder<Block, Block> = BLOCKS.register("spatial_assembler") { ->
+            SpatialAssemblerBlock(BlockBehaviour.Properties.of().strength(3.5f).noOcclusion())
+        }
+
+        val SPATIAL_ASSEMBLER_ITEM: DeferredHolder<Item, Item> = ITEMS.register("spatial_assembler") { ->
+            BlockItem(SPATIAL_ASSEMBLER_BLOCK.get(), Item.Properties())
+        }
+
+        @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
+        val SPATIAL_ASSEMBLER_BE: DeferredHolder<BlockEntityType<*>, BlockEntityType<SpatialAssemblerBlockEntity>> =
+            BLOCK_ENTITY_TYPES.register("spatial_assembler") { ->
+                BlockEntityType.Builder.of(
+                    { pos, state -> SpatialAssemblerBlockEntity(SPATIAL_ASSEMBLER_BE.get(), pos, state) },
+                    SPATIAL_ASSEMBLER_BLOCK.get()
+                ).build(null)
+            }
+
+        val SPATIAL_ASSEMBLER_MENU: DeferredHolder<MenuType<*>, MenuType<SpatialAssemblerMenu>> =
+            MENU_TYPES.register("spatial_assembler") { ->
+                net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create { windowId, inv, buf ->
+                    SpatialAssemblerMenu(MENU_TYPES.getEntries().find { it.key!!.location().path == "spatial_assembler" }!!.get() as MenuType<*>, windowId, inv, buf)
+                }
+            }
+
         val STRESS_CELLS: List<DeferredHolder<Item, Item>> by lazy {
             listOf(
                 STRESS_CELL_1K, STRESS_CELL_4K, STRESS_CELL_16K, STRESS_CELL_64K, STRESS_CELL_256K,
@@ -340,6 +368,7 @@ class AppliedCreate {
                     STRESS_COMPONENTS.forEach { output.accept(it.get()) }
                     // Storage cells
                     STRESS_CELLS.forEach { output.accept(it.get()) }
+                    output.accept(SPATIAL_ASSEMBLER_ITEM.get())
                 }
                 .build()
         }
@@ -475,6 +504,12 @@ class AppliedCreate {
             ME_GEARBOX_ITEM.get().asItem()
         )
 
+        // Register representative item for Spatial Assembler
+        AEBaseBlockEntity.registerBlockEntityItem(
+            SPATIAL_ASSEMBLER_BE.get(),
+            SPATIAL_ASSEMBLER_ITEM.get().asItem()
+        )
+
         // Reload AE2's igtooltip ServiceLoader to ensure our AppliedCreateTooltipProvider
         // is discovered (NeoForge module layers may cache ServiceLoader before our mod loads)
         try {
@@ -544,6 +579,11 @@ class AppliedCreate {
             ME_GEARBOX_BE.get()
         ) { be, _ -> be }
 
+        // Spatial Assembler — AE2 grid node
+        event.registerBlockEntity(
+            AECapabilities.IN_WORLD_GRID_NODE_HOST,
+            SPATIAL_ASSEMBLER_BE.get()
+        ) { be, _ -> be }
         // Register GENERIC_INTERNAL_INV so AE2's registerGenericAdapters auto-registers
         // Capabilities.ItemHandler.BLOCK and FluidHandler.BLOCK adapters for our blocks,
         // enabling item insertion from hoppers, Create mechanical crafters, etc.

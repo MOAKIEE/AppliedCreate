@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "appliedcreate:block/spatial_assembler"
+    }
+  }
+}

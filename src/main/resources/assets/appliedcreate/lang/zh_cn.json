@@ -65,5 +65,18 @@
     "gui.appliedcreate.me_blueprint_cannon.materials": "材料清单",
     "gui.appliedcreate.me_blueprint_cannon.noMaterials": "无需材料",
 
-    "appliedcreate.me_gearbox.multiplier": "应力倍率"
+    "appliedcreate.me_gearbox.multiplier": "应力倍率",
+
+    "block.appliedcreate.spatial_assembler": "空间装配器",
+    "gui.appliedcreate.spatial_assembler.input": "输入",
+    "gui.appliedcreate.spatial_assembler.output": "输出",
+    "gui.appliedcreate.spatial_assembler.status.idle": "空闲",
+    "gui.appliedcreate.spatial_assembler.status.noCell": "无空间元件",
+    "gui.appliedcreate.spatial_assembler.status.outputFull": "输出已满",
+    "gui.appliedcreate.spatial_assembler.status.noGrid": "无网络连接",
+    "gui.appliedcreate.spatial_assembler.status.noGlue": "未找到粘合区域",
+    "gui.appliedcreate.spatial_assembler.status.tooLarge": "区域过大",
+    "gui.appliedcreate.spatial_assembler.status.noPower": "能量不足",
+    "gui.appliedcreate.spatial_assembler.status.transitionDone": "传送完成",
+    "gui.appliedcreate.spatial_assembler.status.transitionFailed": "传送失败"
 }
