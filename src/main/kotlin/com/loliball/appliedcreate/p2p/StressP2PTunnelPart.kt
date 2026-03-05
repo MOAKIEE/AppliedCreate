@@ -163,6 +163,13 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
             RotationPropagator.handleAdded(level, partnerPos, partnerBE)
         }
 
+        // Phase 4: Let the disconnected kinetic block re-discover local sources.
+        // After virtual edges are removed, handleAdded will only find physical neighbors.
+        // If any neighbor is a source (e.g. waterwheel), the gear joins that local network.
+        if (be != null) {
+            RotationPropagator.handleAdded(level, kineticPos, be)
+        }
+
         registeredInputPos = null
         registeredKineticPos = null
     }
