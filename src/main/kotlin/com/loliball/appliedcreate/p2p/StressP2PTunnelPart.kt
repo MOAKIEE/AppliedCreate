@@ -41,6 +41,11 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
     /** Number of deferred registration retry attempts remaining */
     private var retryAttemptsRemaining = 0
 
+    /** Whether this part has completed its initial world-load registration.
+     *  During world load, kinetic networks are restored from NBT — we must NOT
+     *  trigger re-propagation until the next runtime change. */
+    private var initialLoadComplete = false
+
     companion object {
         /** Max number of tick-deferred retries for registration when grid isn't ready */
         private const val MAX_RETRY_ATTEMPTS = 5
@@ -64,6 +69,7 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
 
     override fun addToWorld() {
         super.addToWorld()
+        initialLoadComplete = false
         registerKineticBridge()
     }
 
@@ -75,34 +81,45 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
     override fun onMainNodeStateChanged(reason: IGridNodeListener.State) {
         super.onMainNodeStateChanged(reason)
 
-        // Skip grid boot — during world load, kinetic networks are already restored
-        // from NBT. Re-registering here would trigger duplicate propagation and cause
-        // stress overload on the output side.
-        if (reason == IGridNodeListener.State.GRID_BOOT) return
+        // During world load, kinetic networks are already restored from NBT.
+        // The first non-GRID_BOOT state change marks the grid as fully online —
+        // only after that should we react to channel/power changes.
+        if (!initialLoadComplete) {
+            if (reason != IGridNodeListener.State.GRID_BOOT) {
+                initialLoadComplete = true
+                // First CHANNEL event after boot — just register the bridge if needed,
+                // but don't unregister (the network is freshly booted, not losing channels).
+                registerKineticBridge()
+            }
+            return
+        }
 
         val level = blockEntity.level ?: return
         if (level.isClientSide) return
 
         if (isActive) {
-            // Channel/power restored — re-register the bridge
             registerKineticBridge()
         } else {
-            // Channel lost or power lost — disconnect the bridge
             unregisterKineticBridge()
         }
     }
 
     override fun onTunnelNetworkChange() {
-        // Guard: don't trigger kinetic cascades during grid shutdown.
-        // During save/unload, mainNode.destroy() fires this callback but the level may be
-        // ticking block entity removal — triggering detachKinetics/attachKinetics here causes hangs.
         val level = blockEntity.level ?: return
         if (level.isClientSide) return
 
-        // When P2P network changes (new outputs linked, etc.), re-register all bridges
+        // During initial world load, the grid fires onTunnelNetworkChange as it
+        // discovers P2P links. Since kinetic networks are already restored from NBT,
+        // triggering re-propagation here would cause stress overload on the output.
+        // Just register the bridge edges silently (no propagation).
+        if (!initialLoadComplete) {
+            registerKineticBridge()
+            return
+        }
+
+        // Runtime P2P config change — full re-register with propagation
         reRegisterBridge()
 
-        // Also re-register all outputs
         for (output in getOutputs()) {
             output.reRegisterBridge()
         }
