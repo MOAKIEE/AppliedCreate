@@ -118,8 +118,10 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         logger.debug("[StressP2P@{}] Registered bridge: inputTunnel={}, kinetic={}",
             blockEntity.blockPos, inputPos, kineticPos)
 
-        // Trigger re-propagation so the kinetic network discovers the new virtual edges
-        KineticBridgeRegistry.triggerRepropagation(inputPos, level)
+        // Note: Do NOT trigger re-propagation here. During world load, kinetic networks
+        // are already correctly restored from NBT — calling triggerRepropagation would tear
+        // them down and cause stress overload on the output side. Runtime P2P changes are
+        // handled by onTunnelNetworkChange → reRegisterBridge which does trigger re-propagation.
     }
 
     private fun unregisterKineticBridge() {

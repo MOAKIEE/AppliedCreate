@@ -109,16 +109,44 @@ object KineticBridgeRegistry {
     /**
      * Trigger kinetic re-propagation on all endpoints in a tunnel group.
      * Call this when P2P tunnel configuration changes (link/unlink, memory card, etc.)
+     *
+     * Uses a two-phase approach to avoid ordering issues:
+     * Phase 1: handleRemoved on ALL endpoints (tear down existing networks)
+     * Phase 2: handleAdded on source-bearing endpoints only (rebuild via BFS)
+     *
+     * This prevents the scenario where processing endpoints one-by-one causes
+     * a source-side rebuild that is immediately torn down when the output-side
+     * endpoint is processed next.
      */
     fun triggerRepropagation(inputTunnelPos: BlockPos, level: Level) {
         val endpoints = tunnelEndpoints[inputTunnelPos] ?: return
-        for (pos in endpoints.toList()) { // toList to avoid concurrent modification
-            val be = level.getBlockEntity(pos) as? KineticBlockEntity ?: continue
-            LOGGER.debug("[KineticBridge] Triggering re-propagation at {}", pos)
-            // Use Create's proper network rebuild entry points instead of
-            // detachKinetics/removeSource/attachKinetics which doesn't trigger
-            // RotationPropagator's full propagation BFS.
+        val snapshot = endpoints.toList() // snapshot to avoid concurrent modification
+
+        // Collect all kinetic block entities at endpoints
+        val kineticEntries = snapshot.mapNotNull { pos ->
+            val be = level.getBlockEntity(pos) as? KineticBlockEntity ?: return@mapNotNull null
+            pos to be
+        }
+
+        if (kineticEntries.isEmpty()) return
+
+        // Phase 1: Remove all endpoints from their kinetic networks
+        for ((pos, be) in kineticEntries) {
+            LOGGER.debug("[KineticBridge] Phase 1 — removing kinetic network at {}", pos)
             RotationPropagator.handleRemoved(level, pos, be)
+        }
+
+        // Phase 2: Re-add endpoints that are sources or have a source reference.
+        // The BFS in propagateNewSource will traverse virtual edges to reach all
+        // connected endpoints automatically — we don't need to handleAdded on every one.
+        // Prioritize source blocks (generators) first, then blocks that had a source.
+        val sources = kineticEntries.filter { (_, be) -> be.isSource }
+        val withSource = kineticEntries.filter { (_, be) -> !be.isSource && be.hasSource() }
+        val remaining = kineticEntries.filter { (_, be) -> !be.isSource && !be.hasSource() }
+
+        for ((pos, be) in sources + withSource + remaining) {
+            LOGGER.debug("[KineticBridge] Phase 2 — re-adding kinetic at {} (isSource={}, hasSource={})",
+                pos, be.isSource, be.hasSource())
             RotationPropagator.handleAdded(level, pos, be)
         }
     }
