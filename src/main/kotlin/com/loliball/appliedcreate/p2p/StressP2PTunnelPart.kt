@@ -1,6 +1,7 @@
 package com.loliball.appliedcreate.p2p
 
 import appeng.api.parts.IPartItem
+import appeng.api.networking.IGridNodeListener
 import appeng.api.parts.IPartModel
 import appeng.items.parts.PartModels
 import appeng.parts.p2p.P2PModels
@@ -69,6 +70,20 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
     override fun removeFromWorld() {
         unregisterKineticBridge()
         super.removeFromWorld()
+    }
+
+    override fun onMainNodeStateChanged(reason: IGridNodeListener.State) {
+        super.onMainNodeStateChanged(reason)
+        val level = blockEntity.level ?: return
+        if (level.isClientSide) return
+
+        if (isActive) {
+            // Channel/power restored — re-register the bridge
+            registerKineticBridge()
+        } else {
+            // Channel lost or power lost — disconnect the bridge
+            unregisterKineticBridge()
+        }
     }
 
     override fun onTunnelNetworkChange() {
