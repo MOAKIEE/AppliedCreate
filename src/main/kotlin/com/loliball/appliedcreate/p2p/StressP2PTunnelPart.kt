@@ -140,6 +140,13 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         val be = level.getBlockEntity(kineticPos) as? KineticBlockEntity
         if (be != null && be.getTheoreticalSpeed() != 0f) {
             RotationPropagator.handleRemoved(level, kineticPos, be)
+            // handleRemoved only clears neighbors whose source == kineticPos.
+            // The BE itself still retains its speed/source (Create assumes the block
+            // is physically gone). Since the block is still present, manually clear it.
+            if (be.hasSource()) {
+                be.removeSource()
+                be.sendData()
+            }
         }
 
         // Phase 2: Remove virtual edges from the registry.
