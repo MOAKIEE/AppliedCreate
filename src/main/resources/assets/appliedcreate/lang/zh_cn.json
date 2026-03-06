@@ -87,5 +87,8 @@
     "config.jade.plugin_appliedcreate.andesite_pp_power_storage": "能量存储 (安山样板供应器)",
     "config.jade.plugin_appliedcreate.brass_pp_power_storage": "能量存储 (黄铜样板供应器)",
     "config.jade.plugin_appliedcreate.kea_grid_node": "网络节点 (动能接收器)",
-    "config.jade.plugin_appliedcreate.me_gearbox_grid_node": "网络节点 (ME齿轮箱)"
+    "config.jade.plugin_appliedcreate.me_gearbox_grid_node": "网络节点 (ME齿轮箱)",
+
+    "item.appliedcreate.creative_stress_cell": "创造应力元件",
+    "item.appliedcreate.creative_stress_cell.tooltip": "提供无限应力存储"
 }

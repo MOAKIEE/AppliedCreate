@@ -28,6 +28,8 @@ import com.loliball.appliedcreate.p2p.StressP2PTunnelPart
 import com.loliball.appliedcreate.p2p.KineticBridgeRegistry
 import com.loliball.appliedcreate.storage.StressKeyType
 import com.loliball.appliedcreate.storage.StressStorageCell
+import com.loliball.appliedcreate.storage.CreativeStressCell
+import appeng.api.storage.StorageCells
 import appeng.api.AECapabilities
 import appeng.api.features.P2PTunnelAttunement
 import appeng.api.stacks.AEKeyTypes
@@ -246,6 +248,9 @@ class AppliedCreate {
         val STRESS_CELL_256M: DeferredHolder<Item, Item> = ITEMS.register("stress_storage_cell_256m") { ->
             StressStorageCell(Item.Properties(), 5.0, 262144, 8, 1)
         }
+        val CREATIVE_STRESS_CELL: DeferredHolder<Item, Item> = ITEMS.register("creative_stress_cell") { ->
+            CreativeStressCell(Item.Properties())
+        }
 
         // ── Spatial Assembler ──
         val SPATIAL_ASSEMBLER_BLOCK: DeferredHolder<Block, Block> = BLOCKS.register("spatial_assembler") { ->
@@ -371,6 +376,7 @@ class AppliedCreate {
                     STRESS_COMPONENTS.forEach { output.accept(it.get()) }
                     // Storage cells
                     STRESS_CELLS.forEach { output.accept(it.get()) }
+                    output.accept(CREATIVE_STRESS_CELL.get())
                     output.accept(SPATIAL_ASSEMBLER_ITEM.get())
                 }
                 .build()
@@ -557,6 +563,9 @@ class AppliedCreate {
             // Register upgrade cards for ME Blueprint Cannon
             appeng.api.upgrades.Upgrades.add(AEItems.SPEED_CARD, ME_BLUEPRINT_CANNON_ITEM.get(), 4)
             appeng.api.upgrades.Upgrades.add(AEItems.CRAFTING_CARD, ME_BLUEPRINT_CANNON_ITEM.get(), 1)
+
+            // Register creative stress cell handler
+            StorageCells.addCellHandler(CreativeStressCell.Handler)
         }
     }
 

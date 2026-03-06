@@ -87,5 +87,8 @@
     "config.jade.plugin_appliedcreate.andesite_pp_power_storage": "Power Storage (Andesite Pattern Provider)",
     "config.jade.plugin_appliedcreate.brass_pp_power_storage": "Power Storage (Brass Pattern Provider)",
     "config.jade.plugin_appliedcreate.kea_grid_node": "Grid Node (Kinetic Energy Acceptor)",
-    "config.jade.plugin_appliedcreate.me_gearbox_grid_node": "Grid Node (ME Gearbox)"
+    "config.jade.plugin_appliedcreate.me_gearbox_grid_node": "Grid Node (ME Gearbox)",
+
+    "item.appliedcreate.creative_stress_cell": "Creative Stress Cell",
+    "item.appliedcreate.creative_stress_cell.tooltip": "Provides infinite stress storage"
 }
