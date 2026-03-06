@@ -41,9 +41,13 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
     /** Number of deferred registration retry attempts remaining */
     private var retryAttemptsRemaining = 0
 
-    /** Whether this part has completed its initial world-load registration.
-     *  During world load, kinetic networks are restored from NBT — we must NOT
-     *  trigger re-propagation until the next runtime change. */
+    /** Whether this part has completed its initial world-load sequence.
+     *  During world load, Create rebuilds kinetic networks from NBT on each block's
+     *  first tick (attachKinetics → RotationPropagator.handleAdded). We must NOT
+     *  register virtual edges until AFTER this completes, or Create's BFS will
+     *  traverse our edges during its first-tick propagation and corrupt stress accounting.
+     *  We delay edge registration until isActive first becomes true (AE2 grid online),
+     *  which happens several ticks after world load — well after Create's first-tick. */
     private var initialLoadComplete = false
 
     companion object {
@@ -70,9 +74,11 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
     override fun addToWorld() {
         super.addToWorld()
         initialLoadComplete = false
-        logger.debug("[StressP2P@{}] >>> addToWorld (isOutput={}, initialLoadComplete={})",
-            blockEntity.blockPos, isOutput, initialLoadComplete)
-        registerKineticBridge()
+        logger.debug("[StressP2P@{}] >>> addToWorld (isOutput={})",
+            blockEntity.blockPos, isOutput)
+        // Do NOT register virtual edges here — Create's first-tick attachKinetics()
+        // would traverse them and corrupt stress accounting. Registration is deferred
+        // until the AE2 grid comes online (isActive=true in onMainNodeStateChanged).
     }
 
     override fun removeFromWorld() {
@@ -92,10 +98,15 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
 
         if (!initialLoadComplete) {
             if (isActive) {
-                // Grid is now fully online for the first time — mark boot complete
+                // Grid is now fully online for the first time.
+                // By this point Create's first-tick attachKinetics() has already run
+                // and kinetic networks are stable. Safe to register virtual edges now.
                 initialLoadComplete = true
-                logger.debug("[StressP2P@{}]   -> initialLoadComplete set to true (first isActive)", blockEntity.blockPos)
+                logger.debug("[StressP2P@{}]   -> first activation, registering bridge + scheduling propagation",
+                    blockEntity.blockPos)
                 registerKineticBridge()
+                // Schedule propagation for next tick to let all tunnels register first
+                scheduleKineticPropagation()
             }
             // During boot, ignore ALL state changes until isActive becomes true
             return
@@ -117,8 +128,8 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
             blockEntity.blockPos, isOutput, initialLoadComplete, registeredInputPos)
 
         if (!initialLoadComplete) {
-            logger.debug("[StressP2P@{}]   -> during init load, silent registerKineticBridge only", blockEntity.blockPos)
-            registerKineticBridge()
+            // During boot, do nothing — edges will be registered when isActive becomes true
+            logger.debug("[StressP2P@{}]   -> during init load, skipping", blockEntity.blockPos)
             return
         }
 
@@ -224,20 +235,39 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
             return
         }
 
+        // Phase 1: Unregister old edges and propagate removal on old endpoints
         if (oldInputPos != null && oldKineticPos != null) {
+            val oldEndpoints = KineticBridgeRegistry.getEndpoints(oldInputPos).toList()
             KineticBridgeRegistry.unregister(oldInputPos, oldKineticPos)
-            logger.debug("[StressP2P@{}]   reRegisterBridge: triggerRepropagation on old", blockEntity.blockPos)
-            KineticBridgeRegistry.triggerRepropagation(oldInputPos, level)
+            // handleRemoved on the old kinetic pos
+            val oldBE = level.getBlockEntity(oldKineticPos) as? KineticBlockEntity
+            if (oldBE != null && oldBE.getTheoreticalSpeed() != 0f) {
+                RotationPropagator.handleRemoved(level, oldKineticPos, oldBE)
+            }
+            // handleAdded on remaining endpoints to let them re-discover
+            for (partnerPos in oldEndpoints) {
+                if (partnerPos == oldKineticPos) continue
+                val partnerBE = level.getBlockEntity(partnerPos) as? KineticBlockEntity ?: continue
+                RotationPropagator.handleAdded(level, partnerPos, partnerBE)
+            }
+            if (oldBE != null) {
+                RotationPropagator.handleAdded(level, oldKineticPos, oldBE)
+            }
         }
 
+        // Phase 2: Register new edges and propagate on new endpoints
         if (newInputPos != null) {
             val be = level.getBlockEntity(newKineticPos)
             if (be is KineticBlockEntity) {
                 KineticBridgeRegistry.register(newInputPos, newKineticPos)
                 registeredInputPos = newInputPos
                 registeredKineticPos = newKineticPos
-                logger.debug("[StressP2P@{}]   reRegisterBridge: triggerRepropagation on new", blockEntity.blockPos)
-                KineticBridgeRegistry.triggerRepropagation(newInputPos, level)
+                // handleAdded on all endpoints in the new group
+                val newEndpoints = KineticBridgeRegistry.getEndpoints(newInputPos)
+                for (endpointPos in newEndpoints) {
+                    val endpointBE = level.getBlockEntity(endpointPos) as? KineticBlockEntity ?: continue
+                    RotationPropagator.handleAdded(level, endpointPos, endpointBE)
+                }
                 return
             }
         }
@@ -260,6 +290,31 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
             // NOTE: Requires ME grid to be online (input uses P2PService)
             this.input?.blockEntity?.blockPos
         }
+    }
+
+    /**
+     * Schedule kinetic propagation for the next server tick.
+     * This is called after first-time bridge registration (when AE2 grid comes online)
+     * to let Create discover the newly-connected virtual edges.
+     * Deferred by one tick to ensure all tunnel parts in the group have registered.
+     */
+    private fun scheduleKineticPropagation() {
+        val level = blockEntity.level as? ServerLevel ?: return
+        val server = level.server
+        val inputPos = registeredInputPos ?: return
+        logger.debug("[StressP2P@{}] scheduleKineticPropagation for next tick (inputTunnel={})",
+            blockEntity.blockPos, inputPos)
+        server.tell(TickTask(server.tickCount + 1) {
+            if (blockEntity.isRemoved) return@TickTask
+            if (registeredInputPos != inputPos) return@TickTask // changed since scheduled
+            val endpoints = KineticBridgeRegistry.getEndpoints(inputPos)
+            logger.debug("[StressP2P@{}] propagation tick: {} endpoints for tunnel {}",
+                blockEntity.blockPos, endpoints.size, inputPos)
+            for (endpointPos in endpoints) {
+                val be = level.getBlockEntity(endpointPos) as? KineticBlockEntity ?: continue
+                RotationPropagator.handleAdded(level, endpointPos, be)
+            }
+        })
     }
 
     /**
