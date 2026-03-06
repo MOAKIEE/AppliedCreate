@@ -9,6 +9,7 @@ import appeng.parts.p2p.P2PTunnelPart
 import com.loliball.appliedcreate.AppliedCreate
 import com.simibubi.create.content.kinetics.RotationPropagator
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity
+import net.minecraft.core.Direction
 import net.minecraft.core.BlockPos
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.TickTask
@@ -361,14 +362,32 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
                     }
                 }
 
-                // Phase 1: Tear down output-side endpoints' NBT-restored kinetic state.
-                // This clears their speed, source, and network so Create doesn't see them
-                // as conflicting when propagation reaches them.
+                // Phase 1: Tear down output-side endpoints AND their physical neighbors'
+                // NBT-restored kinetic state. The output endpoints themselves typically have
+                // speed=0 (no virtual edges existed during Create's first-tick), but blocks
+                // physically connected behind them (gears, shafts) have NBT-restored speed,
+                // source, and network membership. If we only clear the endpoints, Create's
+                // BFS (Phase 2) will reach those downstream blocks and find them in a
+                // conflicting network → stress overload.
                 for ((pos, be) in outputEndpointEntries) {
-                    logger.info("[StressP2P@{}]   Phase 1: tearing down output endpoint {}",
-                        blockEntity.blockPos, pos)
+                    logger.info("[StressP2P@{}]   Phase 1: tearing down output endpoint {} (speed={})",
+                        blockEntity.blockPos, pos, be.theoreticalSpeed)
+                    // Tear down the endpoint itself (may be no-op if speed=0)
                     RotationPropagator.handleRemoved(level, pos, be)
                     be.removeSource()
+                    // CRITICAL: Also tear down physical neighbors of the output endpoint.
+                    // These blocks retain NBT-restored kinetic state from Create's first-tick
+                    // and would cause network conflicts when BFS reaches them.
+                    for (dir in Direction.entries) {
+                        val neighborPos = pos.relative(dir)
+                        val neighborBE = level.getBlockEntity(neighborPos) as? KineticBlockEntity ?: continue
+                        if (neighborBE.theoreticalSpeed != 0f) {
+                            logger.info("[StressP2P@{}]   Phase 1: tearing down neighbor {} of output {} (speed={}, hasSource={})",
+                                blockEntity.blockPos, neighborPos, pos, neighborBE.theoreticalSpeed, neighborBE.hasSource())
+                            RotationPropagator.handleRemoved(level, neighborPos, neighborBE)
+                            neighborBE.removeSource()
+                        }
+                    }
                 }
 
                 // Phase 2: Propagate from input-side endpoint only.
@@ -377,6 +396,12 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
                     logger.info("[StressP2P@{}]   Phase 2: propagating from input endpoint {}, speed={}",
                         blockEntity.blockPos, inputEndpointPos, inputEndpointBE!!.theoreticalSpeed)
                     RotationPropagator.handleAdded(level, inputEndpointPos!!, inputEndpointBE!!)
+                    // Post-propagation: log the state of all endpoints to verify BFS result
+                    for (epPos in endpoints) {
+                        val epBE = level.getBlockEntity(epPos) as? KineticBlockEntity ?: continue
+                        logger.info("[StressP2P@{}]   Post-propagation: endpoint {} speed={}, hasSource={}, isOverStressed={}",
+                            blockEntity.blockPos, epPos, epBE.theoreticalSpeed, epBE.hasSource(), epBE.isOverStressed)
+                    }
                 }
             } else {
                 // Runtime re-propagation (not initial load) — propagate on all endpoints
