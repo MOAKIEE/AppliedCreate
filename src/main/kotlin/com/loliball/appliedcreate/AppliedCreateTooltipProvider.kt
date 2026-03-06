@@ -41,36 +41,36 @@ class AppliedCreateTooltipProvider : TooltipProvider {
         val powerProvider = PowerStorageDataProvider()
 
         registration.addBlockEntityData(
-            ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "grid_node"),
+            ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "andesite_pp_grid_node"),
             AndesitePatternProviderBlockEntity::class.java,
             gridNodeProvider
         )
         registration.addBlockEntityData(
-            ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "grid_node"),
+            ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "brass_pp_grid_node"),
             BrassPatternProviderBlockEntity::class.java,
             gridNodeProvider
         )
         registration.addBlockEntityData(
-            ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "power_storage"),
+            ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "andesite_pp_power_storage"),
             AndesitePatternProviderBlockEntity::class.java,
             powerProvider
         )
         registration.addBlockEntityData(
-            ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "power_storage"),
+            ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "brass_pp_power_storage"),
             BrassPatternProviderBlockEntity::class.java,
             powerProvider
         )
 
         // Kinetic Energy Acceptor
         registration.addBlockEntityData(
-            ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "grid_node"),
+            ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "kea_grid_node"),
             KineticEnergyAcceptorBlockEntity::class.java,
             gridNodeProvider
         )
 
         // ME Gearbox
         registration.addBlockEntityData(
-            ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "grid_node"),
+            ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "me_gearbox_grid_node"),
             MEGearboxBlockEntity::class.java,
             gridNodeProvider
         )

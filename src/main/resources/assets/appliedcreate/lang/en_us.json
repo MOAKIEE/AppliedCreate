@@ -78,5 +78,14 @@
     "gui.appliedcreate.spatial_assembler.status.tooLarge": "Region Too Large",
     "gui.appliedcreate.spatial_assembler.status.noPower": "Insufficient Power",
     "gui.appliedcreate.spatial_assembler.status.transitionDone": "Transition Complete",
-    "gui.appliedcreate.spatial_assembler.status.transitionFailed": "Transition Failed"
+    "gui.appliedcreate.spatial_assembler.status.transitionFailed": "Transition Failed",
+
+    "config.jade.plugin_appliedcreate.grid_node_state": "Grid Node State",
+    "config.jade.plugin_appliedcreate.power_storage": "Power Storage",
+    "config.jade.plugin_appliedcreate.andesite_pp_grid_node": "Grid Node (Andesite Pattern Provider)",
+    "config.jade.plugin_appliedcreate.brass_pp_grid_node": "Grid Node (Brass Pattern Provider)",
+    "config.jade.plugin_appliedcreate.andesite_pp_power_storage": "Power Storage (Andesite Pattern Provider)",
+    "config.jade.plugin_appliedcreate.brass_pp_power_storage": "Power Storage (Brass Pattern Provider)",
+    "config.jade.plugin_appliedcreate.kea_grid_node": "Grid Node (Kinetic Energy Acceptor)",
+    "config.jade.plugin_appliedcreate.me_gearbox_grid_node": "Grid Node (ME Gearbox)"
 }

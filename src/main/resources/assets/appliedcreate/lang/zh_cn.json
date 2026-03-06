@@ -78,5 +78,14 @@
     "gui.appliedcreate.spatial_assembler.status.tooLarge": "区域过大",
     "gui.appliedcreate.spatial_assembler.status.noPower": "能量不足",
     "gui.appliedcreate.spatial_assembler.status.transitionDone": "传送完成",
-    "gui.appliedcreate.spatial_assembler.status.transitionFailed": "传送失败"
+    "gui.appliedcreate.spatial_assembler.status.transitionFailed": "传送失败",
+
+    "config.jade.plugin_appliedcreate.grid_node_state": "网络节点状态",
+    "config.jade.plugin_appliedcreate.power_storage": "能量存储",
+    "config.jade.plugin_appliedcreate.andesite_pp_grid_node": "网络节点 (安山样板供应器)",
+    "config.jade.plugin_appliedcreate.brass_pp_grid_node": "网络节点 (黄铜样板供应器)",
+    "config.jade.plugin_appliedcreate.andesite_pp_power_storage": "能量存储 (安山样板供应器)",
+    "config.jade.plugin_appliedcreate.brass_pp_power_storage": "能量存储 (黄铜样板供应器)",
+    "config.jade.plugin_appliedcreate.kea_grid_node": "网络节点 (动能接收器)",
+    "config.jade.plugin_appliedcreate.me_gearbox_grid_node": "网络节点 (ME齿轮箱)"
 }
