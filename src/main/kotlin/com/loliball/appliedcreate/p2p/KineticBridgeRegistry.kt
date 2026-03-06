@@ -52,7 +52,7 @@ object KineticBridgeRegistry {
             addEdge(existingPos, kineticPos)
         }
 
-        LOGGER.debug("[KineticBridge] Register: tunnel={}, kinetic={}, edges to {} partners",
+        LOGGER.info("[KineticBridge] Register: tunnel={}, kinetic={}, edges to {} partners",
             inputTunnelPos, kineticPos, existingEndpoints.size)
     }
 
@@ -78,7 +78,7 @@ object KineticBridgeRegistry {
             tunnelEndpoints.remove(inputTunnelPos)
         }
 
-        LOGGER.debug("[KineticBridge] Unregister: tunnel={}, kinetic={}, removed {} edges",
+        LOGGER.info("[KineticBridge] Unregister: tunnel={}, kinetic={}, removed {} edges",
             inputTunnelPos, kineticPos, partners.size)
     }
 
@@ -132,7 +132,7 @@ object KineticBridgeRegistry {
 
         // Phase 1: Remove all endpoints from their kinetic networks
         for ((pos, be) in kineticEntries) {
-            LOGGER.debug("[KineticBridge] Phase 1 — removing kinetic network at {}", pos)
+            LOGGER.info("[KineticBridge] Phase 1 — removing kinetic network at {}", pos)
             RotationPropagator.handleRemoved(level, pos, be)
         }
 
@@ -145,7 +145,7 @@ object KineticBridgeRegistry {
         val remaining = kineticEntries.filter { (_, be) -> !be.isSource && !be.hasSource() }
 
         for ((pos, be) in sources + withSource + remaining) {
-            LOGGER.debug("[KineticBridge] Phase 2 — re-adding kinetic at {} (isSource={}, hasSource={})",
+            LOGGER.info("[KineticBridge] Phase 2 — re-adding kinetic at {} (isSource={}, hasSource={})",
                 pos, be.isSource, be.hasSource())
             RotationPropagator.handleAdded(level, pos, be)
         }
