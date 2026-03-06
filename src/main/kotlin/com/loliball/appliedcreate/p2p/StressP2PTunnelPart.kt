@@ -393,30 +393,52 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
                     }
                 }
 
-                // Phase 1: Tear down output-side endpoints AND their physical neighbors'
-                // NBT-restored kinetic state. The output endpoints themselves typically have
-                // speed=0 (no virtual edges existed during Create's first-tick), but blocks
-                // physically connected behind them (gears, shafts) have NBT-restored speed,
-                // source, and network membership. If we only clear the endpoints, Create's
-                // BFS (Phase 2) will reach those downstream blocks and find them in a
-                // conflicting network → stress overload.
-                for ((pos, be) in outputEndpointEntries) {
-                    logger.info("[StressP2P@{}]   Phase 1: tearing down output endpoint {} (speed={})",
-                        blockEntity.blockPos, pos, be.theoreticalSpeed)
-                    // Tear down the endpoint itself (may be no-op if speed=0)
-                    RotationPropagator.handleRemoved(level, pos, be)
-                    be.removeSource()
-                    // CRITICAL: Also tear down physical neighbors of the output endpoint.
-                    // These blocks retain NBT-restored kinetic state from Create's first-tick
-                    // and would cause network conflicts when BFS reaches them.
-                    for (dir in Direction.entries) {
-                        val neighborPos = pos.relative(dir)
-                        val neighborBE = level.getBlockEntity(neighborPos) as? KineticBlockEntity ?: continue
-                        if (neighborBE.theoreticalSpeed != 0f) {
-                            logger.info("[StressP2P@{}]   Phase 1: tearing down neighbor {} of output {} (speed={}, hasSource={})",
-                                blockEntity.blockPos, neighborPos, pos, neighborBE.theoreticalSpeed, neighborBE.hasSource())
-                            RotationPropagator.handleRemoved(level, neighborPos, neighborBE)
-                            neighborBE.removeSource()
+                // Phase 1: Recursively tear down ALL output-side kinetic blocks.
+                // The previous 1-hop approach only cleared immediate neighbors, leaving
+                // deeper blocks (e.g. 25 MechanicalCrafters in a grid) with NBT-restored
+                // kinetic state. When our Phase 2 BFS reached them, they still belonged
+                // to a conflicting network → stress duplication → overload.
+                //
+                // Additionally, blocks that haven't had their first tick() yet still have
+                // updateSpeed=true. If we don't clear this flag, their subsequent tick()
+                // calls attachKinetics() → handleAdded() AGAIN after our Phase 2 already
+                // set them up, causing a second propagateNewSource pass → double stress.
+                // This race condition is why the bug was PROBABILISTIC.
+                //
+                // Fix: BFS from each output endpoint through physical adjacency, calling
+                // detachKinetics() and setting updateSpeed=false on every reachable block.
+                val endpointPositions = endpoints.toSet()
+                val tornDown = mutableSetOf<BlockPos>()
+                // Don't tear down the input-side endpoint
+                if (inputEndpointPos != null) tornDown.add(inputEndpointPos)
+                
+                for ((startPos, _) in outputEndpointEntries) {
+                    // BFS from this output endpoint through physical neighbors
+                    val frontier = ArrayDeque<BlockPos>()
+                    frontier.add(startPos)
+                    while (frontier.isNotEmpty()) {
+                        val pos = frontier.removeFirst()
+                        if (!tornDown.add(pos)) continue
+                        val be = level.getBlockEntity(pos) as? KineticBlockEntity ?: continue
+                        logger.info("[StressP2P@{}]   Phase 1: detaching {} (speed={}, hasSource={}, updateSpeed={})",
+                            blockEntity.blockPos, pos, be.theoreticalSpeed, be.hasSource(), be.updateSpeed)
+                        be.detachKinetics()  // handleRemoved + network removal, zeros speed
+                        be.removeSource()    // clear source reference
+                        be.updateSpeed = false // CRITICAL: prevent first-tick re-attachKinetics race
+                        // Enqueue physical neighbors (6 directions only, no virtual edges)
+                        for (dir in Direction.entries) {
+                            val neighborPos = pos.relative(dir)
+                            if (neighborPos in tornDown) continue
+                            // Only follow into kinetic blocks, don't cross virtual edges
+                            if (neighborPos in endpointPositions && neighborPos != pos) {
+                                // This is another endpoint — tear it down but don't BFS further
+                                // (it will be handled by its own BFS start or is the input endpoint)
+                                continue
+                            }
+                            val neighborBE = level.getBlockEntity(neighborPos) as? KineticBlockEntity
+                            if (neighborBE != null) {
+                                frontier.add(neighborPos)
+                            }
                         }
                     }
                 }
