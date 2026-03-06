@@ -417,6 +417,11 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
      * Schedule a tick-deferred retry for bridge registration.
      * This handles the case where output tunnels are added to world before
      * the ME grid is fully online (findInputTunnelPos returns null).
+     *
+     * NOTE: MinecraftServer.shouldRun() may execute TickTask(tickCount+1) immediately
+     * when haveTime() is true (common during world load), so we record the tick at
+     * scheduling time and keep re-enqueuing inside the callback until the server tick
+     * has actually advanced before doing real work.
      */
     private fun scheduleRetry() {
         if (retryAttemptsRemaining <= 0) {
@@ -426,24 +431,43 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         val server = level.server
         retryAttemptsRemaining--
         val attemptsLeft = retryAttemptsRemaining
-        logger.info("[StressP2P@{}] scheduleRetry ({} attempts left)",
-            blockEntity.blockPos, attemptsLeft)
-        server.tell(TickTask(server.tickCount + 1) {
-            if (registeredInputPos != null) {
-                logger.info("[StressP2P@{}] retry: already registered, skip", blockEntity.blockPos)
+        val scheduledAtTick = server.tickCount
+        logger.info("[StressP2P@{}] scheduleRetry ({} attempts left, scheduledAt=tick{})",
+            blockEntity.blockPos, attemptsLeft, scheduledAtTick)
+        scheduleForNextTick(server, scheduledAtTick, attemptsLeft)
+    }
+
+    /**
+     * Enqueue a TickTask that keeps bouncing until the server tick actually advances
+     * past [scheduledAtTick], preventing all retries from collapsing into one tick
+     * when the server has spare time (haveTime() == true).
+     */
+    private fun scheduleForNextTick(server: net.minecraft.server.MinecraftServer, scheduledAtTick: Int, attemptsLeft: Int) {
+        server.tell(TickTask(scheduledAtTick + 1) {
+            if (server.tickCount <= scheduledAtTick) {
+                // Still the same tick — re-enqueue
+                scheduleForNextTick(server, scheduledAtTick, attemptsLeft)
                 return@TickTask
             }
-            if (blockEntity.isRemoved) return@TickTask
-            val inputPos = findInputTunnelPos()
-            if (inputPos != null) {
-                logger.info("[StressP2P@{}] retry: grid ready, calling registerKineticBridge", blockEntity.blockPos)
-                registerKineticBridge()
-            } else if (attemptsLeft > 0) {
-                scheduleRetry()
-            } else {
-                logger.info("[StressP2P@{}] retry: giving up — grid never came online", blockEntity.blockPos)
-            }
+            doRetryAttempt(attemptsLeft)
         })
+    }
+
+    private fun doRetryAttempt(attemptsLeft: Int) {
+        if (registeredInputPos != null) {
+            logger.info("[StressP2P@{}] retry: already registered, skip", blockEntity.blockPos)
+            return
+        }
+        if (blockEntity.isRemoved) return
+        val inputPos = findInputTunnelPos()
+        if (inputPos != null) {
+            logger.info("[StressP2P@{}] retry: grid ready, calling registerKineticBridge", blockEntity.blockPos)
+            registerKineticBridge()
+        } else if (attemptsLeft > 0) {
+            scheduleRetry()
+        } else {
+            logger.info("[StressP2P@{}] retry: giving up — grid never came online", blockEntity.blockPos)
+        }
     }
 
 }
