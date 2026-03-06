@@ -106,24 +106,24 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         if (!initialLoadComplete) {
             if (isActive) {
                 // Grid is now fully online for the first time.
-                // By this point Create's first-tick attachKinetics() has already run
-                // and kinetic networks are stable. Safe to register virtual edges now.
+                // CRITICAL: Do NOT register virtual edges immediately!
+                // During world load, this fires BEFORE Create's block entities have
+                // their first tick (attachKinetics). If we register edges now, those
+                // blocks' first-tick BFS will traverse our virtual edges, merge into
+                // a giant network with maxStress=0 (source not accounted for), and
+                // trigger stress overload.
+                //
+                // Additionally, TickTask(tickCount+1) runs immediately in the same
+                // tick when MinecraftServer.haveTime() is true (common during load).
+                //
+                // Fix: defer BOTH edge registration AND propagation to an actual
+                // future tick using the scheduleForNextTick bounce pattern. By then,
+                // all Create blocks have completed their first-tick attachKinetics()
+                // and formed stable local networks.
                 initialLoadComplete = true
-                logger.info("[StressP2P@{}]   -> first activation, registering bridge (isOutput={})",
+                logger.info("[StressP2P@{}]   -> first activation, deferring registration to next tick (isOutput={})",
                     blockEntity.blockPos, isOutput)
-                registerKineticBridge()
-                // CRITICAL: Only the INPUT tunnel schedules kinetic propagation.
-                // All tunnel parts (input + each output) receive onMainNodeStateChanged
-                // in the same tick, and each would schedule its own propagation.
-                // The first propagation (from input) works correctly: it tears down
-                // output-side NBT state and propagates from input. But subsequent
-                // propagations (from output parts) find those outputs already rebuilt
-                // with speed/source, tear them down AGAIN, and corrupt stress accounting.
-                // Output tunnels just need to register their edge — the input tunnel's
-                // deferred propagation (1 tick later) covers all registered endpoints.
-                if (!this.isOutput) {
-                    scheduleKineticPropagation()
-                }
+                scheduleDeferredInitialRegistration()
             }
             // During boot, ignore ALL state changes until isActive becomes true
             return
@@ -310,6 +310,34 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
     }
 
     /**
+     * Schedule deferred initial registration + propagation for after world load.
+     * Called from onMainNodeStateChanged when isActive first becomes true.
+     *
+     * Uses the scheduleForNextTick bounce pattern to guarantee execution in an
+     * actual future server tick, not the current tick via haveTime(). This ensures
+     * all Create block entities have completed their first-tick attachKinetics()
+     * and formed stable local kinetic networks before we inject virtual edges.
+     */
+    private fun scheduleDeferredInitialRegistration() {
+        val level = blockEntity.level as? ServerLevel ?: return
+        val server = level.server
+        val scheduledAtTick = server.tickCount
+        val isInput = !this.isOutput
+        logger.info("[StressP2P@{}] scheduleDeferredInitialRegistration (isInput={}, scheduledAt=tick{})",
+            blockEntity.blockPos, isInput, scheduledAtTick)
+        scheduleForNextTick(server, scheduledAtTick) {
+            if (blockEntity.isRemoved) return@scheduleForNextTick
+            logger.info("[StressP2P@{}] deferred initial registration executing (tick={})",
+                blockEntity.blockPos, server.tickCount)
+            registerKineticBridge()
+            // Only the input tunnel schedules propagation after registration
+            if (isInput) {
+                scheduleKineticPropagation()
+            }
+        }
+    }
+
+    /**
      * Schedule kinetic propagation for the next server tick.
      * Called after first-time bridge registration (when AE2 grid comes online).
      *
@@ -321,20 +349,23 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
      * Fix: tear down output-side kinetic state first (handleRemoved + removeSource),
      * then propagate from input side only. Create's BFS flows through virtual edges
      * to the now-clean output blocks and integrates them correctly.
+     *
+     * Uses the scheduleForNextTick bounce pattern to guarantee actual tick advancement.
      */
     private fun scheduleKineticPropagation() {
         val level = blockEntity.level as? ServerLevel ?: return
         val server = level.server
         val inputPos = registeredInputPos ?: return
         val isInitialLoad = !didInitialReconcile
-        logger.info("[StressP2P@{}] scheduleKineticPropagation for next tick (inputTunnel={}, isInitialLoad={})",
-            blockEntity.blockPos, inputPos, isInitialLoad)
-        server.tell(TickTask(server.tickCount + 1) {
-            if (blockEntity.isRemoved) return@TickTask
-            if (registeredInputPos != inputPos) return@TickTask // changed since scheduled
+        val scheduledAtTick = server.tickCount
+        logger.info("[StressP2P@{}] scheduleKineticPropagation (inputTunnel={}, isInitialLoad={}, scheduledAt=tick{})",
+            blockEntity.blockPos, inputPos, isInitialLoad, scheduledAtTick)
+        scheduleForNextTick(server, scheduledAtTick) {
+            if (blockEntity.isRemoved) return@scheduleForNextTick
+            if (registeredInputPos != inputPos) return@scheduleForNextTick // changed since scheduled
             val endpoints = KineticBridgeRegistry.getEndpoints(inputPos)
-            logger.info("[StressP2P@{}] propagation tick: {} endpoints for tunnel {}",
-                blockEntity.blockPos, endpoints.size, inputPos)
+            logger.info("[StressP2P@{}] propagation tick: {} endpoints for tunnel {} (tick={})",
+                blockEntity.blockPos, endpoints.size, inputPos, server.tickCount)
 
             if (isInitialLoad) {
                 didInitialReconcile = true
@@ -410,18 +441,13 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
                     RotationPropagator.handleAdded(level, endpointPos, be)
                 }
             }
-        })
+        }
     }
 
     /**
      * Schedule a tick-deferred retry for bridge registration.
      * This handles the case where output tunnels are added to world before
      * the ME grid is fully online (findInputTunnelPos returns null).
-     *
-     * NOTE: MinecraftServer.shouldRun() may execute TickTask(tickCount+1) immediately
-     * when haveTime() is true (common during world load), so we record the tick at
-     * scheduling time and keep re-enqueuing inside the callback until the server tick
-     * has actually advanced before doing real work.
      */
     private fun scheduleRetry() {
         if (retryAttemptsRemaining <= 0) {
@@ -434,22 +460,28 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         val scheduledAtTick = server.tickCount
         logger.info("[StressP2P@{}] scheduleRetry ({} attempts left, scheduledAt=tick{})",
             blockEntity.blockPos, attemptsLeft, scheduledAtTick)
-        scheduleForNextTick(server, scheduledAtTick, attemptsLeft)
+        scheduleForNextTick(server, scheduledAtTick) {
+            doRetryAttempt(attemptsLeft)
+        }
     }
 
     /**
      * Enqueue a TickTask that keeps bouncing until the server tick actually advances
-     * past [scheduledAtTick], preventing all retries from collapsing into one tick
+     * past [scheduledAtTick], preventing callbacks from executing in the same tick
      * when the server has spare time (haveTime() == true).
+     *
+     * MinecraftServer.shouldRun() returns true for TickTask(tickCount+1) when
+     * haveTime() is true, which is common during world load. This bounce pattern
+     * guarantees the callback runs in a genuinely different server tick.
      */
-    private fun scheduleForNextTick(server: net.minecraft.server.MinecraftServer, scheduledAtTick: Int, attemptsLeft: Int) {
+    private fun scheduleForNextTick(server: net.minecraft.server.MinecraftServer, scheduledAtTick: Int, callback: () -> Unit) {
         server.tell(TickTask(scheduledAtTick + 1) {
             if (server.tickCount <= scheduledAtTick) {
                 // Still the same tick — re-enqueue
-                scheduleForNextTick(server, scheduledAtTick, attemptsLeft)
+                scheduleForNextTick(server, scheduledAtTick, callback)
                 return@TickTask
             }
-            doRetryAttempt(attemptsLeft)
+            callback()
         })
     }
 
