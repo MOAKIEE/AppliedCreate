@@ -83,6 +83,28 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         didInitialReconcile = false
         logger.info("[StressP2P@{}] >>> addToWorld (isOutput={})",
             blockEntity.blockPos, isOutput)
+
+        // CRITICAL FIX: For output tunnels, immediately clear the adjacent kinetic block's
+        // NBT-restored network state. During the previous session, this block was part of the
+        // merged P2P network. Its NBT still has that network ID. When initialize() runs on the
+        // first tick, hasNetwork() would return true → addSilently() re-joins the old merged
+        // network → stress from ALL output groups counted in one network → overload.
+        //
+        // addToWorld() fires BEFORE the first tick (before initialize()), so clearing here
+        // ensures initialize() sees hasNetwork()=false and skips addSilently(). Our deferred
+        // Phase 2 propagation will correctly set up the block later from the input side.
+        if (isOutput) {
+            val level = blockEntity.level
+            if (level != null && !level.isClientSide) {
+                val kineticPos = blockEntity.blockPos.relative(this.side)
+                val be = level.getBlockEntity(kineticPos) as? KineticBlockEntity
+                if (be != null) {
+                    logger.info("[StressP2P@{}]   clearing output kinetic NBT state at {} (network={}, speed={})",
+                        blockEntity.blockPos, kineticPos, be.hasNetwork(), be.getSpeed())
+                    be.clearKineticInformation()
+                }
+            }
+        }
         // Do NOT register virtual edges here — Create's first-tick attachKinetics()
         // would traverse them and corrupt stress accounting. Registration is deferred
         // until the AE2 grid comes online (isActive=true in onMainNodeStateChanged).
