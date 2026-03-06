@@ -108,11 +108,21 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
                 // By this point Create's first-tick attachKinetics() has already run
                 // and kinetic networks are stable. Safe to register virtual edges now.
                 initialLoadComplete = true
-                logger.info("[StressP2P@{}]   -> first activation, registering bridge + scheduling propagation",
-                    blockEntity.blockPos)
+                logger.info("[StressP2P@{}]   -> first activation, registering bridge (isOutput={})",
+                    blockEntity.blockPos, isOutput)
                 registerKineticBridge()
-                // Schedule propagation for next tick to let all tunnels register first
-                scheduleKineticPropagation()
+                // CRITICAL: Only the INPUT tunnel schedules kinetic propagation.
+                // All tunnel parts (input + each output) receive onMainNodeStateChanged
+                // in the same tick, and each would schedule its own propagation.
+                // The first propagation (from input) works correctly: it tears down
+                // output-side NBT state and propagates from input. But subsequent
+                // propagations (from output parts) find those outputs already rebuilt
+                // with speed/source, tear them down AGAIN, and corrupt stress accounting.
+                // Output tunnels just need to register their edge — the input tunnel's
+                // deferred propagation (1 tick later) covers all registered endpoints.
+                if (!this.isOutput) {
+                    scheduleKineticPropagation()
+                }
             }
             // During boot, ignore ALL state changes until isActive becomes true
             return
