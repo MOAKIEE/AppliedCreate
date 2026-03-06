@@ -27,8 +27,6 @@ public abstract class KineticBlockEntityDebugMixin {
     @Shadow
     protected boolean overStressed;
 
-    @Shadow
-    public abstract BlockPos getBlockPos();
 
     @Shadow
     public abstract float getTheoreticalSpeed();
@@ -48,10 +46,11 @@ public abstract class KineticBlockEntityDebugMixin {
             at = @At("HEAD")
     )
     private void appliedcreate$debugUpdateFromNetwork(float maxStress, float currentStress, int networkSize, CallbackInfo ci) {
+        KineticBlockEntity self = (KineticBlockEntity)(Object)this;
         boolean wouldBeOverStressed = maxStress < currentStress;
         if (wouldBeOverStressed && !this.overStressed) {
             // This is the transition point: block is about to become overStressed
-            BlockPos pos = getBlockPos();
+            BlockPos pos = self.getBlockPos();
             LOGGER.error("[OVERSTRESS TRANSITION] Block at {} will become overStressed! " +
                             "maxStress={}, currentStress={}, networkSize={}, " +
                             "currentSpeed={}, hasSource={}, hasNetwork={}",
@@ -62,7 +61,7 @@ public abstract class KineticBlockEntityDebugMixin {
         }
         // Also log when stress state changes in general (non-transition cases)
         if (wouldBeOverStressed) {
-            BlockPos pos = getBlockPos();
+            BlockPos pos = self.getBlockPos();
             LOGGER.warn("[STRESS UPDATE] Block at {} updateFromNetwork: maxStress={}, currentStress={}, networkSize={}, " +
                             "alreadyOverStressed={}, speed={}",
                     pos, maxStress, currentStress, networkSize, this.overStressed, getTheoreticalSpeed());
@@ -81,7 +80,7 @@ public abstract class KineticBlockEntityDebugMixin {
         KineticBlockEntity self = (KineticBlockEntity)(Object)this;
         Level level = self.getLevel();
         if (level != null && !level.isClientSide) {
-            BlockPos pos = getBlockPos();
+            BlockPos pos = self.getBlockPos();
             LOGGER.info("[ATTACH KINETICS] Block at {} type={}, speed={}, hasSource={}, hasNetwork={}, overStressed={}",
                     pos, self.getBlockState().getBlock().getClass().getSimpleName(),
                     getTheoreticalSpeed(), hasSource(), hasNetwork(), this.overStressed);
@@ -101,7 +100,7 @@ public abstract class KineticBlockEntityDebugMixin {
         KineticBlockEntity self = (KineticBlockEntity)(Object)this;
         Level level = self.getLevel();
         if (level != null && !level.isClientSide) {
-            BlockPos pos = getBlockPos();
+            BlockPos pos = self.getBlockPos();
             LOGGER.info("[DETACH KINETICS] Block at {} type={}, speed={}, hasSource={}, hasNetwork={}, overStressed={}",
                     pos, self.getBlockState().getBlock().getClass().getSimpleName(),
                     getTheoreticalSpeed(), hasSource(), hasNetwork(), this.overStressed);
