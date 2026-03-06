@@ -4,6 +4,7 @@
   "package": "com.loliball.appliedcreate.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "KineticBlockEntityDebugMixin",
     "RotationPropagatorMixin"
   ],
   "injectors": {
