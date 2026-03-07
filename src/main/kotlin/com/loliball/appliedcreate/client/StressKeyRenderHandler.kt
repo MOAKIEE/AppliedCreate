@@ -11,7 +11,7 @@ import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.renderer.MultiBufferSource
 import net.minecraft.client.renderer.RenderType
 import net.minecraft.client.renderer.texture.OverlayTexture
-import net.minecraft.client.renderer.texture.TextureAtlas
+import net.minecraft.world.inventory.InventoryMenu
 import net.minecraft.network.chat.Component
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.level.Level
@@ -29,7 +29,7 @@ object StressKeyRenderHandler : AEKeyRenderHandler<StressKey> {
     }
 
     override fun drawInGui(minecraft: Minecraft, guiGraphics: GuiGraphics, x: Int, y: Int, stack: StressKey) {
-        val sprite = minecraft.getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(STRESS_ICON)
+        val sprite = minecraft.getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(STRESS_ICON)
         guiGraphics.blit(x, y, 0, 16, 16, sprite)
     }
 
@@ -42,7 +42,7 @@ object StressKeyRenderHandler : AEKeyRenderHandler<StressKey> {
         level: Level
     ) {
         val sprite = Minecraft.getInstance()
-            .getTextureAtlas(TextureAtlas.LOCATION_BLOCKS)
+            .getTextureAtlas(InventoryMenu.BLOCK_ATLAS)
             .apply(STRESS_ICON)
 
         val color = 0xFFDCAA50.toInt() // warm amber tint

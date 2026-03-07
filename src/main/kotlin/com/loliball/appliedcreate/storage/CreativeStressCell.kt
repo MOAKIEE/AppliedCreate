@@ -41,6 +41,10 @@ class CreativeStressCell(properties: Properties) : Item(properties.stacksTo(1)) 
 
         override fun getIdleDrain(): Double = 0.0
 
+        override fun getDescription(): Component {
+            return Component.translatable("item.appliedcreate.creative_stress_cell")
+        }
+
         override fun persist() {
             // Nothing to persist — infinite cell has no mutable state
         }

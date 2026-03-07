@@ -311,7 +311,7 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
 
         if (be.missingItem != null) {
             stringWidth += 16
-            net.createmod.catnip.gui.element.GuiGameElement.of(be.missingItem)
+            net.createmod.catnip.gui.element.GuiGameElement.of(be.missingItem!!)
                 .at<net.createmod.catnip.gui.element.GuiGameElement.GuiRenderBuilder>((x + 128).toFloat(), (y + 49).toFloat(), 100f)
                 .scale(1.0)
                 .render(graphics)

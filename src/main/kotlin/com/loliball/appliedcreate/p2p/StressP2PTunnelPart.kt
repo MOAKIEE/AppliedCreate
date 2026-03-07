@@ -401,7 +401,7 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
                 // Phase 2: Propagate from input-side endpoint only.
                 // Create's BFS will traverse virtual edges to reach the now-clean output blocks.
                 if (inputEndpointBE != null && inputEndpointPos != null) {
-                    RotationPropagator.handleAdded(level, inputEndpointPos!!, inputEndpointBE!!)
+                    RotationPropagator.handleAdded(level, inputEndpointPos, inputEndpointBE)
 
                     // Phase 3: Zero stale unloaded counters on all affected KineticNetworks.
                     // ROOT CAUSE FIX: KineticNetwork.remove() does NOT adjust unloadedStress/

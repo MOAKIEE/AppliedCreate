@@ -296,7 +296,7 @@ class SpatialAssemblerBlockEntity(type: BlockEntityType<*>, pos: BlockPos, state
     }
 
     // ── Menu Provider ──
-    fun sendToMenu(buffer: RegistryFriendlyByteBuf) {
+    override fun sendToMenu(buffer: RegistryFriendlyByteBuf) {
         buffer.writeBlockPos(blockPos)
         buffer.writeNbt(getUpdateTag(buffer.registryAccess()))
     }

@@ -49,7 +49,7 @@ class MEBlueprintCannonMenu : MenuBase<MEBlueprintCannonBlockEntity> {
         val pos = extraData.readBlockPos()
         val be = level.getBlockEntity(pos)
         if (be is MEBlueprintCannonBlockEntity) {
-            be.readClient(extraData.readNbt(), extraData.registryAccess())
+            be.readClient(extraData.readNbt() ?: return null, extraData.registryAccess())
             return be
         }
         return null
