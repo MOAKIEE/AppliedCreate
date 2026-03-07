@@ -11,19 +11,20 @@ import com.loliball.appliedcreate.energy.KineticEnergyAcceptorBlock
 import com.loliball.appliedcreate.energy.KineticEnergyAcceptorBlockEntity
 import com.loliball.appliedcreate.energy.MEGearboxBlock
 import com.loliball.appliedcreate.energy.MEGearboxBlockEntity
-import com.loliball.appliedcreate.block.BlockFumo
+import com.loliball.appliedcreate.misc.BlockFumo
 import net.minecraft.world.level.block.state.BlockBehaviour
-import com.loliball.appliedcreate.block.AndesitePatternProviderBlock
-import com.loliball.appliedcreate.block.BrassPatternProviderBlock
-import com.loliball.appliedcreate.block.entity.AndesitePatternProviderBlockEntity
-import com.loliball.appliedcreate.block.entity.BrassPatternProviderBlockEntity
+import com.loliball.appliedcreate.patternprovider.AndesitePatternProviderBlock
+import com.loliball.appliedcreate.patternprovider.BrassPatternProviderBlock
+import com.loliball.appliedcreate.patternprovider.AndesitePatternProviderBlockEntity
+import com.loliball.appliedcreate.patternprovider.BrassPatternProviderBlockEntity
 
-import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
-import com.loliball.appliedcreate.item.BrassPatternProviderUpgradeItem
-import com.loliball.appliedcreate.item.MechanicalCraftingPartItem
-import com.loliball.appliedcreate.item.StressP2PPartItem
-import com.loliball.appliedcreate.part.AndesitePatternProviderPart
-import com.loliball.appliedcreate.part.BrassPatternProviderPart
+import com.loliball.appliedcreate.patternprovider.AndesitePatternProviderMenu
+import com.loliball.appliedcreate.patternprovider.BrassPatternProviderMenu
+import com.loliball.appliedcreate.patternprovider.BrassPatternProviderUpgradeItem
+import com.loliball.appliedcreate.patternprovider.MechanicalCraftingPartItem
+import com.loliball.appliedcreate.p2p.StressP2PPartItem
+import com.loliball.appliedcreate.patternprovider.AndesitePatternProviderPart
+import com.loliball.appliedcreate.patternprovider.BrassPatternProviderPart
 import com.loliball.appliedcreate.p2p.StressP2PTunnelPart
 import com.loliball.appliedcreate.p2p.KineticBridgeRegistry
 import com.loliball.appliedcreate.storage.StressKeyType
@@ -36,6 +37,10 @@ import appeng.api.stacks.AEKeyTypes
 import appeng.blockentity.AEBaseBlockEntity
 import appeng.helpers.patternprovider.PatternProviderLogicHost
 import appeng.core.definitions.AEItems
+import appeng.menu.AEBaseMenu
+import appeng.api.parts.PartModels
+import appeng.api.upgrades.Upgrades
+import appeng.integration.modules.igtooltip.TooltipProviders
 import appeng.menu.MenuOpener
 import appeng.menu.locator.MenuHostLocator
 import appeng.menu.locator.MenuLocators
@@ -59,6 +64,11 @@ import net.neoforged.neoforge.registries.DeferredRegister
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent
 import net.neoforged.neoforge.common.NeoForge
+import net.neoforged.neoforge.common.extensions.IMenuTypeExtension
+import net.neoforged.neoforge.registries.RegisterEvent
+import net.minecraft.world.entity.player.Inventory
+import com.simibubi.create.api.stress.BlockStressValues
+import appeng.api.stacks.AEKeyType
 import net.neoforged.neoforge.event.server.ServerStoppingEvent
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
@@ -120,6 +130,13 @@ class AppliedCreate {
                 }
             }
 
+        val ANDESITE_PATTERN_PROVIDER_MENU: DeferredHolder<MenuType<*>, MenuType<AndesitePatternProviderMenu>> =
+            MENU_TYPES.register("andesite_pattern_provider") { ->
+                createPatternProviderMenuType { menuType, windowId, inv, host ->
+                    AndesitePatternProviderMenu(menuType, windowId, inv, host)
+                }
+            }
+
         // ── Items ──
         val BRASS_PATTERN_PROVIDER_UPGRADE_ITEM: DeferredHolder<Item, Item> = ITEMS.register("brass_pattern_provider_upgrade") { ->
             BrassPatternProviderUpgradeItem()
@@ -167,7 +184,7 @@ class AppliedCreate {
 
         val ME_BLUEPRINT_CANNON_MENU: DeferredHolder<MenuType<*>, MenuType<MEBlueprintCannonMenu>> =
             MENU_TYPES.register("me_blueprint_cannon") { ->
-                net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create { windowId, inv, buf ->
+                IMenuTypeExtension.create { windowId, inv, buf ->
                     // Correctly handle the late initialization of MENU_TYPES
                     MEBlueprintCannonMenu(MENU_TYPES.getEntries().find { it.key!!.location().path == "me_blueprint_cannon" }!!.get() as MenuType<*>, windowId, inv, buf)
                 }
@@ -272,7 +289,7 @@ class AppliedCreate {
 
         val SPATIAL_ASSEMBLER_MENU: DeferredHolder<MenuType<*>, MenuType<SpatialAssemblerMenu>> =
             MENU_TYPES.register("spatial_assembler") { ->
-                net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create { windowId, inv, buf ->
+                IMenuTypeExtension.create { windowId, inv, buf ->
                     SpatialAssemblerMenu(MENU_TYPES.getEntries().find { it.key!!.location().path == "spatial_assembler" }!!.get() as MenuType<*>, windowId, inv, buf)
                 }
             }
@@ -383,11 +400,11 @@ class AppliedCreate {
         }
 
         @Suppress("UNCHECKED_CAST")
-        private fun <T : appeng.menu.AEBaseMenu> createPatternProviderMenuType(
-            factory: (MenuType<T>, Int, net.minecraft.world.entity.player.Inventory, PatternProviderLogicHost) -> T
+        private fun <T : AEBaseMenu> createPatternProviderMenuType(
+            factory: (MenuType<T>, Int, Inventory, PatternProviderLogicHost) -> T
         ): MenuType<T> {
             var menuTypeHolder: MenuType<T>? = null
-            val menuType = net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create { windowId, inv, buf ->
+            val menuType = IMenuTypeExtension.create { windowId, inv, buf ->
                 val locator = MenuLocators.readFromPacket(buf)
                 val host = locator.locate(inv.player, PatternProviderLogicHost::class.java)
                     ?: throw IllegalStateException("Could not find PatternProviderLogicHost")
@@ -400,9 +417,9 @@ class AppliedCreate {
             return menuType
         }
 
-        private fun <T : appeng.menu.AEBaseMenu> registerPatternProviderOpener(
+        private fun <T : AEBaseMenu> registerPatternProviderOpener(
             menuType: MenuType<T>,
-            menuFactory: (Int, net.minecraft.world.entity.player.Inventory, PatternProviderLogicHost) -> T
+            menuFactory: (Int, Inventory, PatternProviderLogicHost) -> T
         ) {
             MenuOpener.addOpener(menuType) { player: Player, locator: MenuHostLocator, fromSubMenu: Boolean ->
                 if (player !is ServerPlayer) return@addOpener false
@@ -429,10 +446,10 @@ class AppliedCreate {
         BLOCK_ENTITY_TYPES.register(bus)
         MENU_TYPES.register(bus)
         CREATIVE_TABS.register(bus)
-        bus.addListener { event: net.neoforged.neoforge.registries.RegisterEvent ->
+        bus.addListener { event: RegisterEvent ->
             // Register after AE2 creates its keytypes registry (NewRegistryEvent)
             // but before registries freeze
-            event.register(appeng.api.stacks.AEKeyType.REGISTRY_KEY) {
+            event.register(AEKeyType.REGISTRY_KEY) {
                 AEKeyTypes.register(StressKeyType.TYPE)
             }
         }
@@ -447,34 +464,34 @@ class AppliedCreate {
 
         // Register part models manually since Kotlin companion object @PartModels annotations
         // are not discoverable by AE2's Java reflection-based PartModelsHelper scanner
-        appeng.api.parts.PartModels.registerModels(
+        PartModels.registerModels(
             AndesitePatternProviderPart.ANDESITE_MODEL_BASE
         )
-        appeng.api.parts.PartModels.registerModels(
+        PartModels.registerModels(
             *AndesitePatternProviderPart.ANDESITE_MODELS_OFF.models.toTypedArray()
         )
-        appeng.api.parts.PartModels.registerModels(
+        PartModels.registerModels(
             *AndesitePatternProviderPart.ANDESITE_MODELS_ON.models.toTypedArray()
         )
-        appeng.api.parts.PartModels.registerModels(
+        PartModels.registerModels(
             *AndesitePatternProviderPart.ANDESITE_MODELS_HAS_CHANNEL.models.toTypedArray()
         )
-        appeng.api.parts.PartModels.registerModels(
+        PartModels.registerModels(
             BrassPatternProviderPart.BRASS_MODEL_BASE
         )
-        appeng.api.parts.PartModels.registerModels(
+        PartModels.registerModels(
             *BrassPatternProviderPart.BRASS_MODELS_OFF.models.toTypedArray()
         )
-        appeng.api.parts.PartModels.registerModels(
+        PartModels.registerModels(
             *BrassPatternProviderPart.BRASS_MODELS_ON.models.toTypedArray()
         )
-        appeng.api.parts.PartModels.registerModels(
+        PartModels.registerModels(
             *BrassPatternProviderPart.BRASS_MODELS_HAS_CHANNEL.models.toTypedArray()
         )
 
         // Register Stress P2P Tunnel part models
         for (model in StressP2PTunnelPart.getModels()) {
-            appeng.api.parts.PartModels.registerModels(*model.models.toTypedArray())
+            PartModels.registerModels(*model.models.toTypedArray())
         }
 
         bus.addListener(::onCommonSetup)
@@ -528,7 +545,7 @@ class AppliedCreate {
         // Reload AE2's igtooltip ServiceLoader to ensure our AppliedCreateTooltipProvider
         // is discovered (NeoForge module layers may cache ServiceLoader before our mod loads)
         try {
-            appeng.integration.modules.igtooltip.TooltipProviders.LOADER.reload()
+            TooltipProviders.LOADER.reload()
             LOGGER.debug("Reloaded AE2 igtooltip ServiceLoader")
         } catch (e: Exception) {
             LOGGER.warn("Failed to reload AE2 igtooltip ServiceLoader: {}", e.message)
@@ -545,24 +562,31 @@ class AppliedCreate {
                 )
             }
 
+            registerPatternProviderOpener(ANDESITE_PATTERN_PROVIDER_MENU.get()) { wnd, inv, host ->
+                AndesitePatternProviderMenu(
+                    ANDESITE_PATTERN_PROVIDER_MENU.get(),
+                    wnd, inv, host
+                )
+            }
+
             // Register stress value for kinetic energy acceptor
-            com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
+            BlockStressValues.IMPACTS.register(
                 KINETIC_ENERGY_ACCEPTOR_BLOCK.get(), { KineticEnergyAcceptorBlockEntity.MAX_STRESS_SU / 256.0 }
             )
 
             // Register stress values for ME Gearbox
             // Import mode: stress impact (consumes kinetic energy)
-            com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
+            BlockStressValues.IMPACTS.register(
                 ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.BASE_STRESS_IMPACT_PER_RPM.toDouble() }
             )
             // Export mode: stress capacity (generates kinetic energy)
-            com.simibubi.create.api.stress.BlockStressValues.CAPACITIES.register(
+            BlockStressValues.CAPACITIES.register(
                 ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.BASE_STRESS_CAPACITY_PER_RPM.toDouble() }
             )
 
             // Register upgrade cards for ME Blueprint Cannon
-            appeng.api.upgrades.Upgrades.add(AEItems.SPEED_CARD, ME_BLUEPRINT_CANNON_ITEM.get(), 4)
-            appeng.api.upgrades.Upgrades.add(AEItems.CRAFTING_CARD, ME_BLUEPRINT_CANNON_ITEM.get(), 1)
+            Upgrades.add(AEItems.SPEED_CARD, ME_BLUEPRINT_CANNON_ITEM.get(), 4)
+            Upgrades.add(AEItems.CRAFTING_CARD, ME_BLUEPRINT_CANNON_ITEM.get(), 1)
 
             // Register creative stress cell handler
             StorageCells.addCellHandler(CreativeStressCell.Handler)

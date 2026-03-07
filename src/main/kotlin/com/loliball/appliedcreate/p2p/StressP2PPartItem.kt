@@ -1,4 +1,4 @@
-package com.loliball.appliedcreate.item
+package com.loliball.appliedcreate.p2p
 
 import appeng.items.parts.PartItem
 import com.loliball.appliedcreate.p2p.StressP2PTunnelPart

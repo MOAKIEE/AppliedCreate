@@ -9,6 +9,7 @@ import com.simibubi.create.foundation.gui.widget.Indicator
 import com.simibubi.create.foundation.item.TooltipHelper
 import com.simibubi.create.foundation.utility.CreateLang
 import net.createmod.catnip.lang.FontHelper
+import net.createmod.catnip.gui.element.GuiGameElement
 import net.minecraft.ChatFormatting
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.components.AbstractWidget
@@ -311,8 +312,8 @@ class MEBlueprintCannonScreen(menu: MEBlueprintCannonMenu, inventory: Inventory,
 
         if (be.missingItem != null) {
             stringWidth += 16
-            net.createmod.catnip.gui.element.GuiGameElement.of(be.missingItem!!)
-                .at<net.createmod.catnip.gui.element.GuiGameElement.GuiRenderBuilder>((x + 128).toFloat(), (y + 49).toFloat(), 100f)
+            GuiGameElement.of(be.missingItem!!)
+                .at<GuiGameElement.GuiRenderBuilder>((x + 128).toFloat(), (y + 49).toFloat(), 100f)
                 .scale(1.0)
                 .render(graphics)
         }

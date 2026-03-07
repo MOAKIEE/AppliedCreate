@@ -1,4 +1,4 @@
-package com.loliball.appliedcreate.client
+package com.loliball.appliedcreate.storage
 
 import appeng.api.client.AEKeyRenderHandler
 import appeng.api.client.AEKeyRendering

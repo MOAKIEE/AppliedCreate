@@ -1,11 +1,11 @@
-package com.loliball.appliedcreate.item
+package com.loliball.appliedcreate.patternprovider
 
 import com.loliball.appliedcreate.AppliedCreate
-import com.loliball.appliedcreate.block.AndesitePatternProviderBlock
-import com.loliball.appliedcreate.block.entity.AndesitePatternProviderBlockEntity
-import com.loliball.appliedcreate.block.entity.BrassPatternProviderBlockEntity
-import com.loliball.appliedcreate.part.AndesitePatternProviderPart
-import com.loliball.appliedcreate.part.BrassPatternProviderPart
+import com.loliball.appliedcreate.patternprovider.AndesitePatternProviderBlock
+import com.loliball.appliedcreate.patternprovider.AndesitePatternProviderBlockEntity
+import com.loliball.appliedcreate.patternprovider.BrassPatternProviderBlockEntity
+import com.loliball.appliedcreate.patternprovider.AndesitePatternProviderPart
+import com.loliball.appliedcreate.patternprovider.BrassPatternProviderPart
 import appeng.api.parts.IPartHost
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.sounds.SoundEvents

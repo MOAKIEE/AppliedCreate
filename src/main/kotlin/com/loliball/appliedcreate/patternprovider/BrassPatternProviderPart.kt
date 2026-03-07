@@ -1,4 +1,4 @@
-package com.loliball.appliedcreate.part
+package com.loliball.appliedcreate.patternprovider
 
 import appeng.api.parts.IPartItem
 import appeng.api.parts.IPartModel
@@ -12,7 +12,7 @@ import appeng.menu.locator.MenuHostLocator
 import appeng.parts.PartModel
 import appeng.parts.crafting.PatternProviderPart
 import com.loliball.appliedcreate.AppliedCreate
-import com.loliball.appliedcreate.logic.MechanicalCraftingPatternLogic
+import com.loliball.appliedcreate.patternprovider.MechanicalCraftingPatternLogic
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack

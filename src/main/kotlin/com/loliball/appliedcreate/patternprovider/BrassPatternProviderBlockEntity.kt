@@ -1,4 +1,4 @@
-package com.loliball.appliedcreate.block.entity
+package com.loliball.appliedcreate.patternprovider
 
 import appeng.api.networking.IGridNodeListener
 import appeng.api.orientation.BlockOrientation
@@ -12,7 +12,8 @@ import appeng.menu.ISubMenu
 import appeng.menu.MenuOpener
 import appeng.menu.locator.MenuHostLocator
 import com.loliball.appliedcreate.AppliedCreate
-import com.loliball.appliedcreate.logic.MechanicalCraftingPatternLogic
+import com.loliball.appliedcreate.patternprovider.AndesitePatternProviderBlock
+import com.loliball.appliedcreate.patternprovider.MechanicalCraftingPatternLogic
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.core.HolderLookup
@@ -112,7 +113,7 @@ class BrassPatternProviderBlockEntity(pos: BlockPos, state: BlockState) :
     }
 
     private fun getPushDirection(): PushDirection {
-        return blockState.getValue(com.loliball.appliedcreate.block.AndesitePatternProviderBlock.PUSH_DIRECTION)
+        return blockState.getValue(AndesitePatternProviderBlock.PUSH_DIRECTION)
     }
 
     companion object {

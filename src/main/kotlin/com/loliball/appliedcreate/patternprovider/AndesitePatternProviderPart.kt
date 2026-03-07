@@ -1,4 +1,4 @@
-package com.loliball.appliedcreate.part
+package com.loliball.appliedcreate.patternprovider
 
 import appeng.api.parts.IPartItem
 import appeng.api.parts.IPartModel
@@ -12,7 +12,7 @@ import appeng.menu.locator.MenuHostLocator
 import appeng.parts.PartModel
 import appeng.parts.crafting.PatternProviderPart
 import com.loliball.appliedcreate.AppliedCreate
-import com.loliball.appliedcreate.logic.MechanicalCraftingPatternLogic
+import com.loliball.appliedcreate.patternprovider.MechanicalCraftingPatternLogic
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
@@ -24,10 +24,10 @@ class AndesitePatternProviderPart(partItem: IPartItem<*>) : PatternProviderPart(
     }
 
     override fun openMenu(player: Player, locator: MenuHostLocator) {
-        MenuOpener.open(appeng.menu.implementations.PatternProviderMenu.TYPE, player, locator)
+        MenuOpener.open(AppliedCreate.ANDESITE_PATTERN_PROVIDER_MENU.get(), player, locator)
     }
     override fun returnToMainMenu(player: Player, subMenu: ISubMenu) {
-        MenuOpener.returnTo(appeng.menu.implementations.PatternProviderMenu.TYPE, player, subMenu.getLocator())
+        MenuOpener.returnTo(AppliedCreate.ANDESITE_PATTERN_PROVIDER_MENU.get(), player, subMenu.getLocator())
     }
 
     override fun getTerminalIcon(): AEItemKey {

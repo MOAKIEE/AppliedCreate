@@ -1,4 +1,4 @@
-package com.loliball.appliedcreate.item
+package com.loliball.appliedcreate.patternprovider
 
 import appeng.api.parts.IPart
 import appeng.api.parts.IPartItem

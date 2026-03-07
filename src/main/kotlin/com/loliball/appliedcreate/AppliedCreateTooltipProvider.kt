@@ -10,10 +10,10 @@ import appeng.api.integrations.igtooltip.providers.BodyProvider
 import appeng.api.integrations.igtooltip.providers.ServerDataProvider
 import appeng.integration.modules.igtooltip.blocks.GridNodeStateDataProvider
 import appeng.integration.modules.igtooltip.blocks.PowerStorageDataProvider
-import com.loliball.appliedcreate.block.AndesitePatternProviderBlock
-import com.loliball.appliedcreate.block.BrassPatternProviderBlock
-import com.loliball.appliedcreate.block.entity.AndesitePatternProviderBlockEntity
-import com.loliball.appliedcreate.block.entity.BrassPatternProviderBlockEntity
+import com.loliball.appliedcreate.patternprovider.AndesitePatternProviderBlock
+import com.loliball.appliedcreate.patternprovider.BrassPatternProviderBlock
+import com.loliball.appliedcreate.patternprovider.AndesitePatternProviderBlockEntity
+import com.loliball.appliedcreate.patternprovider.BrassPatternProviderBlockEntity
 import net.minecraft.resources.ResourceLocation
 import com.loliball.appliedcreate.energy.KineticEnergyAcceptorBlock
 import com.loliball.appliedcreate.energy.KineticEnergyAcceptorBlockEntity

@@ -1,4 +1,4 @@
-package com.loliball.appliedcreate.gui
+package com.loliball.appliedcreate.patternprovider
 
 import appeng.helpers.patternprovider.PatternProviderLogicHost
 import appeng.menu.implementations.PatternProviderMenu

@@ -1,6 +1,6 @@
-package com.loliball.appliedcreate.block
+package com.loliball.appliedcreate.patternprovider
 
-import com.loliball.appliedcreate.block.entity.AndesitePatternProviderBlockEntity
+import com.loliball.appliedcreate.patternprovider.AndesitePatternProviderBlockEntity
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.world.InteractionHand
@@ -8,6 +8,7 @@ import net.minecraft.world.InteractionResult
 import net.minecraft.world.ItemInteractionResult
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
+import net.minecraft.world.Containers
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.EntityBlock
@@ -100,9 +101,9 @@ class AndesitePatternProviderBlock : Block(
         if (!state.`is`(newState.block)) {
             val blockEntity = level.getBlockEntity(pos)
             if (blockEntity is AndesitePatternProviderBlockEntity) {
-                val drops = mutableListOf<net.minecraft.world.item.ItemStack>()
+                val drops = mutableListOf<ItemStack>()
                 blockEntity.addAdditionalDrops(level, pos, drops)
-                drops.forEach { net.minecraft.world.Containers.dropItemStack(level, pos.x.toDouble(), pos.y.toDouble(), pos.z.toDouble(), it) }
+                drops.forEach { Containers.dropItemStack(level, pos.x.toDouble(), pos.y.toDouble(), pos.z.toDouble(), it) }
             }
             super.onRemove(state, level, pos, newState, moving)
         }

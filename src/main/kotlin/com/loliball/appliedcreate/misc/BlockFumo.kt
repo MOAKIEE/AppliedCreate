@@ -1,4 +1,4 @@
-package com.loliball.appliedcreate.block
+package com.loliball.appliedcreate.misc
 
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction

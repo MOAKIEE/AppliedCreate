@@ -1,4 +1,4 @@
-package com.loliball.appliedcreate.block.entity
+package com.loliball.appliedcreate.patternprovider
 
 import appeng.api.networking.IGridNodeListener
 import appeng.api.orientation.BlockOrientation
@@ -12,7 +12,8 @@ import appeng.menu.ISubMenu
 import appeng.menu.MenuOpener
 import appeng.menu.locator.MenuHostLocator
 import com.loliball.appliedcreate.AppliedCreate
-import com.loliball.appliedcreate.logic.MechanicalCraftingPatternLogic
+import com.loliball.appliedcreate.patternprovider.AndesitePatternProviderBlock
+import com.loliball.appliedcreate.patternprovider.MechanicalCraftingPatternLogic
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.core.HolderLookup
@@ -99,10 +100,10 @@ class AndesitePatternProviderBlockEntity(pos: BlockPos, state: BlockState) :
     }
 
     override fun openMenu(player: Player, locator: MenuHostLocator) {
-        MenuOpener.open(appeng.menu.implementations.PatternProviderMenu.TYPE, player, locator)
+        MenuOpener.open(AppliedCreate.ANDESITE_PATTERN_PROVIDER_MENU.get(), player, locator)
     }
     override fun returnToMainMenu(player: Player, subMenu: ISubMenu) {
-        MenuOpener.returnTo(appeng.menu.implementations.PatternProviderMenu.TYPE, player, subMenu.getLocator())
+        MenuOpener.returnTo(AppliedCreate.ANDESITE_PATTERN_PROVIDER_MENU.get(), player, subMenu.getLocator())
     }
 
     override fun setBlockState(state: BlockState) {
@@ -111,7 +112,7 @@ class AndesitePatternProviderBlockEntity(pos: BlockPos, state: BlockState) :
     }
 
     private fun getPushDirection(): PushDirection {
-        return blockState.getValue(com.loliball.appliedcreate.block.AndesitePatternProviderBlock.PUSH_DIRECTION)
+        return blockState.getValue(AndesitePatternProviderBlock.PUSH_DIRECTION)
     }
 
     companion object {

@@ -1,4 +1,4 @@
-package com.loliball.appliedcreate.logic
+package com.loliball.appliedcreate.patternprovider
 
 import appeng.api.config.LockCraftingMode
 import appeng.api.crafting.IPatternDetails
@@ -8,6 +8,8 @@ import appeng.api.stacks.KeyCounter
 import appeng.helpers.patternprovider.PatternProviderLogic
 import appeng.helpers.patternprovider.PatternProviderLogicHost
 import com.simibubi.create.content.kinetics.crafter.MechanicalCrafterBlock
+import com.simibubi.create.content.kinetics.base.HorizontalKineticBlock
+import net.minecraft.core.Direction
 import com.simibubi.create.content.kinetics.crafter.MechanicalCrafterBlockEntity
 import com.simibubi.create.content.kinetics.crafter.MechanicalCraftingRecipe
 import com.simibubi.create.content.kinetics.crafter.RecipeGridHandler
@@ -100,17 +102,17 @@ class MechanicalCraftingPatternLogic(
                 if (targetMap[crafter] != current) continue
 
                 val facing = crafter.blockState.getValue(
-                    com.simibubi.create.content.kinetics.base.HorizontalKineticBlock.HORIZONTAL_FACING
+                    HorizontalKineticBlock.HORIZONTAL_FACING
                 )
                 val targetDir = MechanicalCrafterBlock.getTargetDirection(crafter.blockState)
                 val pointingName = when (targetDir) {
-                    net.minecraft.core.Direction.UP -> "up"
-                    net.minecraft.core.Direction.DOWN -> "down"
+                    Direction.UP -> "up"
+                    Direction.DOWN -> "down"
                     else -> when (facing) {
-                        net.minecraft.core.Direction.SOUTH -> if (targetDir == net.minecraft.core.Direction.EAST) "left" else "right"
-                        net.minecraft.core.Direction.NORTH -> if (targetDir == net.minecraft.core.Direction.WEST) "left" else "right"
-                        net.minecraft.core.Direction.EAST -> if (targetDir == net.minecraft.core.Direction.SOUTH) "left" else "right"
-                        net.minecraft.core.Direction.WEST -> if (targetDir == net.minecraft.core.Direction.NORTH) "left" else "right"
+                        Direction.SOUTH -> if (targetDir == Direction.EAST) "left" else "right"
+                        Direction.NORTH -> if (targetDir == Direction.WEST) "left" else "right"
+                        Direction.EAST -> if (targetDir == Direction.SOUTH) "left" else "right"
+                        Direction.WEST -> if (targetDir == Direction.NORTH) "left" else "right"
                         else -> "up"
                     }
                 }

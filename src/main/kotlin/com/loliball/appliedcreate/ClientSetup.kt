@@ -1,7 +1,8 @@
 package com.loliball.appliedcreate
 
-import com.loliball.appliedcreate.client.StressKeyRenderHandler
-import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
+import com.loliball.appliedcreate.storage.StressKeyRenderHandler
+import com.loliball.appliedcreate.patternprovider.BrassPatternProviderMenu
+import com.loliball.appliedcreate.patternprovider.AndesitePatternProviderMenu
 import com.loliball.appliedcreate.cannon.MEBlueprintCannonMenu
 import com.loliball.appliedcreate.cannon.MEBlueprintCannonRenderer
 import com.loliball.appliedcreate.energy.KineticEnergyAcceptorRenderer
@@ -39,6 +40,14 @@ object ClientSetup {
                 PatternProviderScreen(menu, inv, title, style)
             },
             "/screens/appliedcreate/brass_pattern_provider.json"
+        )
+        InitScreens.register(
+            event,
+            AppliedCreate.ANDESITE_PATTERN_PROVIDER_MENU.get(),
+            { menu: AndesitePatternProviderMenu, inv: Inventory, title: Component, style: ScreenStyle ->
+                PatternProviderScreen(menu, inv, title, style)
+            },
+            "/screens/appliedcreate/andesite_pattern_provider.json"
         )
         event.register(
             AppliedCreate.ME_BLUEPRINT_CANNON_MENU.get(),
