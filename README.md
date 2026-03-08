@@ -20,10 +20,9 @@ Pattern providers designed for Create's Mechanical Crafters. Place one adjacent 
 
 ### Stress P2P Tunnel
 
-Transmit Create's rotational stress (speed + torque) through AE2 P2P tunnels. Consists of two components:
+Transmit Create's rotational stress (speed + torque) through AE2 P2P tunnels.
 
 - **Stress P2P Tunnel** — an AE2 P2P tunnel part that attaches to cables
-- **Stress P2P Companion** — a full block that auto-places behind the tunnel to interface with Create's kinetic network
 
 Supports attunement via Create's mechanical items (cogwheels, shafts, etc.).
 
