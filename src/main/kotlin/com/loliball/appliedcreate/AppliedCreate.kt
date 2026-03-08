@@ -100,12 +100,12 @@ class AppliedCreate {
         //  Andesite Pattern Provider
         // ──────────────────────────────────────────────────────────────
         val ANDESITE_PATTERN_PROVIDER_BLOCK: BlockEntry<AndesitePatternProviderBlock> = REGISTRATE
-            .block<AndesitePatternProviderBlock>("andesite_pattern_provider") { _ -> AndesitePatternProviderBlock() }
+            .block("andesite_pattern_provider") { _ -> AndesitePatternProviderBlock() }
             .simpleItem()
             .register()
 
         val ANDESITE_PATTERN_PROVIDER_BE: BlockEntityEntry<AndesitePatternProviderBlockEntity> = REGISTRATE
-            .blockEntity<AndesitePatternProviderBlockEntity>("andesite_pattern_provider") { _, pos, state ->
+            .blockEntity("andesite_pattern_provider") { _, pos, state ->
                 AndesitePatternProviderBlockEntity(pos, state)
             }
             .validBlocks(ANDESITE_PATTERN_PROVIDER_BLOCK)
@@ -115,12 +115,12 @@ class AppliedCreate {
         //  Brass Pattern Provider
         // ──────────────────────────────────────────────────────────────
         val BRASS_PATTERN_PROVIDER_BLOCK: BlockEntry<BrassPatternProviderBlock> = REGISTRATE
-            .block<BrassPatternProviderBlock>("brass_pattern_provider") { _ -> BrassPatternProviderBlock() }
+            .block("brass_pattern_provider") { _ -> BrassPatternProviderBlock() }
             .simpleItem()
             .register()
 
         val BRASS_PATTERN_PROVIDER_BE: BlockEntityEntry<BrassPatternProviderBlockEntity> = REGISTRATE
-            .blockEntity<BrassPatternProviderBlockEntity>("brass_pattern_provider") { _, pos, state ->
+            .blockEntity("brass_pattern_provider") { _, pos, state ->
                 BrassPatternProviderBlockEntity(pos, state)
             }
             .validBlocks(BRASS_PATTERN_PROVIDER_BLOCK)
@@ -144,11 +144,11 @@ class AppliedCreate {
         //  Items — Pattern Provider Parts, P2P, Upgrade
         // ──────────────────────────────────────────────────────────────
         val BRASS_PATTERN_PROVIDER_UPGRADE_ITEM: ItemEntry<BrassPatternProviderUpgradeItem> = REGISTRATE
-            .item<BrassPatternProviderUpgradeItem>("brass_pattern_provider_upgrade") { _ -> BrassPatternProviderUpgradeItem() }
+            .item("brass_pattern_provider_upgrade") { _ -> BrassPatternProviderUpgradeItem() }
             .register()
 
         val ANDESITE_PATTERN_PROVIDER_PART_ITEM: ItemEntry<MechanicalCraftingPartItem<AndesitePatternProviderPart>> = REGISTRATE
-            .item<MechanicalCraftingPartItem<AndesitePatternProviderPart>>("andesite_pattern_provider_part") { props ->
+            .item("andesite_pattern_provider_part") { props ->
                 MechanicalCraftingPartItem(
                     props,
                     AndesitePatternProviderPart::class.java
@@ -157,7 +157,7 @@ class AppliedCreate {
             .register()
 
         val BRASS_PATTERN_PROVIDER_PART_ITEM: ItemEntry<MechanicalCraftingPartItem<BrassPatternProviderPart>> = REGISTRATE
-            .item<MechanicalCraftingPartItem<BrassPatternProviderPart>>("brass_pattern_provider_part") { props ->
+            .item("brass_pattern_provider_part") { props ->
                 MechanicalCraftingPartItem(
                     props,
                     BrassPatternProviderPart::class.java
@@ -169,7 +169,7 @@ class AppliedCreate {
         //  Stress P2P Tunnel
         // ──────────────────────────────────────────────────────────────
         val STRESS_P2P_TUNNEL_PART_ITEM: ItemEntry<StressP2PPartItem> = REGISTRATE
-            .item<StressP2PPartItem>("stress_p2p_tunnel") { props ->
+            .item("stress_p2p_tunnel") { props ->
                 StressP2PPartItem(
                     props,
                     StressP2PTunnelPart::class.java
@@ -181,14 +181,14 @@ class AppliedCreate {
         //  ME Blueprint Cannon
         // ──────────────────────────────────────────────────────────────
         val ME_BLUEPRINT_CANNON_BLOCK: BlockEntry<MEBlueprintCannonBlock> = REGISTRATE
-            .block<MEBlueprintCannonBlock>("me_blueprint_cannon") { props ->
+            .block("me_blueprint_cannon") { props ->
                 MEBlueprintCannonBlock(props.strength(3.5f).noOcclusion())
             }
             .simpleItem()
             .register()
 
         val ME_BLUEPRINT_CANNON_BE: BlockEntityEntry<MEBlueprintCannonBlockEntity> = REGISTRATE
-            .blockEntity<MEBlueprintCannonBlockEntity>("me_blueprint_cannon") { type, pos, state ->
+            .blockEntity("me_blueprint_cannon") { type, pos, state ->
                 MEBlueprintCannonBlockEntity(type, pos, state)
             }
             .validBlocks(ME_BLUEPRINT_CANNON_BLOCK)
@@ -205,12 +205,12 @@ class AppliedCreate {
         //  Kinetic Energy Acceptor
         // ──────────────────────────────────────────────────────────────
         val KINETIC_ENERGY_ACCEPTOR_BLOCK: BlockEntry<KineticEnergyAcceptorBlock> = REGISTRATE
-            .block<KineticEnergyAcceptorBlock>("kinetic_energy_acceptor") { _ -> KineticEnergyAcceptorBlock() }
+            .block("kinetic_energy_acceptor") { _ -> KineticEnergyAcceptorBlock() }
             .simpleItem()
             .register()
 
         val KINETIC_ENERGY_ACCEPTOR_BE: BlockEntityEntry<KineticEnergyAcceptorBlockEntity> = REGISTRATE
-            .blockEntity<KineticEnergyAcceptorBlockEntity>("kinetic_energy_acceptor") { type, pos, state ->
+            .blockEntity("kinetic_energy_acceptor") { type, pos, state ->
                 KineticEnergyAcceptorBlockEntity(type, pos, state)
             }
             .validBlocks(KINETIC_ENERGY_ACCEPTOR_BLOCK)
@@ -220,12 +220,12 @@ class AppliedCreate {
         //  ME Gearbox
         // ──────────────────────────────────────────────────────────────
         val ME_GEARBOX_BLOCK: BlockEntry<MEGearboxBlock> = REGISTRATE
-            .block<MEGearboxBlock>("me_gearbox") { _ -> MEGearboxBlock() }
+            .block("me_gearbox") { _ -> MEGearboxBlock() }
             .simpleItem()
             .register()
 
         val ME_GEARBOX_BE: BlockEntityEntry<MEGearboxBlockEntity> = REGISTRATE
-            .blockEntity<MEGearboxBlockEntity>("me_gearbox") { type, pos, state ->
+            .blockEntity("me_gearbox") { type, pos, state ->
                 MEGearboxBlockEntity(type, pos, state)
             }
             .validBlocks(ME_GEARBOX_BLOCK)
@@ -235,7 +235,7 @@ class AppliedCreate {
         //  小萝卜 (Fumo Doll)
         // ──────────────────────────────────────────────────────────────
         val WHICHBALL_SKIN_DOLL_BLOCK: BlockEntry<BlockFumo> = REGISTRATE
-            .block<BlockFumo>("whichball_skin_doll") { _ -> BlockFumo() }
+            .block("whichball_skin_doll") { _ -> BlockFumo() }
             .simpleItem()
             .register()
 
@@ -243,51 +243,51 @@ class AppliedCreate {
         //  Stress Storage Cells
         // ──────────────────────────────────────────────────────────────
         val STRESS_CELL_1K: ItemEntry<StressStorageCell> = REGISTRATE
-            .item<StressStorageCell>("stress_storage_cell_1k") { _ -> StressStorageCell(Item.Properties(), 0.5, 1, 8, 1) }
+            .item("stress_storage_cell_1k") { _ -> StressStorageCell(Item.Properties(), 0.5, 1, 8, 1) }
             .register()
         val STRESS_CELL_4K: ItemEntry<StressStorageCell> = REGISTRATE
-            .item<StressStorageCell>("stress_storage_cell_4k") { _ -> StressStorageCell(Item.Properties(), 1.0, 4, 8, 1) }
+            .item("stress_storage_cell_4k") { _ -> StressStorageCell(Item.Properties(), 1.0, 4, 8, 1) }
             .register()
         val STRESS_CELL_16K: ItemEntry<StressStorageCell> = REGISTRATE
-            .item<StressStorageCell>("stress_storage_cell_16k") { _ -> StressStorageCell(Item.Properties(), 1.5, 16, 8, 1) }
+            .item("stress_storage_cell_16k") { _ -> StressStorageCell(Item.Properties(), 1.5, 16, 8, 1) }
             .register()
         val STRESS_CELL_64K: ItemEntry<StressStorageCell> = REGISTRATE
-            .item<StressStorageCell>("stress_storage_cell_64k") { _ -> StressStorageCell(Item.Properties(), 2.0, 64, 8, 1) }
+            .item("stress_storage_cell_64k") { _ -> StressStorageCell(Item.Properties(), 2.0, 64, 8, 1) }
             .register()
         val STRESS_CELL_256K: ItemEntry<StressStorageCell> = REGISTRATE
-            .item<StressStorageCell>("stress_storage_cell_256k") { _ -> StressStorageCell(Item.Properties(), 2.5, 256, 8, 1) }
+            .item("stress_storage_cell_256k") { _ -> StressStorageCell(Item.Properties(), 2.5, 256, 8, 1) }
             .register()
         val STRESS_CELL_1M: ItemEntry<StressStorageCell> = REGISTRATE
-            .item<StressStorageCell>("stress_storage_cell_1m") { _ -> StressStorageCell(Item.Properties(), 3.0, 1024, 8, 1) }
+            .item("stress_storage_cell_1m") { _ -> StressStorageCell(Item.Properties(), 3.0, 1024, 8, 1) }
             .register()
         val STRESS_CELL_4M: ItemEntry<StressStorageCell> = REGISTRATE
-            .item<StressStorageCell>("stress_storage_cell_4m") { _ -> StressStorageCell(Item.Properties(), 3.5, 4096, 8, 1) }
+            .item("stress_storage_cell_4m") { _ -> StressStorageCell(Item.Properties(), 3.5, 4096, 8, 1) }
             .register()
         val STRESS_CELL_16M: ItemEntry<StressStorageCell> = REGISTRATE
-            .item<StressStorageCell>("stress_storage_cell_16m") { _ -> StressStorageCell(Item.Properties(), 4.0, 16384, 8, 1) }
+            .item("stress_storage_cell_16m") { _ -> StressStorageCell(Item.Properties(), 4.0, 16384, 8, 1) }
             .register()
         val STRESS_CELL_64M: ItemEntry<StressStorageCell> = REGISTRATE
-            .item<StressStorageCell>("stress_storage_cell_64m") { _ -> StressStorageCell(Item.Properties(), 4.5, 65536, 8, 1) }
+            .item("stress_storage_cell_64m") { _ -> StressStorageCell(Item.Properties(), 4.5, 65536, 8, 1) }
             .register()
         val STRESS_CELL_256M: ItemEntry<StressStorageCell> = REGISTRATE
-            .item<StressStorageCell>("stress_storage_cell_256m") { _ -> StressStorageCell(Item.Properties(), 5.0, 262144, 8, 1) }
+            .item("stress_storage_cell_256m") { _ -> StressStorageCell(Item.Properties(), 5.0, 262144, 8, 1) }
             .register()
         val CREATIVE_STRESS_CELL: ItemEntry<CreativeStressCell> = REGISTRATE
-            .item<CreativeStressCell>("creative_stress_cell") { _ -> CreativeStressCell(Item.Properties()) }
+            .item("creative_stress_cell") { _ -> CreativeStressCell(Item.Properties()) }
             .register()
 
         // ──────────────────────────────────────────────────────────────
         //  Spatial Assembler
         // ──────────────────────────────────────────────────────────────
         val SPATIAL_ASSEMBLER_BLOCK: BlockEntry<SpatialAssemblerBlock> = REGISTRATE
-            .block<SpatialAssemblerBlock>("spatial_assembler") { props ->
+            .block("spatial_assembler") { props ->
                 SpatialAssemblerBlock(props.strength(3.5f).noOcclusion())
             }
             .simpleItem()
             .register()
 
         val SPATIAL_ASSEMBLER_BE: BlockEntityEntry<SpatialAssemblerBlockEntity> = REGISTRATE
-            .blockEntity<SpatialAssemblerBlockEntity>("spatial_assembler") { type, pos, state ->
+            .blockEntity("spatial_assembler") { type, pos, state ->
                 SpatialAssemblerBlockEntity(type, pos, state)
             }
             .validBlocks(SPATIAL_ASSEMBLER_BLOCK)
@@ -312,58 +312,58 @@ class AppliedCreate {
         // ──────────────────────────────────────────────────────────────
         // Circuit boards (inscribed)
         val STRESS_CIRCUIT_BOARD: ItemEntry<Item> = REGISTRATE
-            .item<Item>("stress_circuit_board") { props -> Item(props) }
+            .item("stress_circuit_board") { props -> Item(props) }
             .register()
         val ADVANCED_STRESS_CIRCUIT_BOARD: ItemEntry<Item> = REGISTRATE
-            .item<Item>("advanced_stress_circuit_board") { props -> Item(props) }
+            .item("advanced_stress_circuit_board") { props -> Item(props) }
             .register()
 
         // Processors (assembled from circuit board + silicon + redstone)
         val STRESS_PROCESSOR: ItemEntry<Item> = REGISTRATE
-            .item<Item>("stress_processor") { props -> Item(props) }
+            .item("stress_processor") { props -> Item(props) }
             .register()
         val ADVANCED_STRESS_PROCESSOR: ItemEntry<Item> = REGISTRATE
-            .item<Item>("advanced_stress_processor") { props -> Item(props) }
+            .item("advanced_stress_processor") { props -> Item(props) }
             .register()
 
         // Storage components (crafted with processors, following AE2 component pattern)
         val STRESS_COMPONENT_1K: ItemEntry<Item> = REGISTRATE
-            .item<Item>("stress_storage_component_1k") { props -> Item(props) }
+            .item("stress_storage_component_1k") { props -> Item(props) }
             .register()
         val STRESS_COMPONENT_4K: ItemEntry<Item> = REGISTRATE
-            .item<Item>("stress_storage_component_4k") { props -> Item(props) }
+            .item("stress_storage_component_4k") { props -> Item(props) }
             .register()
         val STRESS_COMPONENT_16K: ItemEntry<Item> = REGISTRATE
-            .item<Item>("stress_storage_component_16k") { props -> Item(props) }
+            .item("stress_storage_component_16k") { props -> Item(props) }
             .register()
         val STRESS_COMPONENT_64K: ItemEntry<Item> = REGISTRATE
-            .item<Item>("stress_storage_component_64k") { props -> Item(props) }
+            .item("stress_storage_component_64k") { props -> Item(props) }
             .register()
         val STRESS_COMPONENT_256K: ItemEntry<Item> = REGISTRATE
-            .item<Item>("stress_storage_component_256k") { props -> Item(props) }
+            .item("stress_storage_component_256k") { props -> Item(props) }
             .register()
         val STRESS_COMPONENT_1M: ItemEntry<Item> = REGISTRATE
-            .item<Item>("stress_storage_component_1m") { props -> Item(props) }
+            .item("stress_storage_component_1m") { props -> Item(props) }
             .register()
         val STRESS_COMPONENT_4M: ItemEntry<Item> = REGISTRATE
-            .item<Item>("stress_storage_component_4m") { props -> Item(props) }
+            .item("stress_storage_component_4m") { props -> Item(props) }
             .register()
         val STRESS_COMPONENT_16M: ItemEntry<Item> = REGISTRATE
-            .item<Item>("stress_storage_component_16m") { props -> Item(props) }
+            .item("stress_storage_component_16m") { props -> Item(props) }
             .register()
         val STRESS_COMPONENT_64M: ItemEntry<Item> = REGISTRATE
-            .item<Item>("stress_storage_component_64m") { props -> Item(props) }
+            .item("stress_storage_component_64m") { props -> Item(props) }
             .register()
         val STRESS_COMPONENT_256M: ItemEntry<Item> = REGISTRATE
-            .item<Item>("stress_storage_component_256m") { props -> Item(props) }
+            .item("stress_storage_component_256m") { props -> Item(props) }
             .register()
 
         // Cell housings
         val ANDESITE_STRESS_CELL_HOUSING: ItemEntry<Item> = REGISTRATE
-            .item<Item>("andesite_stress_cell_housing") { props -> Item(props) }
+            .item("andesite_stress_cell_housing") { props -> Item(props) }
             .register()
         val BRASS_STRESS_CELL_HOUSING: ItemEntry<Item> = REGISTRATE
-            .item<Item>("brass_stress_cell_housing") { props -> Item(props) }
+            .item("brass_stress_cell_housing") { props -> Item(props) }
             .register()
 
         val STRESS_COMPONENTS: List<ItemEntry<Item>> by lazy {
@@ -376,6 +376,7 @@ class AppliedCreate {
         // ──────────────────────────────────────────────────────────────
         //  Creative Tab
         // ──────────────────────────────────────────────────────────────
+        @Suppress("unused")
         val CREATIVE_TAB: DeferredHolder<CreativeModeTab, CreativeModeTab> = CREATIVE_TABS.register("main") { ->
             CreativeModeTab.builder()
                 .title(Component.translatable("itemGroup.$MOD_ID"))
