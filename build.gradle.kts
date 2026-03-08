@@ -57,6 +57,11 @@ repositories {
         name = "ModMaven"
         url = uri("https://modmaven.dev")
     }
+    maven {
+        name = "Registrate"
+        url = uri("https://maven.ithundxr.dev/snapshots")
+        content { includeGroup("com.tterrag.registrate") }
+    }
 }
 
 dependencies {
@@ -69,7 +74,7 @@ dependencies {
     compileOnly("dev.engine-room.flywheel:flywheel-neoforge-${project.extra["minecraft_version"]}:${project.extra["flywheel_version"]}")
     compileOnly("net.createmod.ponder:ponder-neoforge:${project.extra["ponder_version"]}")
     // Registrate is bundled inside Create's jar-in-jar — needs explicit compileOnly for Kotlin to see it
-    compileOnly(files("libs/Registrate-MC1.21-1.3.0+62.jar"))
+    compileOnly("com.tterrag.registrate:Registrate:${project.extra["registrate_version"]}")
 }
 
 tasks.named<Jar>("jar") {
