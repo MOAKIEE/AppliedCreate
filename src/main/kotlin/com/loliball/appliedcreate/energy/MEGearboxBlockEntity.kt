@@ -73,7 +73,7 @@ class MEGearboxBlockEntity(
     lateinit var stressMultiplier: ScrollValueBehaviour
 
     init {
-        mainNode.setVisualRepresentation(AppliedCreate.ME_GEARBOX_ITEM.get())
+        mainNode.setVisualRepresentation(AppliedCreate.ME_GEARBOX_BLOCK.asItem())
         mainNode.setIdlePowerUsage(2.0)
         mainNode.setFlags(GridFlags.REQUIRE_CHANNEL)
     }

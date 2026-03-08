@@ -88,7 +88,7 @@ class BrassPatternProviderBlockEntity(pos: BlockPos, state: BlockState) :
     }
 
     override fun getTerminalIcon(): AEItemKey {
-        return AEItemKey.of(AppliedCreate.BRASS_PATTERN_PROVIDER_ITEM.get())
+        return AEItemKey.of(AppliedCreate.BRASS_PATTERN_PROVIDER_BLOCK.asItem())
     }
 
     override fun saveChanges() {
@@ -96,7 +96,7 @@ class BrassPatternProviderBlockEntity(pos: BlockPos, state: BlockState) :
     }
 
     override fun getMainMenuIcon(): ItemStack {
-        return AppliedCreate.BRASS_PATTERN_PROVIDER_ITEM.get().defaultInstance
+        return AppliedCreate.BRASS_PATTERN_PROVIDER_BLOCK.asItem().defaultInstance
     }
 
     override fun openMenu(player: Player, locator: MenuHostLocator) {

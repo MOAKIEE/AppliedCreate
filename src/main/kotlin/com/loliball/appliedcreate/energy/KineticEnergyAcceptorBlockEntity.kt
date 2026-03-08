@@ -39,7 +39,7 @@ class KineticEnergyAcceptorBlockEntity(
     private var aeValue: Double = 0.0
 
     init {
-        mainNode.setVisualRepresentation(AppliedCreate.KINETIC_ENERGY_ACCEPTOR_ITEM.get())
+        mainNode.setVisualRepresentation(AppliedCreate.KINETIC_ENERGY_ACCEPTOR_BLOCK.asItem())
         mainNode.setIdlePowerUsage(0.0)
 
         val passiveGenerator = object : IPassiveEnergyGenerator {

@@ -88,7 +88,7 @@ class AndesitePatternProviderBlockEntity(pos: BlockPos, state: BlockState) :
     }
 
     override fun getTerminalIcon(): AEItemKey {
-        return AEItemKey.of(AppliedCreate.ANDESITE_PATTERN_PROVIDER_ITEM.get())
+        return AEItemKey.of(AppliedCreate.ANDESITE_PATTERN_PROVIDER_BLOCK.asItem())
     }
 
     override fun saveChanges() {
@@ -96,7 +96,7 @@ class AndesitePatternProviderBlockEntity(pos: BlockPos, state: BlockState) :
     }
 
     override fun getMainMenuIcon(): ItemStack {
-        return AppliedCreate.ANDESITE_PATTERN_PROVIDER_ITEM.get().defaultInstance
+        return AppliedCreate.ANDESITE_PATTERN_PROVIDER_BLOCK.asItem().defaultInstance
     }
 
     override fun openMenu(player: Player, locator: MenuHostLocator) {

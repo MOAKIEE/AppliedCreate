@@ -70,7 +70,7 @@ class MEBlueprintCannonBlockEntity(type: BlockEntityType<*>, pos: BlockPos, stat
     private val mainNode: IManagedGridNode = GridHelper.createManagedNode(
         this, BlockEntityNodeListener.INSTANCE as IGridNodeListener<IGridConnectedBlockEntity>
     )
-        .setVisualRepresentation(AppliedCreate.ME_BLUEPRINT_CANNON_ITEM.get())
+        .setVisualRepresentation(AppliedCreate.ME_BLUEPRINT_CANNON_BLOCK.asItem())
         .setInWorldNode(true)
         .setTagName("proxy")
         .setIdlePowerUsage(2.0)
@@ -78,7 +78,7 @@ class MEBlueprintCannonBlockEntity(type: BlockEntityType<*>, pos: BlockPos, stat
 
     private val actionSource = MachineSource(this)
     private val craftingTracker = MultiCraftingTracker(this, 9)
-    val upgradeInventory = UpgradeInventories.forMachine(AppliedCreate.ME_BLUEPRINT_CANNON_ITEM.get(), 5) { this.setChanged() }
+    val upgradeInventory = UpgradeInventories.forMachine(AppliedCreate.ME_BLUEPRINT_CANNON_BLOCK.asItem(), 5) { this.setChanged() }
 
     // ── Schematicannon Fields ──
     val inventory = object : ItemStackHandler(2) {

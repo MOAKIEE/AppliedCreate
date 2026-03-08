@@ -50,7 +50,7 @@ class SpatialAssemblerBlockEntity(type: BlockEntityType<*>, pos: BlockPos, state
     private val mainNode: IManagedGridNode = GridHelper.createManagedNode(
         this, BlockEntityNodeListener.INSTANCE as IGridNodeListener<IGridConnectedBlockEntity>
     )
-        .setVisualRepresentation(AppliedCreate.SPATIAL_ASSEMBLER_ITEM.get())
+        .setVisualRepresentation(AppliedCreate.SPATIAL_ASSEMBLER_BLOCK.asItem())
         .setInWorldNode(true)
         .setTagName("proxy")
         .setIdlePowerUsage(2.0)
