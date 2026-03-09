@@ -50,6 +50,7 @@ import com.tterrag.registrate.util.entry.BlockEntityEntry
 import com.tterrag.registrate.util.entry.ItemEntry
 import net.minecraft.core.registries.Registries
 import net.minecraft.network.chat.Component
+import net.minecraft.resources.ResourceKey
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.SimpleMenuProvider
 import net.minecraft.world.entity.player.Inventory
@@ -84,7 +85,9 @@ class AppliedCreate {
         // ═══════════════════════════════════════════════════════════════
         //  Registrate instance — replaces DeferredRegister for Blocks, Items, BlockEntities
         // ═══════════════════════════════════════════════════════════════
+        @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
         val REGISTRATE: CreateRegistrate = CreateRegistrate.create(MOD_ID)
+            .defaultCreativeTab(null as ResourceKey<CreativeModeTab>?)
 
         // ═══════════════════════════════════════════════════════════════
         //  Menus — kept as DeferredRegister (AE2 MenuLocators need custom wiring)
