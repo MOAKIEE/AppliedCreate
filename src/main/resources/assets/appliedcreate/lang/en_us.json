@@ -93,7 +93,7 @@
     "gui.appliedcreate.MEGearbox.mode.export": "Mode: Export (ME → Kinetic)",
     "gui.appliedcreate.MEGearbox.mode.import": "Mode: Import (Kinetic → ME)",
     "gui.appliedcreate.MEGearbox.speed.label": "Speed:",
-    "gui.appliedcreate.MEGearbox.stress.label": "Stress:",
+    "gui.appliedcreate.MEGearbox.stress.label": "Stress Multiplier:",
     "gui.appliedcreate.MEGearbox.actual_speed": "Actual Speed: %s RPM",
     "gui.appliedcreate.MEGearbox.actual_stress": "Actual Stress: %s SU",
     "gui.appliedcreate.MEGearbox.speed": "Speed: %s RPM",

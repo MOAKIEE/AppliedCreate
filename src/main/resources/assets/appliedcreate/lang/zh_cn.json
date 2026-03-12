@@ -93,7 +93,7 @@
     "gui.appliedcreate.MEGearbox.mode.export": "模式: 输出 (ME → 动力)",
     "gui.appliedcreate.MEGearbox.mode.import": "模式: 输入 (动力 → ME)",
     "gui.appliedcreate.MEGearbox.speed.label": "转速:",
-    "gui.appliedcreate.MEGearbox.stress.label": "应力:",
+    "gui.appliedcreate.MEGearbox.stress.label": "应力倍率:",
     "gui.appliedcreate.MEGearbox.actual_speed": "实际转速: %s RPM",
     "gui.appliedcreate.MEGearbox.actual_stress": "实际应力: %s SU",
     "gui.appliedcreate.MEGearbox.speed": "转速: %s RPM",
