@@ -64,8 +64,6 @@
     "gui.appliedcreate.me_blueprint_cannon.materials": "Material Checklist",
     "gui.appliedcreate.me_blueprint_cannon.noMaterials": "No materials required",
 
-    "appliedcreate.me_gearbox.multiplier": "Stress Multiplier",
-
     "block.appliedcreate.spatial_assembler": "Spatial Assembler",
     "gui.appliedcreate.spatial_assembler.input": "Input",
     "gui.appliedcreate.spatial_assembler.output": "Output",
@@ -89,5 +87,15 @@
     "config.jade.plugin_appliedcreate.me_gearbox_grid_node": "Grid Node (ME Gearbox)",
 
     "item.appliedcreate.creative_stress_cell": "Creative Stress Cell",
-    "item.appliedcreate.creative_stress_cell.tooltip": "Provides infinite stress storage"
+    "item.appliedcreate.creative_stress_cell.tooltip": "Provides infinite stress storage",
+
+    "gui.appliedcreate.MEGearbox": "ME Gearbox",
+    "gui.appliedcreate.MEGearbox.mode.export": "Mode: Export (ME → Kinetic)",
+    "gui.appliedcreate.MEGearbox.mode.import": "Mode: Import (Kinetic → ME)",
+    "gui.appliedcreate.MEGearbox.speed.label": "Speed:",
+    "gui.appliedcreate.MEGearbox.stress.label": "Stress:",
+    "gui.appliedcreate.MEGearbox.actual_speed": "Actual Speed: %s RPM",
+    "gui.appliedcreate.MEGearbox.actual_stress": "Actual Stress: %s SU",
+    "gui.appliedcreate.MEGearbox.speed": "Speed: %s RPM",
+    "gui.appliedcreate.MEGearbox.stress": "Stress: %s SU"
 }

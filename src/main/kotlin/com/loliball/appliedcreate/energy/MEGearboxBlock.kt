@@ -4,9 +4,10 @@ import com.loliball.appliedcreate.AppliedCreate
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock
 import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel
 import com.simibubi.create.foundation.block.IBE
+import appeng.menu.MenuOpener
+import appeng.menu.locator.MenuLocators
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
-import net.minecraft.network.chat.Component
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.context.BlockPlaceContext
@@ -20,10 +21,9 @@ import net.minecraft.world.phys.BlockHitResult
  * ME Gearbox Block — directional kinetic block with shaft.
  * Dual-network block: joins AE2 ME network and Create kinetic network.
  *
- * Bare-hand right-click toggles between EXPORT and IMPORT mode.
+ * Right-click opens AE2-style GUI for configuration.
  * Wrench right-click rotates the block (default Create behaviour via IWrenchable).
  * Shift+Wrench picks up/drops the block (default Create behaviour via IWrenchable).
- * Stress multiplier is adjusted via Create-style scroll wheel on perpendicular faces.
  * Shaft extends along the FACING axis (both directions).
  * AE2 cable connects on perpendicular sides.
  */
@@ -66,17 +66,11 @@ class MEGearboxBlock : DirectionalKineticBlock(
         return defaultBlockState().setValue(FACING, preferred)
     }
 
-    /**
-     * Bare-hand right-click toggles mode between EXPORT and IMPORT.
-     */
     override fun useWithoutItem(state: BlockState, level: Level, pos: BlockPos, player: Player, hit: BlockHitResult): InteractionResult {
         if (level.isClientSide) return InteractionResult.SUCCESS
 
-        val be = level.getBlockEntity(pos) as? MEGearboxBlockEntity ?: return InteractionResult.PASS
-        be.toggleMode()
-
-        val modeKey = if (be.mode == MEGearboxBlockEntity.Mode.EXPORT) "appliedcreate.me_gearbox.mode.export" else "appliedcreate.me_gearbox.mode.import"
-        player.displayClientMessage(Component.translatable("appliedcreate.me_gearbox.mode").append(Component.translatable(modeKey)), true)
+        val be = level.getBlockEntity(pos) ?: return InteractionResult.PASS
+        MenuOpener.open(AppliedCreate.ME_GEARBOX_MENU.get(), player, MenuLocators.forBlockEntity(be))
 
         return InteractionResult.SUCCESS
     }

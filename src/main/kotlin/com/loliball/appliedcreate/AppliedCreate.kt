@@ -11,6 +11,7 @@ import com.loliball.appliedcreate.energy.KineticEnergyAcceptorBlock
 import com.loliball.appliedcreate.energy.KineticEnergyAcceptorBlockEntity
 import com.loliball.appliedcreate.energy.MEGearboxBlock
 import com.loliball.appliedcreate.energy.MEGearboxBlockEntity
+import com.loliball.appliedcreate.energy.MEGearboxMenu
 import com.loliball.appliedcreate.misc.BlockFumo
 import com.loliball.appliedcreate.patternprovider.AndesitePatternProviderBlock
 import com.loliball.appliedcreate.patternprovider.BrassPatternProviderBlock
@@ -234,6 +235,13 @@ class AppliedCreate {
             .validBlocks(ME_GEARBOX_BLOCK)
             .register()
 
+        val ME_GEARBOX_MENU: DeferredHolder<MenuType<*>, MenuType<MEGearboxMenu>> =
+            MENU_TYPES.register("me_gearbox") { ->
+                createBlockEntityMenuType(MEGearboxBlockEntity::class.java) { _, windowId, inv, host ->
+                    MEGearboxMenu(ME_GEARBOX_MENU.get(), windowId, inv, host)
+                }
+            }
+
         // ──────────────────────────────────────────────────────────────
         //  小萝卜 (Fumo Doll)
         // ──────────────────────────────────────────────────────────────
@@ -453,6 +461,47 @@ class AppliedCreate {
                 true
             }
         }
+
+        @Suppress("UNCHECKED_CAST")
+        private fun <H, T : AEBaseMenu> createBlockEntityMenuType(
+            hostClass: Class<H>,
+            factory: (MenuType<T>, Int, Inventory, H) -> T
+        ): MenuType<T> {
+            var menuTypeHolder: MenuType<T>? = null
+            val menuType = IMenuTypeExtension.create { windowId, inv, buf ->
+                val locator = MenuLocators.readFromPacket(buf)
+                val host = locator.locate(inv.player, hostClass)
+                    ?: throw IllegalStateException("Could not find host of type ${hostClass.simpleName}")
+                val menu = factory(menuTypeHolder!!, windowId, inv, host)
+                menu.setLocator(locator)
+                menu.setReturnedFromSubScreen(buf.readBoolean())
+                menu
+            }
+            menuTypeHolder = menuType as MenuType<T>
+            return menuType
+        }
+
+        private fun <H, T : AEBaseMenu> registerBlockEntityMenuOpener(
+            menuType: MenuType<T>,
+            hostClass: Class<H>,
+            menuFactory: (Int, Inventory, H) -> T
+        ) {
+            MenuOpener.addOpener(menuType) { player: Player, locator: MenuHostLocator, fromSubMenu: Boolean ->
+                if (player !is ServerPlayer) return@addOpener false
+                val host = locator.locate(player, hostClass) ?: return@addOpener false
+                val title = Component.empty()
+                val menuProvider = SimpleMenuProvider({ wnd, p, _ ->
+                    val m = menuFactory(wnd, p, host)
+                    m.setLocator(locator)
+                    m
+                }, title)
+                player.openMenu(menuProvider) { buffer ->
+                    MenuLocators.writeToPacket(buffer, locator)
+                    buffer.writeBoolean(fromSubMenu)
+                }
+                true
+            }
+        }
     }
 
     init {
@@ -581,6 +630,10 @@ class AppliedCreate {
                 )
             }
 
+            registerBlockEntityMenuOpener(ME_GEARBOX_MENU.get(), MEGearboxBlockEntity::class.java) { wnd, inv, host ->
+                MEGearboxMenu(ME_GEARBOX_MENU.get(), wnd, inv, host)
+            }
+
             // Register stress value for kinetic energy acceptor
             BlockStressValues.IMPACTS.register(
                 KINETIC_ENERGY_ACCEPTOR_BLOCK.get(), { KineticEnergyAcceptorBlockEntity.MAX_STRESS_SU / 256.0 }
@@ -588,10 +641,10 @@ class AppliedCreate {
 
             // Register stress values for ME Gearbox
             BlockStressValues.IMPACTS.register(
-                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.BASE_STRESS_IMPACT_PER_RPM.toDouble() }
+                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.DEFAULT_STRESS.toDouble() }
             )
             BlockStressValues.CAPACITIES.register(
-                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.BASE_STRESS_CAPACITY_PER_RPM.toDouble() }
+                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.DEFAULT_STRESS.toDouble() }
             )
 
             // Register upgrade cards for ME Blueprint Cannon

@@ -1,0 +1,27 @@
+{
+  "includes": ["../common/common.json", "../common/player_inventory.json"],
+  "generatedBackground": {
+    "width": 176,
+    "height": 200
+  },
+  "widgets": {
+    "modeToggle": {
+      "left": 8,
+      "top": 20,
+      "width": 160,
+      "height": 20
+    },
+    "speedInput": {
+      "left": 60,
+      "top": 45,
+      "width": 100,
+      "height": 16
+    },
+    "stressInput": {
+      "left": 60,
+      "top": 69,
+      "width": 100,
+      "height": 16
+    }
+  }
+}

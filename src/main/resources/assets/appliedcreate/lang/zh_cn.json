@@ -64,8 +64,6 @@
     "gui.appliedcreate.me_blueprint_cannon.materials": "材料清单",
     "gui.appliedcreate.me_blueprint_cannon.noMaterials": "无需材料",
 
-    "appliedcreate.me_gearbox.multiplier": "应力倍率",
-
     "block.appliedcreate.spatial_assembler": "空间装配器",
     "gui.appliedcreate.spatial_assembler.input": "输入",
     "gui.appliedcreate.spatial_assembler.output": "输出",
@@ -89,5 +87,15 @@
     "config.jade.plugin_appliedcreate.me_gearbox_grid_node": "网络节点 (ME齿轮箱)",
 
     "item.appliedcreate.creative_stress_cell": "创造应力元件",
-    "item.appliedcreate.creative_stress_cell.tooltip": "提供无限应力存储"
+    "item.appliedcreate.creative_stress_cell.tooltip": "提供无限应力存储",
+
+    "gui.appliedcreate.MEGearbox": "ME齿轮箱",
+    "gui.appliedcreate.MEGearbox.mode.export": "模式: 输出 (ME → 动力)",
+    "gui.appliedcreate.MEGearbox.mode.import": "模式: 输入 (动力 → ME)",
+    "gui.appliedcreate.MEGearbox.speed.label": "转速:",
+    "gui.appliedcreate.MEGearbox.stress.label": "应力:",
+    "gui.appliedcreate.MEGearbox.actual_speed": "实际转速: %s RPM",
+    "gui.appliedcreate.MEGearbox.actual_stress": "实际应力: %s SU",
+    "gui.appliedcreate.MEGearbox.speed": "转速: %s RPM",
+    "gui.appliedcreate.MEGearbox.stress": "应力: %s SU"
 }
