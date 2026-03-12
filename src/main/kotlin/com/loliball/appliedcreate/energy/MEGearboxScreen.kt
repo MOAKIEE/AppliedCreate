@@ -22,17 +22,15 @@ class MEGearboxScreen(
     init {
         modeToggle = widgets.addButton("modeToggle", getModeText(menu.currentMode), Runnable { menu.requestToggleMode() })
 
-        speedInput = AETextField(style, font, 0, 0, 0, font.lineHeight)
+        speedInput = widgets.addTextField("speedInput")
         speedInput.setMaxLength(5)
         speedInput.setValue(menu.currentConfiguredSpeed.toString())
         speedInput.setResponder { text -> onSpeedChanged(text) }
-        widgets.add("speedInput", speedInput)
 
-        stressInput = AETextField(style, font, 0, 0, 0, font.lineHeight)
+        stressInput = widgets.addTextField("stressInput")
         stressInput.setMaxLength(5)
         stressInput.setValue(menu.currentConfiguredStress.toString())
         stressInput.setResponder { text -> onStressChanged(text) }
-        widgets.add("stressInput", stressInput)
     }
 
     private fun onSpeedChanged(text: String) {

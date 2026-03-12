@@ -1,8 +1,8 @@
 {
-  "includes": ["../common/common.json", "../common/player_inventory.json"],
+  "includes": ["../common/common.json"],
   "generatedBackground": {
     "width": 176,
-    "height": 200
+    "height": 130
   },
   "widgets": {
     "modeToggle": {

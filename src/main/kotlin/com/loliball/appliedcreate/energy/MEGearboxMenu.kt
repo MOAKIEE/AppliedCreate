@@ -47,7 +47,6 @@ class MEGearboxMenu(
         registerClientAction(ACTION_SET_SPEED, java.lang.Integer::class.java) { value -> handleSetSpeed(value.toInt()) }
         @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
         registerClientAction(ACTION_SET_STRESS, java.lang.Integer::class.java) { value -> handleSetStress(value.toInt()) }
-        createPlayerInventorySlots(playerInventory)
     }
 
     private fun handleToggleMode() {
@@ -68,7 +67,11 @@ class MEGearboxMenu(
             currentConfiguredSpeed = gearbox.configuredSpeed
             currentConfiguredStress = gearbox.configuredStress.toInt()
             currentSpeed = abs(gearbox.speed).toDouble()
-            currentStress = (gearbox.getStressApplied() * abs(gearbox.speed)).toDouble()
+            currentStress = if (gearbox.mode == MEGearboxBlockEntity.Mode.EXPORT) {
+                (gearbox.calculateAddedStressCapacity() * abs(gearbox.speed)).toDouble()
+            } else {
+                (gearbox.getStressApplied() * abs(gearbox.speed)).toDouble()
+            }
         }
         super.broadcastChanges()
     }
