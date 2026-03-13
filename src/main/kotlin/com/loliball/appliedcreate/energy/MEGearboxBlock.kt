@@ -2,6 +2,7 @@ package com.loliball.appliedcreate.energy
 
 import com.loliball.appliedcreate.AppliedCreate
 import com.simibubi.create.AllItems
+import com.simibubi.create.content.equipment.wrench.IWrenchable
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock
 import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel
 import com.simibubi.create.foundation.block.IBE
@@ -15,6 +16,7 @@ import net.minecraft.world.ItemInteractionResult
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.context.BlockPlaceContext
+import net.minecraft.world.item.context.UseOnContext
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.LevelReader
 import net.minecraft.world.level.block.entity.BlockEntity
@@ -35,7 +37,7 @@ class MEGearboxBlock : DirectionalKineticBlock(
     Properties.of()
         .strength(3.5f)
         .noOcclusion()
-), IBE<MEGearboxBlockEntity>, ICogWheel {
+), IBE<MEGearboxBlockEntity>, ICogWheel, IWrenchable {
 
     override fun getRotationAxis(state: BlockState): Direction.Axis {
         return state.getValue(FACING).axis
@@ -80,8 +82,21 @@ class MEGearboxBlock : DirectionalKineticBlock(
     }
 
     override fun useItemOn(stack: ItemStack, state: BlockState, level: Level, pos: BlockPos, player: Player, hand: InteractionHand, hit: BlockHitResult): ItemInteractionResult {
-        if (AllItems.WRENCH.isIn(stack))
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
+        if (AllItems.WRENCH.isIn(stack)) {
+            // Handle wrench rotation directly here because returning PASS_TO_DEFAULT_BLOCK_INTERACTION
+            // would fall through to useWithoutItem() which opens the GUI instead of rotating.
+            val context = UseOnContext(level, player, hand, stack, hit)
+            val result = if (player.isShiftKeyDown) {
+                onSneakWrenched(state, context)
+            } else {
+                onWrenched(state, context)
+            }
+            return if (result == InteractionResult.SUCCESS) {
+                ItemInteractionResult.sidedSuccess(level.isClientSide)
+            } else {
+                ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
+            }
+        }
 
         if (level.isClientSide) return ItemInteractionResult.SUCCESS
 
