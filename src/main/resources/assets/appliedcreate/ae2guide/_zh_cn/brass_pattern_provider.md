@@ -2,7 +2,7 @@
 navigation:
   title: 黄铜样板供应器
   icon: appliedcreate:brass_pattern_provider
-  parent: appliedcreate:ae2guide/index.md
+  parent: appliedcreate:index.md
   position: 30
 item_ids:
   - appliedcreate:brass_pattern_provider

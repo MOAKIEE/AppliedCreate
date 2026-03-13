@@ -2,7 +2,7 @@
 navigation:
   title: Andesite Pattern Provider
   icon: appliedcreate:andesite_pattern_provider
-  parent: appliedcreate:ae2guide/index.md
+  parent: appliedcreate:index.md
   position: 20
 item_ids:
   - appliedcreate:andesite_pattern_provider

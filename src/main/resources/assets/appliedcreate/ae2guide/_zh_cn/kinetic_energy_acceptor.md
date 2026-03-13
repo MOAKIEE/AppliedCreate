@@ -2,7 +2,7 @@
 navigation:
   title: 动能接收器
   icon: appliedcreate:kinetic_energy_acceptor
-  parent: appliedcreate:ae2guide/index.md
+  parent: appliedcreate:index.md
   position: 45
 item_ids:
   - appliedcreate:kinetic_energy_acceptor

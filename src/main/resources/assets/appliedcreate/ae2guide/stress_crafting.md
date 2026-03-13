@@ -2,7 +2,7 @@
 navigation:
   title: Stress Crafting Materials
   icon: appliedcreate:stress_processor
-  parent: appliedcreate:ae2guide/index.md
+  parent: appliedcreate:index.md
   position: 70
 item_ids:
   - appliedcreate:stress_circuit_board

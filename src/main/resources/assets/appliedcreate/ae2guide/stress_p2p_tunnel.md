@@ -2,7 +2,7 @@
 navigation:
   title: Stress P2P Tunnel
   icon: appliedcreate:stress_p2p_tunnel
-  parent: appliedcreate:ae2guide/index.md
+  parent: appliedcreate:index.md
   position: 50
 item_ids:
   - appliedcreate:stress_p2p_tunnel

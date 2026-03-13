@@ -2,7 +2,7 @@
 navigation:
   title: ME齿轮箱
   icon: appliedcreate:me_gearbox
-  parent: appliedcreate:ae2guide/index.md
+  parent: appliedcreate:index.md
   position: 40
 item_ids:
   - appliedcreate:me_gearbox

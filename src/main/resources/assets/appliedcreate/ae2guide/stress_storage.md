@@ -2,7 +2,7 @@
 navigation:
   title: Stress Storage Cells
   icon: appliedcreate:stress_storage_cell_1k
-  parent: appliedcreate:ae2guide/index.md
+  parent: appliedcreate:index.md
   position: 60
 item_ids:
   - appliedcreate:stress_storage_cell_1k

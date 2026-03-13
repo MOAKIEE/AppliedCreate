@@ -2,7 +2,7 @@
 navigation:
   title: 应力P2P通道
   icon: appliedcreate:stress_p2p_tunnel
-  parent: appliedcreate:ae2guide/index.md
+  parent: appliedcreate:index.md
   position: 50
 item_ids:
   - appliedcreate:stress_p2p_tunnel
