@@ -9,7 +9,7 @@ group = project.extra["mod_group_id"] as String
 val modId = project.extra["mod_id"] as String
 
 base {
-    archivesName.set(modId)
+    archivesName.set("$modId-${project.extra["minecraft_version"]}")
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
