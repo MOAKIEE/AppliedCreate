@@ -255,34 +255,34 @@ class AppliedCreate {
         //  Stress Storage Cells
         // ──────────────────────────────────────────────────────────────
         val STRESS_CELL_1K: ItemEntry<StressStorageCell> = REGISTRATE
-            .item("stress_storage_cell_1k") { _ -> StressStorageCell(Item.Properties(), 0.5, 1, 8, 1) }
+            .item("stress_storage_cell_1k") { _ -> StressStorageCell(Item.Properties(), 0.5, 1, 8, 1, { ANDESITE_STRESS_CELL_HOUSING.get() }, { STRESS_COMPONENT_1K.get() }) }
             .register()
         val STRESS_CELL_4K: ItemEntry<StressStorageCell> = REGISTRATE
-            .item("stress_storage_cell_4k") { _ -> StressStorageCell(Item.Properties(), 1.0, 4, 8, 1) }
+            .item("stress_storage_cell_4k") { _ -> StressStorageCell(Item.Properties(), 1.0, 4, 8, 1, { ANDESITE_STRESS_CELL_HOUSING.get() }, { STRESS_COMPONENT_4K.get() }) }
             .register()
         val STRESS_CELL_16K: ItemEntry<StressStorageCell> = REGISTRATE
-            .item("stress_storage_cell_16k") { _ -> StressStorageCell(Item.Properties(), 1.5, 16, 8, 1) }
+            .item("stress_storage_cell_16k") { _ -> StressStorageCell(Item.Properties(), 1.5, 16, 8, 1, { ANDESITE_STRESS_CELL_HOUSING.get() }, { STRESS_COMPONENT_16K.get() }) }
             .register()
         val STRESS_CELL_64K: ItemEntry<StressStorageCell> = REGISTRATE
-            .item("stress_storage_cell_64k") { _ -> StressStorageCell(Item.Properties(), 2.0, 64, 8, 1) }
+            .item("stress_storage_cell_64k") { _ -> StressStorageCell(Item.Properties(), 2.0, 64, 8, 1, { ANDESITE_STRESS_CELL_HOUSING.get() }, { STRESS_COMPONENT_64K.get() }) }
             .register()
         val STRESS_CELL_256K: ItemEntry<StressStorageCell> = REGISTRATE
-            .item("stress_storage_cell_256k") { _ -> StressStorageCell(Item.Properties(), 2.5, 256, 8, 1) }
+            .item("stress_storage_cell_256k") { _ -> StressStorageCell(Item.Properties(), 2.5, 256, 8, 1, { ANDESITE_STRESS_CELL_HOUSING.get() }, { STRESS_COMPONENT_256K.get() }) }
             .register()
         val STRESS_CELL_1M: ItemEntry<StressStorageCell> = REGISTRATE
-            .item("stress_storage_cell_1m") { _ -> StressStorageCell(Item.Properties(), 3.0, 1024, 8, 1) }
+            .item("stress_storage_cell_1m") { _ -> StressStorageCell(Item.Properties(), 3.0, 1024, 8, 1, { BRASS_STRESS_CELL_HOUSING.get() }, { STRESS_COMPONENT_1M.get() }) }
             .register()
         val STRESS_CELL_4M: ItemEntry<StressStorageCell> = REGISTRATE
-            .item("stress_storage_cell_4m") { _ -> StressStorageCell(Item.Properties(), 3.5, 4096, 8, 1) }
+            .item("stress_storage_cell_4m") { _ -> StressStorageCell(Item.Properties(), 3.5, 4096, 8, 1, { BRASS_STRESS_CELL_HOUSING.get() }, { STRESS_COMPONENT_4M.get() }) }
             .register()
         val STRESS_CELL_16M: ItemEntry<StressStorageCell> = REGISTRATE
-            .item("stress_storage_cell_16m") { _ -> StressStorageCell(Item.Properties(), 4.0, 16384, 8, 1) }
+            .item("stress_storage_cell_16m") { _ -> StressStorageCell(Item.Properties(), 4.0, 16384, 8, 1, { BRASS_STRESS_CELL_HOUSING.get() }, { STRESS_COMPONENT_16M.get() }) }
             .register()
         val STRESS_CELL_64M: ItemEntry<StressStorageCell> = REGISTRATE
-            .item("stress_storage_cell_64m") { _ -> StressStorageCell(Item.Properties(), 4.5, 65536, 8, 1) }
+            .item("stress_storage_cell_64m") { _ -> StressStorageCell(Item.Properties(), 4.5, 65536, 8, 1, { BRASS_STRESS_CELL_HOUSING.get() }, { STRESS_COMPONENT_64M.get() }) }
             .register()
         val STRESS_CELL_256M: ItemEntry<StressStorageCell> = REGISTRATE
-            .item("stress_storage_cell_256m") { _ -> StressStorageCell(Item.Properties(), 5.0, 262144, 8, 1) }
+            .item("stress_storage_cell_256m") { _ -> StressStorageCell(Item.Properties(), 5.0, 262144, 8, 1, { BRASS_STRESS_CELL_HOUSING.get() }, { STRESS_COMPONENT_256M.get() }) }
             .register()
         val CREATIVE_STRESS_CELL: ItemEntry<CreativeStressCell> = REGISTRATE
             .item("creative_stress_cell") { _ -> CreativeStressCell(Item.Properties()) }

@@ -2,10 +2,14 @@ package com.loliball.appliedcreate.energy
 
 import appeng.api.networking.energy.IPassiveEnergyGenerator
 import appeng.api.orientation.BlockOrientation
+import com.google.common.collect.ImmutableList
 import com.loliball.appliedcreate.AppliedCreate
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock
+import com.simibubi.create.foundation.blockEntity.SmartBlockEntity
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform
+import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsBoard
+import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsFormatter
 import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollValueBehaviour
 import com.simibubi.create.foundation.utility.CreateLang
 import net.createmod.catnip.math.VecHelper
@@ -13,8 +17,10 @@ import net.minecraft.ChatFormatting
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.network.chat.Component
+import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
+import net.minecraft.world.phys.BlockHitResult
 import net.minecraft.world.phys.Vec3
 import java.util.EnumSet
 import kotlin.math.abs
@@ -48,6 +54,7 @@ class KineticEnergyAcceptorBlockEntity(
                 return this@KineticEnergyAcceptorBlockEntity.level == null
                     || this@KineticEnergyAcceptorBlockEntity.level!!.isClientSide
                     || abs(speed) == 0f
+                    || getMultiplier() == 0
             }
         }
 
@@ -56,12 +63,10 @@ class KineticEnergyAcceptorBlockEntity(
 
     override fun addBehaviours(behaviours: MutableList<BlockEntityBehaviour>) {
         super.addBehaviours(behaviours)
-        stressMultiplier = ScrollValueBehaviour(
-            Component.translatable("appliedcreate.kinetic_energy_acceptor.multiplier"),
-            this,
-            AcceptorValueBoxTransform()
-        )
-        stressMultiplier.between(1, MAX_MULTIPLIER)
+        val label = Component.translatable("appliedcreate.kinetic_energy_acceptor.multiplier")
+        stressMultiplier = AcceptorScrollValueBehaviour(label, this, AcceptorValueBoxTransform())
+        stressMultiplier.between(0, MAX_MULTIPLIER)
+        stressMultiplier.withFormatter { v -> "${v}x" }
         stressMultiplier.value = 1
         stressMultiplier.withCallback { _ ->
             if (hasNetwork()) {
@@ -129,6 +134,21 @@ class KineticEnergyAcceptorBlockEntity(
                 .style(ChatFormatting.DARK_GRAY))
             .forGoggles(tooltip, 1)
         return true
+    }
+
+    private class AcceptorScrollValueBehaviour(
+        label: Component,
+        be: SmartBlockEntity,
+        slot: ValueBoxTransform
+    ) : ScrollValueBehaviour(label, be, slot) {
+
+        override fun createBoard(player: Player, hitResult: BlockHitResult): ValueSettingsBoard {
+            return ValueSettingsBoard(
+                label, max, 1,
+                ImmutableList.of(label),
+                ValueSettingsFormatter { settings -> CreateLang.number(settings.value().toDouble()).text("x").component() }
+            )
+        }
     }
 
     private inner class AcceptorValueBoxTransform : ValueBoxTransform.Sided() {
