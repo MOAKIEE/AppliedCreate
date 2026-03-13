@@ -53,10 +53,6 @@ Base stress impact: 64 SU per RPM (at ×1 multiplier). Scales linearly with the 
 4. **Scroll** on the block to adjust the stress multiplier if needed
 5. The acceptor will immediately begin generating AE power
 
-## Crafting
-
-<RecipeFor id="appliedcreate:kinetic_energy_acceptor" />
-
 ## Tips
 
 - Higher multiplier = more AE power but more stress consumed from the kinetic network

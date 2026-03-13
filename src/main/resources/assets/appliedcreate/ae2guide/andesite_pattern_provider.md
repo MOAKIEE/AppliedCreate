@@ -63,10 +63,6 @@ When the ME system receives a crafting request, the provider will:
 4. Distribute each ingredient to the correct crafter slot according to the recipe layout
 5. Signal the crafters to begin crafting
 
-## Crafting
-
-<RecipeFor id="appliedcreate:andesite_pattern_provider" />
-
 ## Upgrading
 
 Use a <ItemLink id="appliedcreate:brass_pattern_provider_upgrade" /> on the Andesite Pattern Provider to upgrade it to a <ItemLink id="appliedcreate:brass_pattern_provider" /> with 36 pattern slots. All existing patterns are preserved during the upgrade.

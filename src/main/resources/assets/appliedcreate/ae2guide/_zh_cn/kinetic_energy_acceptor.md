@@ -53,10 +53,6 @@ item_ids:
 4. 如需调整，**滚轮**方块以改变应力倍率
 5. 接收器将立即开始产生AE能量
 
-## 合成配方
-
-<RecipeFor id="appliedcreate:kinetic_energy_acceptor" />
-
 ## 提示
 
 - 更高的倍率 = 更多AE能量，但消耗动力网络更多应力

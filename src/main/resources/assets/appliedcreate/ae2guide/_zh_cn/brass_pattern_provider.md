@@ -47,10 +47,6 @@ item_ids:
 
 ## 获取方式
 
-### 直接合成
-
-<RecipeFor id="appliedcreate:brass_pattern_provider" />
-
 ### 从安山版升级
 
 对已有的 <ItemLink id="appliedcreate:andesite_pattern_provider" /> 使用 <ItemLink id="appliedcreate:brass_pattern_provider_upgrade" /> 即可原地升级。安山版中已存放的所有样板将被保留。

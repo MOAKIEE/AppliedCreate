@@ -63,10 +63,6 @@ item_ids:
 4. 按照配方布局将每种材料分配到正确的合成器槽位
 5. 向合成器发送开始合成的信号
 
-## 合成配方
-
-<RecipeFor id="appliedcreate:andesite_pattern_provider" />
-
 ## 升级
 
 对安山样板供应器使用 <ItemLink id="appliedcreate:brass_pattern_provider_upgrade" /> 即可升级为拥有36个样板槽的 <ItemLink id="appliedcreate:brass_pattern_provider" />。升级过程中所有已存放的样板将被保留。

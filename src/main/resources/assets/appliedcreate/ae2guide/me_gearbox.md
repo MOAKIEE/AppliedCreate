@@ -57,10 +57,6 @@ The gearbox consumes Create rotation and inserts stress values into ME storage:
 4. For Export mode, ensure your ME network has stress stored in stress storage cells
 5. For Import mode, ensure a kinetic source is driving the gearbox
 
-## Crafting
-
-<RecipeFor id="appliedcreate:me_gearbox" />
-
 ## Tips
 
 - The transfer rate displayed in the goggle tooltip shows how much stress (SU/t) is being moved between ME and kinetic networks
