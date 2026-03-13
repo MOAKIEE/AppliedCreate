@@ -3,14 +3,15 @@ package com.loliball.appliedcreate
 import com.loliball.appliedcreate.storage.StressKeyRenderHandler
 import com.loliball.appliedcreate.patternprovider.BrassPatternProviderMenu
 import com.loliball.appliedcreate.patternprovider.AndesitePatternProviderMenu
+// [HIDDEN] Blueprint Cannon & Spatial Assembler — registered for compilation, hidden from creative tab/recipes
 import com.loliball.appliedcreate.cannon.MEBlueprintCannonMenu
 import com.loliball.appliedcreate.cannon.MEBlueprintCannonRenderer
+import com.loliball.appliedcreate.cannon.MEBlueprintCannonScreen
+import com.loliball.appliedcreate.spatial.SpatialAssemblerScreen
 import com.loliball.appliedcreate.energy.KineticEnergyAcceptorRenderer
 import com.loliball.appliedcreate.energy.MEGearboxMenu
 import com.loliball.appliedcreate.energy.MEGearboxRenderer
 import com.loliball.appliedcreate.energy.MEGearboxScreen
-import com.loliball.appliedcreate.cannon.MEBlueprintCannonScreen
-import com.loliball.appliedcreate.spatial.SpatialAssemblerScreen
 import com.loliball.appliedcreate.storage.StressStorageCell
 
 import appeng.client.gui.style.ScreenStyle
@@ -51,6 +52,7 @@ object ClientSetup {
             },
             "/screens/appliedcreate/andesite_pattern_provider.json"
         )
+        // [HIDDEN] Blueprint Cannon & Spatial Assembler — screens registered for compilation
         event.register(
             AppliedCreate.ME_BLUEPRINT_CANNON_MENU.get(),
             ::MEBlueprintCannonScreen

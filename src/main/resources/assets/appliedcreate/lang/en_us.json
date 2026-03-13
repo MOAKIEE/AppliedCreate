@@ -58,6 +58,8 @@
     "appliedcreate.me_gearbox.transfer": "Transfer: ",
     "appliedcreate.me_gearbox.transfer.unit": " SU/t",
 
+    "appliedcreate.kinetic_energy_acceptor.multiplier": "Stress Multiplier",
+
     "block.appliedcreate.whichball_skin_doll": "Whichball Skin Doll",
 
     "gui.appliedcreate.me_blueprint_cannon.viewMaterials": "View Materials",

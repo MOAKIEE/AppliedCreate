@@ -44,11 +44,9 @@ class MEGearboxBlockEntity(
         /** Min/Max RPM */
         const val MIN_SPEED = 1
         const val MAX_SPEED = 256
-        /** Default stress capacity/impact per RPM */
         const val DEFAULT_STRESS = 64.0f
-        /** Min/Max stress per RPM */
-        const val MIN_STRESS = 1.0f
-        const val MAX_STRESS = 4096.0f
+        const val MIN_STRESS = 0.0f
+        const val MAX_STRESS = 65536.0f
         /** Base stress units transferred to/from ME per tick at 256 RPM */
         const val BASE_STRESS_TRANSFER_PER_256_RPM = 16384L
     }
@@ -262,8 +260,10 @@ class MEGearboxBlockEntity(
         configuredSpeed = compound.getInt("GearboxSpeed").let {
             if (it == 0) DEFAULT_SPEED else it.coerceIn(MIN_SPEED, MAX_SPEED)
         }
-        configuredStress = compound.getFloat("GearboxStress").let {
-            if (it == 0f) DEFAULT_STRESS else it.coerceIn(MIN_STRESS, MAX_STRESS)
+        configuredStress = if (compound.contains("GearboxStress")) {
+            compound.getFloat("GearboxStress").coerceIn(MIN_STRESS, MAX_STRESS)
+        } else {
+            DEFAULT_STRESS
         }
     }
 

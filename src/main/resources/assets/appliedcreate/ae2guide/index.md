@@ -7,11 +7,11 @@ navigation:
 
 # Applied Create
 
-Applied Create bridges [Create](https://www.curseforge.com/minecraft/mc-mods/create) mechanical crafting with [Applied Energistics 2](https://www.curseforge.com/minecraft/mc-mods/applied-energistics-2) automation.
+Applied Create bridges [Create](https://www.curseforge.com/minecraft/mc-mods/create) mechanical kinetics with [Applied Energistics 2](https://www.curseforge.com/minecraft/mc-mods/applied-energistics-2) automation.
 
-It introduces specialized pattern providers that understand Create's Mechanical Crafter grid layout, automatically distributing ingredients to the correct slots — enabling fully automated mechanical crafting driven by your ME network.
+It introduces specialized pattern providers for mechanical crafting, stress storage cells for ME networks, P2P tunnels for kinetic energy, and converter blocks that bridge the two energy systems.
 
-## Items & Blocks
+## Pattern Providers
 
 <Row gap="20">
 <Column>
@@ -34,14 +34,62 @@ Upgraded pattern provider with 36 processing pattern slots. Ideal for complex au
 </Column>
 </Row>
 
-## How It Works
+## Energy Conversion
 
-1. Create AE2 **processing patterns** whose inputs match the mechanical crafting recipe ingredients and whose output matches the recipe result
-2. Place a pattern provider **adjacent** to your Mechanical Crafter array
-3. Connect the provider to your ME network and insert the processing patterns
-4. When a crafting request arrives, the provider automatically identifies the matching recipe and distributes ingredients into the correct Mechanical Crafter slots
-5. The Mechanical Crafters then complete the recipe — the finished item can be returned to the ME network via any method (e.g. funnel, chute, or import bus)
+<Row gap="20">
+<Column>
 
-## Upgrade Path
+<ItemImage id="appliedcreate:me_gearbox" scale="4" />
 
-Use the <ItemLink id="appliedcreate:brass_pattern_provider_upgrade" /> on an Andesite Pattern Provider to upgrade it to a Brass Pattern Provider in-place, preserving all stored patterns.
+### <ItemLink id="appliedcreate:me_gearbox" />
+
+Bidirectional converter between ME stress storage and Create kinetic networks. Configurable speed, stress multiplier, and import/export mode via an AE2-style GUI.
+
+</Column>
+<Column>
+
+<ItemImage id="appliedcreate:kinetic_energy_acceptor" scale="4" />
+
+### <ItemLink id="appliedcreate:kinetic_energy_acceptor" />
+
+Converts Create rotational energy into AE2 grid power (AE/t). Power your ME system with kinetic energy.
+
+</Column>
+</Row>
+
+## Stress Transmission
+
+<Row gap="20">
+<Column>
+
+<ItemImage id="appliedcreate:stress_p2p_tunnel" scale="4" />
+
+### <ItemLink id="appliedcreate:stress_p2p_tunnel" />
+
+Transmit Create rotational stress through AE2 P2P tunnels. Bridge kinetic networks across your ME system without physical connections.
+
+</Column>
+</Row>
+
+## Stress Storage
+
+<Row gap="20">
+<Column>
+
+<ItemImage id="appliedcreate:stress_storage_cell_1k" scale="4" />
+
+### Stress Storage Cells
+
+Store Create rotational stress values in your ME network. Available in 10 tiers from 1k to 256M, with two housing types: Andesite (1k–256k) and Brass (1M–256M).
+
+</Column>
+<Column>
+
+<ItemImage id="appliedcreate:stress_processor" scale="4" />
+
+### Stress Crafting Materials
+
+Specialized circuit boards, processors, storage assemblies, and cell housings for building stress storage cells. Follows the AE2 crafting progression with a Create twist.
+
+</Column>
+</Row>

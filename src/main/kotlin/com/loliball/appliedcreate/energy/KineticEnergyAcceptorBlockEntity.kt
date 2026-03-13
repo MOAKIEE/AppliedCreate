@@ -4,25 +4,21 @@ import appeng.api.networking.energy.IPassiveEnergyGenerator
 import appeng.api.orientation.BlockOrientation
 import com.loliball.appliedcreate.AppliedCreate
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock
+import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
+import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform
+import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollValueBehaviour
 import com.simibubi.create.foundation.utility.CreateLang
+import net.createmod.catnip.math.VecHelper
 import net.minecraft.ChatFormatting
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.network.chat.Component
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
+import net.minecraft.world.phys.Vec3
 import java.util.EnumSet
 import kotlin.math.abs
 
-/**
- * Kinetic Energy Acceptor — receives Create rotational kinetic energy (SU) and converts
- * it into AE2 network energy (AE/t) via IPassiveEnergyGenerator.
- *
- * Conversion formula: AE/t = AE_PER_256_RPM * (|RPM| / 256)
- * Stress impact: MAX_STRESS_SU / 256f
- *
- * Grid exposed on sides perpendicular to the shaft axis (cable connects to sides, not shaft ends).
- */
 class KineticEnergyAcceptorBlockEntity(
     type: BlockEntityType<*>,
     pos: BlockPos,
@@ -30,13 +26,14 @@ class KineticEnergyAcceptorBlockEntity(
 ) : NetworkedKineticBlockEntity(type, pos, state) {
 
     companion object {
-        /** AE/t generated at 256 RPM */
         const val AE_PER_256_RPM = 640.0
-        /** Stress impact (SU) at 256 RPM */
-        const val MAX_STRESS_SU = 16384
+        const val BASE_STRESS_SU = 16384
+        const val MAX_MULTIPLIER = 16
     }
 
     private var aeValue: Double = 0.0
+
+    lateinit var stressMultiplier: ScrollValueBehaviour
 
     init {
         mainNode.setVisualRepresentation(AppliedCreate.KINETIC_ENERGY_ACCEPTOR_BLOCK.asItem())
@@ -57,7 +54,27 @@ class KineticEnergyAcceptorBlockEntity(
         mainNode.addService(IPassiveEnergyGenerator::class.java, passiveGenerator)
     }
 
-    // ── Grid connectivity: expose on sides perpendicular to shaft ──
+    override fun addBehaviours(behaviours: MutableList<BlockEntityBehaviour>) {
+        super.addBehaviours(behaviours)
+        stressMultiplier = ScrollValueBehaviour(
+            Component.translatable("appliedcreate.kinetic_energy_acceptor.multiplier"),
+            this,
+            AcceptorValueBoxTransform()
+        )
+        stressMultiplier.between(1, MAX_MULTIPLIER)
+        stressMultiplier.value = 1
+        stressMultiplier.withCallback { _ ->
+            if (hasNetwork()) {
+                val network = getOrCreateNetwork()
+                network.updateStressFor(this, calculateStressApplied())
+                network.updateStress()
+            }
+            notifyUpdate()
+        }
+        behaviours.add(stressMultiplier)
+    }
+
+    fun getMultiplier(): Int = if (::stressMultiplier.isInitialized) stressMultiplier.value else 1
 
     override fun getGridConnectableSides(orientation: BlockOrientation): Set<Direction> {
         val shaft = blockState.getValue(DirectionalKineticBlock.FACING)
@@ -69,27 +86,21 @@ class KineticEnergyAcceptorBlockEntity(
         exposeSides()
     }
 
-    // ── Stress ──
-
     override fun calculateStressApplied(): Float {
-        val impact = MAX_STRESS_SU / 256f
+        val impact = (BASE_STRESS_SU / 256f) * getMultiplier()
         this.lastStressApplied = impact
         return impact
     }
 
-    // ── Tick ──
-
     override fun tick() {
         super.tick()
 
-        val newAE = AE_PER_256_RPM * (abs(speed.toInt()) / 256.0)
+        val newAE = AE_PER_256_RPM * getMultiplier() * (abs(speed.toInt()) / 256.0)
         if (newAE.compareTo(aeValue) != 0) {
             aeValue = newAE
             mainNode.ifPresent { grid, node -> grid.tickManager.wakeDevice(node) }
         }
     }
-
-    // ── Goggle Tooltip ──
 
     override fun addToGoggleTooltip(tooltip: MutableList<Component>, isPlayerSneaking: Boolean): Boolean {
         CreateLang.translate("gui.goggles.generator_stats")
@@ -118,5 +129,19 @@ class KineticEnergyAcceptorBlockEntity(
                 .style(ChatFormatting.DARK_GRAY))
             .forGoggles(tooltip, 1)
         return true
+    }
+
+    private inner class AcceptorValueBoxTransform : ValueBoxTransform.Sided() {
+
+        override fun getSouthLocation(): Vec3 {
+            return VecHelper.voxelSpace(8.0, 8.0, 15.5)
+        }
+
+        override fun isSideActive(state: BlockState, direction: Direction): Boolean {
+            val shaft = state.getValue(DirectionalKineticBlock.FACING)
+            return direction.axis != shaft.axis
+        }
+
+        override fun getScale(): Float = 0.5f
     }
 }

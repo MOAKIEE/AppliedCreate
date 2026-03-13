@@ -1,5 +1,6 @@
 package com.loliball.appliedcreate
 
+// [HIDDEN] Blueprint Cannon & Spatial Assembler — registrations kept for compilation, hidden from creative tab/recipes
 import com.loliball.appliedcreate.cannon.MEBlueprintCannonBlock
 import com.loliball.appliedcreate.cannon.MEBlueprintCannonBlockEntity
 import com.loliball.appliedcreate.cannon.MEBlueprintCannonMenu
@@ -182,7 +183,7 @@ class AppliedCreate {
             .register()
 
         // ──────────────────────────────────────────────────────────────
-        //  ME Blueprint Cannon
+        //  ME Blueprint Cannon  [HIDDEN] — registered but not in creative tab/recipes
         // ──────────────────────────────────────────────────────────────
         val ME_BLUEPRINT_CANNON_BLOCK: BlockEntry<MEBlueprintCannonBlock> = REGISTRATE
             .block("me_blueprint_cannon") { props ->
@@ -201,7 +202,7 @@ class AppliedCreate {
         val ME_BLUEPRINT_CANNON_MENU: DeferredHolder<MenuType<*>, MenuType<MEBlueprintCannonMenu>> =
             MENU_TYPES.register("me_blueprint_cannon") { ->
                 IMenuTypeExtension.create { windowId, inv, buf ->
-                    MEBlueprintCannonMenu(MENU_TYPES.getEntries().find { it.key!!.location().path == "me_blueprint_cannon" }!!.get() as MenuType<*>, windowId, inv, buf)
+                    MEBlueprintCannonMenu(ME_BLUEPRINT_CANNON_MENU.get(), windowId, inv, buf)
                 }
             }
 
@@ -288,7 +289,7 @@ class AppliedCreate {
             .register()
 
         // ──────────────────────────────────────────────────────────────
-        //  Spatial Assembler
+        //  Spatial Assembler  [HIDDEN] — registered but not in creative tab/recipes
         // ──────────────────────────────────────────────────────────────
         val SPATIAL_ASSEMBLER_BLOCK: BlockEntry<SpatialAssemblerBlock> = REGISTRATE
             .block("spatial_assembler") { props ->
@@ -307,7 +308,7 @@ class AppliedCreate {
         val SPATIAL_ASSEMBLER_MENU: DeferredHolder<MenuType<*>, MenuType<SpatialAssemblerMenu>> =
             MENU_TYPES.register("spatial_assembler") { ->
                 IMenuTypeExtension.create { windowId, inv, buf ->
-                    SpatialAssemblerMenu(MENU_TYPES.getEntries().find { it.key!!.location().path == "spatial_assembler" }!!.get() as MenuType<*>, windowId, inv, buf)
+                    SpatialAssemblerMenu(SPATIAL_ASSEMBLER_MENU.get(), windowId, inv, buf)
                 }
             }
 
@@ -399,7 +400,7 @@ class AppliedCreate {
                     output.accept(BRASS_PATTERN_PROVIDER_PART_ITEM.get())
                     output.accept(BRASS_PATTERN_PROVIDER_UPGRADE_ITEM.get())
                     output.accept(STRESS_P2P_TUNNEL_PART_ITEM.get())
-                    output.accept(ME_BLUEPRINT_CANNON_BLOCK.asStack())
+                    // output.accept(ME_BLUEPRINT_CANNON_BLOCK.asStack())  // [HIDDEN]
                     output.accept(KINETIC_ENERGY_ACCEPTOR_BLOCK.asStack())
                     output.accept(ME_GEARBOX_BLOCK.asStack())
                     output.accept(WHICHBALL_SKIN_DOLL_BLOCK.asStack())
@@ -415,7 +416,7 @@ class AppliedCreate {
                     // Storage cells
                     STRESS_CELLS.forEach { output.accept(it.get()) }
                     output.accept(CREATIVE_STRESS_CELL.get())
-                    output.accept(SPATIAL_ASSEMBLER_BLOCK.asStack())
+                    // output.accept(SPATIAL_ASSEMBLER_BLOCK.asStack())  // [HIDDEN]
                 }
                 .build()
         }
@@ -519,6 +520,7 @@ class AppliedCreate {
                 AEKeyTypes.register(StressKeyType.TYPE)
             }
         }
+        // [HIDDEN] Blueprint Cannon network payload — registered for compilation, block hidden from creative tab
         bus.addListener { event: RegisterPayloadHandlersEvent ->
             val registrar = event.registrar(MOD_ID)
             registrar.playToServer(
@@ -586,6 +588,7 @@ class AppliedCreate {
             BRASS_PATTERN_PROVIDER_BE.get(),
             BRASS_PATTERN_PROVIDER_BLOCK.asItem()
         )
+        // [HIDDEN] Blueprint Cannon
         AEBaseBlockEntity.registerBlockEntityItem(
             ME_BLUEPRINT_CANNON_BE.get(),
             ME_BLUEPRINT_CANNON_BLOCK.asItem()
@@ -598,6 +601,7 @@ class AppliedCreate {
             ME_GEARBOX_BE.get(),
             ME_GEARBOX_BLOCK.asItem()
         )
+        // [HIDDEN] Spatial Assembler
         AEBaseBlockEntity.registerBlockEntityItem(
             SPATIAL_ASSEMBLER_BE.get(),
             SPATIAL_ASSEMBLER_BLOCK.asItem()
@@ -636,7 +640,7 @@ class AppliedCreate {
 
             // Register stress value for kinetic energy acceptor
             BlockStressValues.IMPACTS.register(
-                KINETIC_ENERGY_ACCEPTOR_BLOCK.get(), { KineticEnergyAcceptorBlockEntity.MAX_STRESS_SU / 256.0 }
+                KINETIC_ENERGY_ACCEPTOR_BLOCK.get(), { KineticEnergyAcceptorBlockEntity.BASE_STRESS_SU / 256.0 }
             )
 
             // Register stress values for ME Gearbox
@@ -647,7 +651,7 @@ class AppliedCreate {
                 ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.DEFAULT_STRESS.toDouble() }
             )
 
-            // Register upgrade cards for ME Blueprint Cannon
+            // [HIDDEN] Blueprint Cannon upgrade cards
             Upgrades.add(AEItems.SPEED_CARD, ME_BLUEPRINT_CANNON_BLOCK.asItem(), 4)
             Upgrades.add(AEItems.CRAFTING_CARD, ME_BLUEPRINT_CANNON_BLOCK.asItem(), 1)
 
@@ -667,6 +671,7 @@ class AppliedCreate {
             BRASS_PATTERN_PROVIDER_BE.get()
         ) { be, _ -> be }
 
+        // [HIDDEN] Blueprint Cannon
         event.registerBlockEntity(
             AECapabilities.IN_WORLD_GRID_NODE_HOST,
             ME_BLUEPRINT_CANNON_BE.get()
@@ -682,6 +687,7 @@ class AppliedCreate {
             ME_GEARBOX_BE.get()
         ) { be, _ -> be }
 
+        // [HIDDEN] Spatial Assembler
         event.registerBlockEntity(
             AECapabilities.IN_WORLD_GRID_NODE_HOST,
             SPATIAL_ASSEMBLER_BE.get()

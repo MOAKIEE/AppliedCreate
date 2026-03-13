@@ -7,11 +7,11 @@ navigation:
 
 # 应用机动
 
-应用机动将 [机械动力](https://www.curseforge.com/minecraft/mc-mods/create) 的动力合成与 [应用能源2](https://www.curseforge.com/minecraft/mc-mods/applied-energistics-2) 的自动化系统连接起来。
+应用机动将 [机械动力](https://www.curseforge.com/minecraft/mc-mods/create) 的动力系统与 [应用能源2](https://www.curseforge.com/minecraft/mc-mods/applied-energistics-2) 的自动化系统连接起来。
 
-它引入了专用的样板供应器，能够理解机械动力的动力合成器网格布局，自动将材料分配到正确的槽位——实现由ME网络驱动的全自动动力合成。
+它引入了专用的样板供应器、应力存储元件、动力P2P通道以及能量转换方块，实现两个模组的深度联动。
 
-## 物品与方块
+## 样板供应器
 
 <Row gap="20">
 <Column>
@@ -34,14 +34,62 @@ navigation:
 </Column>
 </Row>
 
-## 工作原理
+## 能量转换
 
-1. 在AE2样板终端中创建**处理样板**，其输入对应动力合成配方的材料，输出对应配方产物
-2. 将样板供应器放置在动力合成器阵列**旁边**
-3. 将供应器连接到ME网络并放入处理样板
-4. 当合成请求到达时，供应器会自动识别匹配的配方，并将材料分配到正确的动力合成器槽位
-5. 动力合成器随后完成配方合成——成品可通过任意方式（如漏斗、溜槽或输入总线）返回ME网络
+<Row gap="20">
+<Column>
 
-## 升级路径
+<ItemImage id="appliedcreate:me_gearbox" scale="4" />
 
-对安山样板供应器使用 <ItemLink id="appliedcreate:brass_pattern_provider_upgrade" /> 即可原地升级为黄铜样板供应器，已存放的所有样板将被保留。
+### <ItemLink id="appliedcreate:me_gearbox" />
+
+ME网络应力存储与机械动力动力网络之间的双向转换器。可通过AE2风格的GUI配置转速、应力倍率和输入/输出模式。
+
+</Column>
+<Column>
+
+<ItemImage id="appliedcreate:kinetic_energy_acceptor" scale="4" />
+
+### <ItemLink id="appliedcreate:kinetic_energy_acceptor" />
+
+将机械动力的旋转能量转化为AE2电网能量（AE/t）。用动力驱动你的ME系统。
+
+</Column>
+</Row>
+
+## 应力传输
+
+<Row gap="20">
+<Column>
+
+<ItemImage id="appliedcreate:stress_p2p_tunnel" scale="4" />
+
+### <ItemLink id="appliedcreate:stress_p2p_tunnel" />
+
+通过AE2的P2P通道传输机械动力的旋转应力。无需物理连接即可在ME系统中桥接动力网络。
+
+</Column>
+</Row>
+
+## 应力存储
+
+<Row gap="20">
+<Column>
+
+<ItemImage id="appliedcreate:stress_storage_cell_1k" scale="4" />
+
+### 应力存储元件
+
+在ME网络中存储机械动力的旋转应力值。提供从1k到256M共10个容量等级，包含安山（1k–256k）和黄铜（1M–256M）两种外壳类型。
+
+</Column>
+<Column>
+
+<ItemImage id="appliedcreate:stress_processor" scale="4" />
+
+### 应力合成材料
+
+用于制造应力存储元件的专用电路板、处理器、存储组件和元件外壳。遵循AE2的合成进阶体系，并融入机械动力风格。
+
+</Column>
+</Row>
