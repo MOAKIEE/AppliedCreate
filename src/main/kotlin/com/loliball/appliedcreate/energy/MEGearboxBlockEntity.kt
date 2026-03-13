@@ -190,10 +190,8 @@ class MEGearboxBlockEntity(
         storage: appeng.api.storage.MEStorage,
         actionSource: IActionSource
     ) {
-        // Simulate extraction first to check if stress is available
         val rpm = abs(speed)
         val stressNeeded = if (rpm == 0f) {
-            // When not spinning yet, check if we can extract at configured RPM
             getTransferRate(configuredSpeed.toFloat())
         } else {
             getTransferRate(rpm)
@@ -210,14 +208,13 @@ class MEGearboxBlockEntity(
             energy, storage, StressKey.INSTANCE, stressNeeded, actionSource, Actionable.SIMULATE
         )
         val wasSupplied = hasStressSupply
-        hasStressSupply = simulated > 0
+        hasStressSupply = simulated >= stressNeeded
 
         if (hasStressSupply != wasSupplied) {
             updateGeneratedRotation()
         }
 
         if (hasStressSupply && rpm > 0f) {
-            // Actually extract stress
             StorageHelper.poweredExtraction(
                 energy, storage, StressKey.INSTANCE, stressNeeded, actionSource, Actionable.MODULATE
             )
