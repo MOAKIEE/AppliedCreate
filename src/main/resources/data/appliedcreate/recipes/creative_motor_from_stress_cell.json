@@ -1,0 +1,13 @@
+{
+    "type": "minecraft:crafting_shapeless",
+    "category": "misc",
+    "ingredients": [
+        {
+            "item": "appliedcreate:creative_stress_cell"
+        }
+    ],
+    "result": {
+        "item": "create:creative_motor",
+        "count": 1
+    }
+}
