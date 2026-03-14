@@ -11,6 +11,7 @@
         "C": { "item": "ae2:fluix_glass_cable" },
         "S": { "item": "create:shaft" }
     },
+    "accept_mirrored": true,
     "result": {
         "item": "appliedcreate:kinetic_energy_acceptor",
         "count": 1

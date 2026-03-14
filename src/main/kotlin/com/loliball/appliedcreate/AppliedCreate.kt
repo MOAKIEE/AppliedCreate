@@ -13,6 +13,7 @@ import com.loliball.appliedcreate.energy.KineticEnergyAcceptorBlock
 import com.loliball.appliedcreate.energy.KineticEnergyAcceptorBlockEntity
 import com.loliball.appliedcreate.energy.MEGearboxBlock
 import com.loliball.appliedcreate.energy.MEGearboxBlockEntity
+import com.loliball.appliedcreate.energy.MEGearboxMenu
 import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
 import com.loliball.appliedcreate.item.BrassPatternProviderUpgradeItem
 import com.loliball.appliedcreate.item.MechanicalCraftingPartItem
@@ -22,9 +23,11 @@ import com.loliball.appliedcreate.kinetic.StressP2PCompanionBlockEntity
 import com.loliball.appliedcreate.part.AndesitePatternProviderPart
 import com.loliball.appliedcreate.part.BrassPatternProviderPart
 import com.loliball.appliedcreate.p2p.StressP2PTunnelPart
+import com.loliball.appliedcreate.storage.CreativeStressCell
 import com.loliball.appliedcreate.storage.StressKeyType
 import com.loliball.appliedcreate.storage.StressStorageCell
 import appeng.api.features.P2PTunnelAttunement
+import appeng.api.storage.StorageCells
 import appeng.api.stacks.AEKeyTypes
 import appeng.blockentity.AEBaseBlockEntity
 import appeng.helpers.patternprovider.PatternProviderLogicHost
@@ -223,6 +226,8 @@ class AppliedCreate {
         @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
         lateinit var ME_GEARBOX_BE: RegistryObject<BlockEntityType<MEGearboxBlockEntity>>
 
+        lateinit var ME_GEARBOX_MENU: RegistryObject<MenuType<MEGearboxMenu>>
+
         init {
             KINETIC_ENERGY_ACCEPTOR_BE = BLOCK_ENTITY_TYPES.register("kinetic_energy_acceptor") {
                 BlockEntityType.Builder.of(
@@ -235,6 +240,11 @@ class AppliedCreate {
                     { pos, state -> MEGearboxBlockEntity(ME_GEARBOX_BE.get(), pos, state) },
                     ME_GEARBOX_BLOCK.get()
                 ).build(null)
+            }
+            ME_GEARBOX_MENU = MENU_TYPES.register("me_gearbox") {
+                createBlockEntityMenuType(MEGearboxBlockEntity::class.java) { _, windowId, inv, host ->
+                    MEGearboxMenu(ME_GEARBOX_MENU.get(), windowId, inv, host)
+                }
             }
         }
 
@@ -303,34 +313,48 @@ class AppliedCreate {
 
         // ── Stress Storage Cells ──
         val STRESS_CELL_1K: RegistryObject<Item> = ITEMS.register("stress_storage_cell_1k") {
-            StressStorageCell(Item.Properties(), 0.5, 1, 8, 1)
+            StressStorageCell(Item.Properties(), 0.5, 1, 8, 1,
+                { ANDESITE_STRESS_CELL_HOUSING.get() }, { STRESS_STORAGE_COMPONENT_1K.get() })
         }
         val STRESS_CELL_4K: RegistryObject<Item> = ITEMS.register("stress_storage_cell_4k") {
-            StressStorageCell(Item.Properties(), 1.0, 4, 8, 1)
+            StressStorageCell(Item.Properties(), 1.0, 4, 8, 1,
+                { ANDESITE_STRESS_CELL_HOUSING.get() }, { STRESS_STORAGE_COMPONENT_4K.get() })
         }
         val STRESS_CELL_16K: RegistryObject<Item> = ITEMS.register("stress_storage_cell_16k") {
-            StressStorageCell(Item.Properties(), 1.5, 16, 8, 1)
+            StressStorageCell(Item.Properties(), 1.5, 16, 8, 1,
+                { ANDESITE_STRESS_CELL_HOUSING.get() }, { STRESS_STORAGE_COMPONENT_16K.get() })
         }
         val STRESS_CELL_64K: RegistryObject<Item> = ITEMS.register("stress_storage_cell_64k") {
-            StressStorageCell(Item.Properties(), 2.0, 64, 8, 1)
+            StressStorageCell(Item.Properties(), 2.0, 64, 8, 1,
+                { ANDESITE_STRESS_CELL_HOUSING.get() }, { STRESS_STORAGE_COMPONENT_64K.get() })
         }
         val STRESS_CELL_256K: RegistryObject<Item> = ITEMS.register("stress_storage_cell_256k") {
-            StressStorageCell(Item.Properties(), 2.5, 256, 8, 1)
+            StressStorageCell(Item.Properties(), 2.5, 256, 8, 1,
+                { ANDESITE_STRESS_CELL_HOUSING.get() }, { STRESS_STORAGE_COMPONENT_256K.get() })
         }
         val STRESS_CELL_1M: RegistryObject<Item> = ITEMS.register("stress_storage_cell_1m") {
-            StressStorageCell(Item.Properties(), 3.0, 1024, 8, 1)
+            StressStorageCell(Item.Properties(), 3.0, 1024, 8, 1,
+                { BRASS_STRESS_CELL_HOUSING.get() }, { STRESS_STORAGE_COMPONENT_1M.get() })
         }
         val STRESS_CELL_4M: RegistryObject<Item> = ITEMS.register("stress_storage_cell_4m") {
-            StressStorageCell(Item.Properties(), 3.5, 4096, 8, 1)
+            StressStorageCell(Item.Properties(), 3.5, 4096, 8, 1,
+                { BRASS_STRESS_CELL_HOUSING.get() }, { STRESS_STORAGE_COMPONENT_4M.get() })
         }
         val STRESS_CELL_16M: RegistryObject<Item> = ITEMS.register("stress_storage_cell_16m") {
-            StressStorageCell(Item.Properties(), 4.0, 16384, 8, 1)
+            StressStorageCell(Item.Properties(), 4.0, 16384, 8, 1,
+                { BRASS_STRESS_CELL_HOUSING.get() }, { STRESS_STORAGE_COMPONENT_16M.get() })
         }
         val STRESS_CELL_64M: RegistryObject<Item> = ITEMS.register("stress_storage_cell_64m") {
-            StressStorageCell(Item.Properties(), 4.5, 65536, 8, 1)
+            StressStorageCell(Item.Properties(), 4.5, 65536, 8, 1,
+                { BRASS_STRESS_CELL_HOUSING.get() }, { STRESS_STORAGE_COMPONENT_64M.get() })
         }
         val STRESS_CELL_256M: RegistryObject<Item> = ITEMS.register("stress_storage_cell_256m") {
-            StressStorageCell(Item.Properties(), 5.0, 262144, 8, 1)
+            StressStorageCell(Item.Properties(), 5.0, 262144, 8, 1,
+                { BRASS_STRESS_CELL_HOUSING.get() }, { STRESS_STORAGE_COMPONENT_256M.get() })
+        }
+
+        val CREATIVE_STRESS_CELL: RegistryObject<Item> = ITEMS.register("creative_stress_cell") {
+            CreativeStressCell(Item.Properties())
         }
 
         val STRESS_CELLS: List<RegistryObject<Item>> by lazy {
@@ -378,6 +402,7 @@ class AppliedCreate {
                     output.accept(BRASS_STRESS_CELL_HOUSING.get())
                     // Cells
                     STRESS_CELLS.forEach { output.accept(it.get()) }
+                    output.accept(CREATIVE_STRESS_CELL.get())
                 }
                 .build()
         }
@@ -407,6 +432,47 @@ class AppliedCreate {
             MenuOpener.addOpener(menuType) { player: Player, locator: MenuLocator, fromSubMenu: Boolean ->
                 if (player !is ServerPlayer) return@addOpener false
                 val host = locator.locate(player, PatternProviderLogicHost::class.java) ?: return@addOpener false
+                val title = Component.empty()
+                val menuProvider = SimpleMenuProvider({ wnd, p, _ ->
+                    val m = menuFactory(wnd, p, host)
+                    m.setLocator(locator)
+                    m
+                }, title)
+                NetworkHooks.openScreen(player, menuProvider) { buffer ->
+                    MenuLocators.writeToPacket(buffer, locator)
+                    buffer.writeBoolean(fromSubMenu)
+                }
+                true
+            }
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        private fun <H, T : appeng.menu.AEBaseMenu> createBlockEntityMenuType(
+            hostClass: Class<H>,
+            factory: (MenuType<T>, Int, net.minecraft.world.entity.player.Inventory, H) -> T
+        ): MenuType<T> {
+            var menuTypeHolder: MenuType<T>? = null
+            val menuType = IForgeMenuType.create { windowId, inv, buf ->
+                val locator = MenuLocators.readFromPacket(buf)
+                val host = locator.locate(inv.player, hostClass)
+                    ?: throw IllegalStateException("Could not find host of type ${hostClass.simpleName}")
+                val menu = factory(menuTypeHolder!!, windowId, inv, host)
+                menu.setLocator(locator)
+                menu.setReturnedFromSubScreen(buf.readBoolean())
+                menu
+            }
+            menuTypeHolder = menuType as MenuType<T>
+            return menuType
+        }
+
+        private fun <H, T : appeng.menu.AEBaseMenu> registerBlockEntityMenuOpener(
+            menuType: MenuType<T>,
+            hostClass: Class<H>,
+            menuFactory: (Int, net.minecraft.world.entity.player.Inventory, H) -> T
+        ) {
+            MenuOpener.addOpener(menuType) { player: Player, locator: MenuLocator, fromSubMenu: Boolean ->
+                if (player !is ServerPlayer) return@addOpener false
+                val host = locator.locate(player, hostClass) ?: return@addOpener false
                 val title = Component.empty()
                 val menuProvider = SimpleMenuProvider({ wnd, p, _ ->
                     val m = menuFactory(wnd, p, host)
@@ -543,16 +609,24 @@ class AppliedCreate {
 
             // Register stress value for kinetic energy acceptor
             com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
-                KINETIC_ENERGY_ACCEPTOR_BLOCK.get(), { KineticEnergyAcceptorBlockEntity.MAX_STRESS_SU / 256.0 }
+                KINETIC_ENERGY_ACCEPTOR_BLOCK.get(), { KineticEnergyAcceptorBlockEntity.BASE_STRESS_SU / 256.0 }
             )
 
             // Register stress values for ME Gearbox
             com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
-                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.BASE_STRESS_IMPACT_PER_RPM.toDouble() }
+                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.DEFAULT_STRESS.toDouble() }
             )
             com.simibubi.create.api.stress.BlockStressValues.CAPACITIES.register(
-                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.BASE_STRESS_CAPACITY_PER_RPM.toDouble() }
+                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.DEFAULT_STRESS.toDouble() }
             )
+
+            // Register ME Gearbox menu opener
+            registerBlockEntityMenuOpener(ME_GEARBOX_MENU.get(), MEGearboxBlockEntity::class.java) { wnd, inv, host ->
+                MEGearboxMenu(ME_GEARBOX_MENU.get(), wnd, inv, host)
+            }
+
+            // Register creative stress cell handler
+            StorageCells.addCellHandler(CreativeStressCell.Handler)
 
             // Register upgrade cards for ME Blueprint Cannon
             appeng.api.upgrades.Upgrades.add(

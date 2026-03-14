@@ -4,10 +4,12 @@ import com.loliball.appliedcreate.AppliedCreate
 import com.simibubi.create.content.equipment.wrench.IWrenchable
 import com.simibubi.create.content.equipment.wrench.WrenchItem
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock
+import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel
 import com.simibubi.create.foundation.block.IBE
+import appeng.menu.MenuOpener
+import appeng.menu.locator.MenuLocators
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
-import net.minecraft.network.chat.Component
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.player.Player
@@ -22,7 +24,7 @@ import net.minecraft.world.phys.BlockHitResult
 
 class MEGearboxBlock : DirectionalKineticBlock(
     Properties.of().strength(3.5f).noOcclusion()
-), IBE<MEGearboxBlockEntity>, IWrenchable {
+), IBE<MEGearboxBlockEntity>, ICogWheel, IWrenchable {
 
     override fun getRotationAxis(state: BlockState): Direction.Axis = state.getValue(FACING).axis
 
@@ -54,22 +56,21 @@ class MEGearboxBlock : DirectionalKineticBlock(
         player: Player, hand: InteractionHand, hit: BlockHitResult
     ): InteractionResult {
         val stack = player.getItemInHand(hand)
-        if (stack.item !is WrenchItem) return InteractionResult.PASS
 
-        // Handle wrench rotation directly here so it doesn't fall through
-        // to default block interaction (which would do nothing useful).
-        val context = UseOnContext(level, player, hand, stack, hit)
-        if (player.isShiftKeyDown) {
-            // Shift+Wrench: toggle input/output mode
-            if (level.isClientSide) return InteractionResult.SUCCESS
-            val be = level.getBlockEntity(pos) as? MEGearboxBlockEntity ?: return InteractionResult.PASS
-            be.toggleMode()
-            val modeKey = if (be.mode == MEGearboxBlockEntity.Mode.EXPORT) "appliedcreate.me_gearbox.mode.export" else "appliedcreate.me_gearbox.mode.import"
-            player.displayClientMessage(Component.translatable("appliedcreate.me_gearbox.mode").append(Component.translatable(modeKey)), true)
-            return InteractionResult.SUCCESS
-        } else {
-            // Wrench: rotate the block (default IWrenchable behavior)
-            return onWrenched(state, context)
+        if (stack.item is WrenchItem) {
+            val context = UseOnContext(level, player, hand, stack, hit)
+            return if (player.isShiftKeyDown) {
+                onSneakWrenched(state, context)
+            } else {
+                onWrenched(state, context)
+            }
         }
+
+        if (level.isClientSide) return InteractionResult.SUCCESS
+
+        val be = level.getBlockEntity(pos) ?: return InteractionResult.PASS
+        MenuOpener.open(AppliedCreate.ME_GEARBOX_MENU.get(), player, MenuLocators.forBlockEntity(be))
+
+        return InteractionResult.SUCCESS
     }
 }

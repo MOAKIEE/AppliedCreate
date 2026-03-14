@@ -8,24 +8,31 @@ import appeng.api.storage.cells.CellState
 import appeng.api.storage.cells.IBasicCellItem
 import appeng.api.upgrades.IUpgradeInventory
 import appeng.api.upgrades.UpgradeInventories
+import appeng.core.localization.PlayerMessages
 import appeng.util.ConfigInventory
+import appeng.util.InteractionUtil
 import net.minecraft.network.chat.Component
 import net.minecraft.world.InteractionHand
+import net.minecraft.world.InteractionResult
 import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.inventory.tooltip.TooltipComponent
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.TooltipFlag
+import net.minecraft.world.item.context.UseOnContext
 import net.minecraft.world.level.Level
 import java.util.Optional
+import java.util.function.Supplier
 
 class StressStorageCell(
     properties: Properties,
     private val idleDrain: Double,
     kilobytes: Int,
     private val bytesPerType: Int,
-    private val totalTypes: Int
+    private val totalTypes: Int,
+    private val housingItem: Supplier<Item>,
+    private val componentItem: Supplier<Item>
 ) : Item(properties.stacksTo(1)), IBasicCellItem {
 
     private val totalBytes: Int = kilobytes * 1024
@@ -79,7 +86,39 @@ class StressStorageCell(
     override fun storableInStorageCell(): Boolean = false
 
     override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResultHolder<ItemStack> {
-        return InteractionResultHolder.pass(player.getItemInHand(hand))
+        val stack = player.getItemInHand(hand)
+        if (disassembleDrive(stack, level, player)) {
+            return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide)
+        }
+        return InteractionResultHolder.pass(stack)
+    }
+
+    override fun onItemUseFirst(stack: ItemStack, context: UseOnContext): InteractionResult {
+        return if (disassembleDrive(stack, context.level, context.player ?: return InteractionResult.PASS)) {
+            InteractionResult.sidedSuccess(context.level.isClientSide)
+        } else {
+            InteractionResult.PASS
+        }
+    }
+
+    private fun disassembleDrive(stack: ItemStack, level: Level, player: Player): Boolean {
+        if (!InteractionUtil.isInAlternateUseMode(player)) return false
+
+        val playerInventory = player.inventory
+        if (playerInventory.getSelected() != stack) return false
+
+        val inv = StorageCells.getCellInventory(stack, null)
+        if (inv != null && !inv.availableStacks.isEmpty) {
+            player.displayClientMessage(PlayerMessages.OnlyEmptyCellsCanBeDisassembled.text(), true)
+            return false
+        }
+
+        playerInventory.setItem(playerInventory.selected, ItemStack.EMPTY)
+        playerInventory.placeItemBackInInventory(ItemStack(housingItem.get()))
+        playerInventory.placeItemBackInInventory(ItemStack(componentItem.get()))
+        getUpgrades(stack).forEach { playerInventory.placeItemBackInInventory(it) }
+
+        return true
     }
 
     companion object {

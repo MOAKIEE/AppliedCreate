@@ -6,7 +6,9 @@ import com.loliball.appliedcreate.cannon.MEBlueprintCannonMenu
 import com.loliball.appliedcreate.cannon.MEBlueprintCannonRenderer
 import com.loliball.appliedcreate.cannon.MEBlueprintCannonScreen
 import com.loliball.appliedcreate.energy.KineticEnergyAcceptorRenderer
+import com.loliball.appliedcreate.energy.MEGearboxMenu
 import com.loliball.appliedcreate.energy.MEGearboxRenderer
+import com.loliball.appliedcreate.energy.MEGearboxScreen
 import com.loliball.appliedcreate.kinetic.StressP2PCompanionRenderer
 import com.loliball.appliedcreate.storage.StressStorageCell
 import appeng.client.gui.implementations.PatternProviderScreen
@@ -46,7 +48,14 @@ object ClientSetup {
                 ::MEBlueprintCannonScreen
             )
 
-            // Register StressKey render handler for ME terminal display
+            InitScreens.register(
+                AppliedCreate.ME_GEARBOX_MENU.get(),
+                { menu: MEGearboxMenu, inv: Inventory, title: Component, style: ScreenStyle ->
+                    MEGearboxScreen(menu, inv, title, style)
+                },
+                "/screens/appliedcreate/me_gearbox.json"
+            )
+
             StressKeyRenderHandler.register()
         }
     }

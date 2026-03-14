@@ -18,7 +18,7 @@
   "pattern": [
     "aba",
     "cdc",
-    "aca"
+    "aba"
   ],
   "result": {
     "item": "appliedcreate:stress_storage_component_4m",

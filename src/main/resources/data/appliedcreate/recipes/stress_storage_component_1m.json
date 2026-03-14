@@ -6,15 +6,18 @@
       "item": "create:cinder_flour"
     },
     "b": {
-      "tag": "ae2:all_certus_quartz"
+      "item": "appliedcreate:advanced_stress_processor"
     },
     "c": {
-      "item": "appliedcreate:advanced_stress_processor"
+      "item": "appliedcreate:stress_storage_component_256k"
+    },
+    "d": {
+      "item": "ae2:quartz_glass"
     }
   },
   "pattern": [
     "aba",
-    "bcb",
+    "cdc",
     "aba"
   ],
   "result": {

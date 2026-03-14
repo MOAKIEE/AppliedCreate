@@ -10,6 +10,7 @@
         "B": { "item": "create:brass_casing" },
         "C": { "item": "ae2:pattern_provider" }
     },
+    "accept_mirrored": true,
     "result": {
         "item": "appliedcreate:brass_pattern_provider",
         "count": 1
