@@ -1,6 +1,6 @@
 # Applied Create (应用机动)
 
-连接 [Create (机械动力)](https://modrinth.com/mod/create) 与 [Applied Energistics 2 (应用能源2)](https://modrinth.com/mod/ae2) 的桥梁模组，适用于 Minecraft 1.21.1 (NeoForge)。
+连接 [Create (机械动力)](https://modrinth.com/mod/create) 与 [Applied Energistics 2 (应用能源2)](https://modrinth.com/mod/ae2) 的桥梁模组。
 
 将旋转应力存储在 ME 网络中，通过 P2P 通道传输，并使用样板供应器自动化动力合成。
 
@@ -33,15 +33,15 @@ ME 网络能量存储与 Create 旋转应力之间的双向转换器。
 - **输出模式** (ME → 动力)：从 ME 网络读取存储的应力并输出为旋转
 - **输入模式** (动力 → ME)：接收动力网络的旋转应力并存储至 ME 网络
 
-空手右键切换模式，滚轮调节应力倍率。支持 Jade 提示信息显示模式和传输速率。
+空手右键切换模式，滚轮调节应力倍率。提供 GUI 界面进行配置，支持 Jade 提示信息显示模式和传输速率。
 
 ### 动能接收器
 
-接收 Create 的旋转应力并转换为 AE2 电网功率 (AE)。将其连接到动力网络，即可用机械力为 ME 系统供电。
+接收 Create 的旋转应力并转换为 AE2 电网功率 (AE)。将其连接到动力网络，即可用机械力为 ME 系统供电。滚轮调节转换倍率（1x–256x）。
 
-### ME 蓝图加农炮
+### 创造应力元件
 
-连接 AE2 网络的设备，读取 Create 蓝图并从 ME 网络发射所需建筑材料。提供 AE2 风格的 GUI，包含材料清单、加速卡升级和合成卡支持。
+创造模式下的无限应力来源，用于测试和建造。无需任何动力输入即可提供无限应力容量。可通过创造马达互相转换合成。
 
 ### 应力存储系统
 
@@ -52,15 +52,18 @@ ME 网络能量存储与 Create 旋转应力之间的双向转换器。
 | 1k–256k | 安山样式存储组件 | 安山外壳存储元件 |
 | 1M–256M | 黄铜样式存储组件 | 黄铜外壳存储元件 |
 
-包含自定义处理器（安山/黄铜应力处理器）和电路板，可通过 AE2 压印器或切割机制作。
-
-### 空间装配器
-
-连接 AE2 网络的方块，用于管理空间存储操作。
+包含自定义处理器（安山/黄铜应力处理器）和电路板，可通过 AE2 压印器或切割机制作。元件可拆解为外壳和组件。
 
 ---
 
-## 依赖
+## 支持版本
+
+| 分支 | Minecraft | 模组加载器 | 状态 |
+|------|-----------|-----------|------|
+| [main](https://github.com/loliball/AppliedCreate/tree/main) | 1.20.1 | Forge | 活跃 |
+| [1.21.1-neoforge](https://github.com/loliball/AppliedCreate/tree/1.21.1-neoforge) | 1.21.1 | NeoForge | 活跃 |
+
+## 依赖 (1.21.1 NeoForge)
 
 | 模组 | 版本 | 是否必需 |
 |------|------|----------|
@@ -75,6 +78,11 @@ ME 网络能量存储与 Create 旋转应力之间的双向转换器。
 2. 安装以上全部必需依赖
 3. 将 `appliedcreate-x.x.x.jar` 放入 `mods/` 文件夹
 4. 启动游戏
+
+## 链接
+
+- [CurseForge](https://www.curseforge.com/minecraft/mc-mods/applied-create)
+- [Modrinth](https://modrinth.com/mod/applied-create)
 
 ## 许可证
 
