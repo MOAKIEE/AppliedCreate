@@ -134,7 +134,7 @@ publishMods {
         projectSlug.set(project.extra["mod_id"] as String)
         minecraftVersions.add(project.extra["minecraft_version"] as String)
         requires("create")
-        requires("ae2")
+        requires("applied-energistics-2")
         requires("kotlin-for-forge")
     }
 
