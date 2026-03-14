@@ -75,4 +75,4 @@ ME 网络能量存储与 Create 旋转应力之间的双向转换器。
 
 ## 许可证
 
-[MIT](LICENSE)
+All Rights Reserved (保留所有权利)

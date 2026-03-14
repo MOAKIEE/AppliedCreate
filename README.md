@@ -75,4 +75,4 @@ Includes custom processors (Andesite/Brass Stress Processor) and circuit boards 
 
 ## License
 
-[MIT](LICENSE)
+All Rights Reserved
