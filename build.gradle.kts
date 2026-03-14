@@ -26,6 +26,7 @@ minecraft {
             property("forge.logging.console.level", "debug")
             property("guideDev.ae2guide.sources", file("src/main/resources/assets/appliedcreate/ae2guide").absolutePath)
             property("guideDev.ae2guide.sourcesNamespace", "appliedcreate")
+            arg("-mixin.config=appliedcreate.mixins.json")
 
             mods {
                 create(modId) {
@@ -39,6 +40,7 @@ minecraft {
             property("forge.logging.markers", "REGISTRIES")
             property("forge.logging.console.level", "debug")
             args("--nogui")
+            arg("-mixin.config=appliedcreate.mixins.json")
 
             mods {
                 create(modId) {
@@ -89,6 +91,8 @@ dependencies {
     implementation(fg.deobf("net.createmod.ponder:Ponder-Forge-${project.extra["minecraft_version"]}:${project.extra["ponder_version"]}"))
 
     implementation(fg.deobf("appeng:appliedenergistics2-forge:${project.extra["ae2_version"]}"))
+
+    annotationProcessor("org.spongepowered:mixin:0.8.5:processor")
 }
 
 tasks.named<Jar>("jar") {
