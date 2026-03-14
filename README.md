@@ -78,4 +78,4 @@ An AE2-connected block for managing spatial storage operations.
 
 ## License
 
-[MIT](LICENSE)
+All Rights Reserved
