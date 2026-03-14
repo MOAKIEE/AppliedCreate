@@ -103,7 +103,8 @@ tasks.named<Jar>("jar") {
             "Specification-Version" to "1",
             "Implementation-Title" to project.name,
             "Implementation-Version" to project.version,
-            "Implementation-Vendor" to project.extra["mod_authors"]
+            "Implementation-Vendor" to project.extra["mod_authors"],
+            "MixinConfigs" to "appliedcreate.mixins.json"
         )
     }
     finalizedBy("reobfJar")
