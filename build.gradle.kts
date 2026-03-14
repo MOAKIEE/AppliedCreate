@@ -128,7 +128,8 @@ publishMods {
     version.set(project.version.toString())
 
     curseforge {
-        accessToken.set(providers.environmentVariable("CURSEFORGE_TOKEN"))
+        accessToken.set(providers.environmentVariable("CURSEFORGE_TOKEN")
+            .orElse(providers.gradleProperty("CURSEFORGE_TOKEN")))
         projectId.set(project.extra["curseforge_project_id"] as String)
         projectSlug.set(project.extra["mod_id"] as String)
         minecraftVersions.add(project.extra["minecraft_version"] as String)
@@ -138,7 +139,8 @@ publishMods {
     }
 
     modrinth {
-        accessToken.set(providers.environmentVariable("MODRINTH_TOKEN"))
+        accessToken.set(providers.environmentVariable("MODRINTH_TOKEN")
+            .orElse(providers.gradleProperty("MODRINTH_TOKEN")))
         projectId.set(project.extra["modrinth_project_id"] as String)
         minecraftVersions.add(project.extra["minecraft_version"] as String)
         requires("create")
