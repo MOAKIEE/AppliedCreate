@@ -120,11 +120,10 @@ class MEGearboxBlockEntity(
         notifyUpdate()
     }
 
-    // -- Grid connectivity: expose on sides perpendicular to shaft --
+    // -- Grid connectivity: expose on all 6 sides (including shaft axis) --
 
     override fun getGridConnectableSides(orientation: BlockOrientation): Set<Direction> {
-        val shaft = blockState.getValue(DirectionalKineticBlock.FACING)
-        return EnumSet.complementOf(EnumSet.of(shaft, shaft.opposite))
+        return EnumSet.allOf(Direction::class.java)
     }
 
     override fun initialize() {
@@ -229,6 +228,11 @@ class MEGearboxBlockEntity(
         // Consume kinetic stress and insert into ME storage
         val rpm = abs(speed)
         if (rpm == 0f) return
+
+        // Don't insert stress into ME when the kinetic network is overstressed —
+        // this gearbox IS contributing to the overload via calculateStressApplied(),
+        // so continuing to store stress would be incorrect.
+        if (isOverStressed) return
 
         val stressToInsert = getTransferRate(rpm)
         if (stressToInsert <= 0) return

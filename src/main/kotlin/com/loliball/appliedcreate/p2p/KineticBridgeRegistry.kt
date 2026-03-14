@@ -52,8 +52,8 @@ object KineticBridgeRegistry {
             addEdge(existingPos, kineticPos)
         }
 
-        LOGGER.info("[KineticBridge] Register: tunnel={}, kinetic={}, edges to {} partners",
-            inputTunnelPos, kineticPos, existingEndpoints.size)
+        LOGGER.info("[KineticBridge] Register: tunnel={}, kinetic={}, edges to {} partners: {}",
+            inputTunnelPos, kineticPos, existingEndpoints.size, existingEndpoints)
     }
 
     /**
