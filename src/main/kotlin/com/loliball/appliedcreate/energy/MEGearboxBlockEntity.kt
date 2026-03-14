@@ -85,8 +85,7 @@ class MEGearboxBlockEntity(
     }
 
     override fun getGridConnectableSides(orientation: BlockOrientation): Set<Direction> {
-        val shaft = blockState.getValue(DirectionalKineticBlock.FACING)
-        return EnumSet.complementOf(EnumSet.of(shaft, shaft.opposite))
+        return EnumSet.allOf(Direction::class.java)
     }
 
     override fun initialize() {
@@ -135,13 +134,17 @@ class MEGearboxBlockEntity(
         val stressNeeded = if (rpm == 0f) getTransferRate(GENERATED_SPEED.toFloat()) else getTransferRate(rpm)
         if (stressNeeded <= 0) { if (hasStressSupply) { hasStressSupply = false; updateGeneratedRotation() }; return }
         val simulated = StorageHelper.poweredExtraction(energy, storage, StressKey.INSTANCE, stressNeeded, actionSource, Actionable.SIMULATE)
-        val wasSupplied = hasStressSupply; hasStressSupply = simulated > 0
+        val wasSupplied = hasStressSupply; hasStressSupply = simulated >= stressNeeded
         if (hasStressSupply != wasSupplied) updateGeneratedRotation()
         if (hasStressSupply && rpm > 0f) StorageHelper.poweredExtraction(energy, storage, StressKey.INSTANCE, stressNeeded, actionSource, Actionable.MODULATE)
     }
 
     private fun tickImport(energy: appeng.api.networking.energy.IEnergySource, storage: appeng.api.storage.MEStorage, actionSource: IActionSource) {
         val rpm = abs(speed); if (rpm == 0f) return
+        // Don't insert stress into ME when the kinetic network is overstressed —
+        // this gearbox IS contributing to the overload via calculateStressApplied(),
+        // so continuing to store stress would be incorrect.
+        if (isOverStressed) return
         val stressToInsert = getTransferRate(rpm); if (stressToInsert <= 0) return
         StorageHelper.poweredInsert(energy, storage, StressKey.INSTANCE, stressToInsert, actionSource, Actionable.MODULATE)
     }

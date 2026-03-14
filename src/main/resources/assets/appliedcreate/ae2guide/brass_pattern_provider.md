@@ -47,10 +47,6 @@ Also available as a cable subpart for compact designs.
 
 ## Obtaining
 
-### Direct Crafting
-
-<RecipeFor id="appliedcreate:brass_pattern_provider" />
-
 ### Upgrading from Andesite
 
 Use a <ItemLink id="appliedcreate:brass_pattern_provider_upgrade" /> on an existing <ItemLink id="appliedcreate:andesite_pattern_provider" /> to upgrade it in-place. All patterns stored in the Andesite variant will be preserved.
