@@ -377,7 +377,7 @@ class AppliedCreate {
                     output.accept(BRASS_PATTERN_PROVIDER_UPGRADE_ITEM.get())
                     output.accept(STRESS_P2P_TUNNEL_PART_ITEM.get())
                     // Companion block hidden from creative tab — auto-placed by P2P tunnel
-                    output.accept(ME_BLUEPRINT_CANNON_ITEM.get())
+                    // output.accept(ME_BLUEPRINT_CANNON_ITEM.get())  // [HIDDEN] ME蓝图加农炮暂时隐藏
                     output.accept(KINETIC_ENERGY_ACCEPTOR_ITEM.get())
                     output.accept(ME_GEARBOX_ITEM.get())
                     output.accept(WHICHBALL_SKIN_DOLL_ITEM.get())
