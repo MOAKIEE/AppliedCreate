@@ -8,7 +8,7 @@ import com.simibubi.create.content.kinetics.base.KineticBlockEntity
 import net.minecraft.core.BlockPos
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
-import org.slf4j.LoggerFactory
+import org.apache.logging.log4j.LogManager
 
 /**
  * Stress P2P Companion Block Entity — unified kinetic bridge for AE2 P2P tunnels.
@@ -32,7 +32,7 @@ class StressP2PCompanionBlockEntity(
 ) : KineticBlockEntity(type, pos, state) {
 
     companion object {
-        private val LOGGER = LoggerFactory.getLogger("AppliedCreate/StressP2PCompanion")
+        private val LOGGER = LogManager.getLogger("appliedcreate/StressP2PCompanion")
     }
 
     // ── P2P Companion (Create Custom Connection) ──
@@ -74,7 +74,7 @@ class StressP2PCompanionBlockEntity(
                 }
             }
             if (partners.isNotEmpty()) {
-                LOGGER.debug("[Companion@{}] addPropagationLocations: key={}, partners={}",
+                LOGGER.info("[Companion@{}] addPropagationLocations: key={}, partners={}",
                     worldPosition, key, partners)
             }
         }
@@ -93,7 +93,7 @@ class StressP2PCompanionBlockEntity(
             val myKey = registeredInputPos ?: return 0f
             val otherKey = target.getRegisteredInputPos() ?: return 0f
             if (myKey == otherKey) {
-                LOGGER.debug("[Companion@{}] propagateRotationTo {} -> speed modifier 1.0",
+                LOGGER.info("[Companion@{}] propagateRotationTo {} -> speed modifier 1.0",
                     worldPosition, target.blockPos)
                 return 1f
             }
@@ -107,7 +107,7 @@ class StressP2PCompanionBlockEntity(
         super.initialize()
         if (level != null && !level!!.isClientSide) {
             registerWithNetwork()
-            LOGGER.debug("[Companion@{}] initialize: registeredInputPos={}",
+            LOGGER.info("[Companion@{}] initialize: registeredInputPos={}",
                 worldPosition, registeredInputPos)
             if (registeredInputPos != null) {
                 // Re-trigger propagation so partners discover this new connection
@@ -128,7 +128,7 @@ class StressP2PCompanionBlockEntity(
             initRetryTicks--
             val currentInputPos = findInputTunnelPos()
             if (currentInputPos != null && currentInputPos != registeredInputPos) {
-                LOGGER.debug("[Companion@{}] early retry found tunnel: {}",
+                LOGGER.info("[Companion@{}] early retry found tunnel: {}",
                     worldPosition, currentInputPos)
                 reloadKinetics()
                 initRetryTicks = 0
@@ -139,7 +139,7 @@ class StressP2PCompanionBlockEntity(
         if (level!!.gameTime % 20 == 0L) {
             val currentInputPos = findInputTunnelPos()
             if (currentInputPos != registeredInputPos) {
-                LOGGER.debug("[Companion@{}] periodic check: tunnel changed {} -> {}",
+                LOGGER.info("[Companion@{}] periodic check: tunnel changed {} -> {}",
                     worldPosition, registeredInputPos, currentInputPos)
                 reloadKinetics()
             }
@@ -147,7 +147,7 @@ class StressP2PCompanionBlockEntity(
     }
 
     override fun remove() {
-        LOGGER.debug("[Companion@{}] remove", worldPosition)
+        LOGGER.info("[Companion@{}] remove", worldPosition)
         isRemoving = true
         unregisterFromNetwork()
         super.remove()
@@ -170,14 +170,14 @@ class StressP2PCompanionBlockEntity(
         if (isRemoving || isReloading) return
         isReloading = true
         try {
-            LOGGER.debug("[Companion@{}] reloadKinetics: old={}",
+            LOGGER.info("[Companion@{}] reloadKinetics: old={}",
                 worldPosition, registeredInputPos)
             unregisterFromNetwork()
             if (hasNetwork()) getOrCreateNetwork().remove(this)
             detachKinetics()
             removeSource()
             registerWithNetwork()
-            LOGGER.debug("[Companion@{}] reloadKinetics: new={}, partners={}",
+            LOGGER.info("[Companion@{}] reloadKinetics: new={}, partners={}",
                 worldPosition, registeredInputPos,
                 registeredInputPos?.let { StressP2PNetwork.getPartners(it, worldPosition) })
             attachKinetics()
@@ -197,7 +197,7 @@ class StressP2PCompanionBlockEntity(
             val lvl = level ?: return
             for (partnerPos in existingPartners) {
                 val be = lvl.getBlockEntity(partnerPos) as? StressP2PCompanionBlockEntity ?: continue
-                LOGGER.debug("[Companion@{}] notifying existing partner @{} to reload kinetics",
+                LOGGER.info("[Companion@{}] notifying existing partner @{} to reload kinetics",
                     worldPosition, partnerPos)
                 be.reloadKinetics()
             }

@@ -14,7 +14,7 @@ import net.minecraft.core.BlockPos
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.TickTask
 import net.minecraft.server.level.ServerLevel
-import org.slf4j.LoggerFactory
+import org.apache.logging.log4j.LogManager
 
 class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunnelPart>(partItem) {
 
@@ -25,7 +25,7 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
     private var didInitialReconcile = false
 
     companion object {
-        private val LOGGER = LoggerFactory.getLogger("AppliedCreate/StressP2P")
+        private val LOGGER = LogManager.getLogger("appliedcreate/StressP2P")
         private const val MAX_RETRY_ATTEMPTS = 5
 
         private val MODELS = P2PModels(

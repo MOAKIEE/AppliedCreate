@@ -4,7 +4,10 @@ import com.loliball.appliedcreate.p2p.KineticBridgeRegistry;
 import com.simibubi.create.content.kinetics.RotationPropagator;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import net.minecraft.core.BlockPos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -16,6 +19,9 @@ import java.util.Set;
 @Mixin(value = RotationPropagator.class, remap = false)
 public abstract class RotationPropagatorMixin {
 
+    @Unique
+    private static final Logger appliedcreate$LOGGER = LogManager.getLogger("appliedcreate/Mixin");
+
     @Inject(
             method = "getPotentialNeighbourLocations(Lcom/simibubi/create/content/kinetics/base/KineticBlockEntity;)Ljava/util/List;",
             at = @At("TAIL"),
@@ -25,7 +31,8 @@ public abstract class RotationPropagatorMixin {
             KineticBlockEntity be,
             CallbackInfoReturnable<List<BlockPos>> cir
     ) {
-        Set<BlockPos> remotePositions = KineticBridgeRegistry.INSTANCE.getRemotePositions(be.getBlockPos());
+        BlockPos pos = be.getBlockPos();
+        Set<BlockPos> remotePositions = KineticBridgeRegistry.INSTANCE.getRemotePositions(pos);
         if (remotePositions != null && !remotePositions.isEmpty()) {
             List<BlockPos> result = new ArrayList<>(cir.getReturnValue());
             for (BlockPos remote : remotePositions) {
@@ -33,6 +40,8 @@ public abstract class RotationPropagatorMixin {
                     result.add(remote);
                 }
             }
+            appliedcreate$LOGGER.info("[Mixin] getPotentialNeighbourLocations: be={}, added {} bridged positions: {}, total={}",
+                    pos, remotePositions.size(), remotePositions, result.size());
             cir.setReturnValue(result);
         }
     }
@@ -47,7 +56,10 @@ public abstract class RotationPropagatorMixin {
             KineticBlockEntity to,
             CallbackInfoReturnable<Boolean> cir
     ) {
-        if (KineticBridgeRegistry.INSTANCE.areBridged(from.getBlockPos(), to.getBlockPos())) {
+        boolean bridged = KineticBridgeRegistry.INSTANCE.areBridged(from.getBlockPos(), to.getBlockPos());
+        if (bridged) {
+            appliedcreate$LOGGER.info("[Mixin] isConnected: from={}, to={} -> BRIDGED (returning true)",
+                    from.getBlockPos(), to.getBlockPos());
             cir.setReturnValue(true);
         }
     }
@@ -62,7 +74,10 @@ public abstract class RotationPropagatorMixin {
             KineticBlockEntity to,
             CallbackInfoReturnable<Float> cir
     ) {
-        if (KineticBridgeRegistry.INSTANCE.areBridged(from.getBlockPos(), to.getBlockPos())) {
+        boolean bridged = KineticBridgeRegistry.INSTANCE.areBridged(from.getBlockPos(), to.getBlockPos());
+        if (bridged) {
+            appliedcreate$LOGGER.info("[Mixin] getRotationSpeedModifier: from={}, to={} -> BRIDGED (returning 1.0f), fromSpeed={}, toSpeed={}",
+                    from.getBlockPos(), to.getBlockPos(), from.getTheoreticalSpeed(), to.getTheoreticalSpeed());
             cir.setReturnValue(1.0f);
         }
     }

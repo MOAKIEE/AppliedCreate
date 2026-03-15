@@ -4,7 +4,7 @@ import com.simibubi.create.content.kinetics.RotationPropagator
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity
 import net.minecraft.core.BlockPos
 import net.minecraft.world.level.Level
-import org.slf4j.LoggerFactory
+import org.apache.logging.log4j.LogManager
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 object KineticBridgeRegistry {
 
-    private val LOGGER = LoggerFactory.getLogger("AppliedCreate/KineticBridge")
+    private val LOGGER = LogManager.getLogger("appliedcreate/KineticBridge")
 
     /** Set to true when server is stopping — guards against RotationPropagator calls during shutdown */
     @Volatile
