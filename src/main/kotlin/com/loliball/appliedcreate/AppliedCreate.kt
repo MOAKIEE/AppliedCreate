@@ -23,6 +23,7 @@ import com.loliball.appliedcreate.kinetic.StressP2PCompanionBlockEntity
 import com.loliball.appliedcreate.part.AndesitePatternProviderPart
 import com.loliball.appliedcreate.part.BrassPatternProviderPart
 import com.loliball.appliedcreate.p2p.StressP2PTunnelPart
+import com.loliball.appliedcreate.p2p.KineticBridgeRegistry
 import com.loliball.appliedcreate.storage.CreativeStressCell
 import com.loliball.appliedcreate.storage.StressKeyType
 import com.loliball.appliedcreate.storage.StressStorageCell
@@ -553,6 +554,17 @@ class AppliedCreate {
 
         if (FMLEnvironment.dist.isClient) {
             ClientSetup.register(bus)
+        }
+
+        // Clear kinetic bridge registry on server shutdown to prevent stale data
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener { _: net.minecraftforge.event.server.ServerStoppingEvent ->
+            KineticBridgeRegistry.clear()
+            LOGGER.debug("Cleared KineticBridgeRegistry on server stop")
+        }
+
+        // Reset shutdown flag when a new server starts (integrated server restart)
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener { _: net.minecraftforge.event.server.ServerStartingEvent ->
+            KineticBridgeRegistry.resetShutdownFlag()
         }
 
         LOGGER.info("Applied Create loaded")
