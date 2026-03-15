@@ -32,6 +32,9 @@ public abstract class RotationPropagatorMixin {
             CallbackInfoReturnable<List<BlockPos>> cir
     ) {
         BlockPos pos = be.getBlockPos();
+        appliedcreate$LOGGER.info("[Mixin] getPotentialNeighbourLocations CALLED: be={}, class={}", 
+                pos, be.getClass().getSimpleName());
+        
         Set<BlockPos> remotePositions = KineticBridgeRegistry.INSTANCE.getRemotePositions(pos);
         if (remotePositions != null && !remotePositions.isEmpty()) {
             List<BlockPos> result = new ArrayList<>(cir.getReturnValue());
@@ -43,6 +46,9 @@ public abstract class RotationPropagatorMixin {
             appliedcreate$LOGGER.info("[Mixin] getPotentialNeighbourLocations: be={}, added {} bridged positions: {}, total={}",
                     pos, remotePositions.size(), remotePositions, result.size());
             cir.setReturnValue(result);
+        } else {
+            appliedcreate$LOGGER.info("[Mixin] getPotentialNeighbourLocations: be={}, NO bridged positions (remotePositions={})", 
+                    pos, remotePositions);
         }
     }
 
