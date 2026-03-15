@@ -575,6 +575,11 @@ class AppliedCreate {
             LOGGER.debug("Cleared KineticBridgeRegistry on server stop")
         }
 
+        // Reset shutdown flag when a new server starts (integrated server restart)
+        NeoForge.EVENT_BUS.addListener { _: net.neoforged.neoforge.event.server.ServerStartingEvent ->
+            KineticBridgeRegistry.resetShutdownFlag()
+        }
+
         LOGGER.info("Applied Create loaded")
     }
 

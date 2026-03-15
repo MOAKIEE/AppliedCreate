@@ -23,6 +23,11 @@ object KineticBridgeRegistry {
 
     private val LOGGER = LoggerFactory.getLogger("AppliedCreate/KineticBridge")
 
+    /** Set to true when server is stopping — guards against RotationPropagator calls during shutdown */
+    @Volatile
+    var serverStopping = false
+        private set
+
     /** localKineticPos → Set<remoteKineticPos> — virtual edges visible to RotationPropagator */
     private val edges = ConcurrentHashMap<BlockPos, MutableSet<BlockPos>>()
 
@@ -151,12 +156,14 @@ object KineticBridgeRegistry {
         }
     }
 
-    /**
-     * Clear all registry data. Called on server shutdown / dimension unload.
-     */
     fun clear() {
+        serverStopping = true
         edges.clear()
         tunnelEndpoints.clear()
+    }
+
+    fun resetShutdownFlag() {
+        serverStopping = false
     }
 
     private fun addEdge(from: BlockPos, to: BlockPos) {

@@ -98,6 +98,7 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         super.onMainNodeStateChanged(reason)
         val level = blockEntity.level ?: return
         if (level.isClientSide) return
+        if (KineticBridgeRegistry.serverStopping) return
 
         LOGGER.info("[StressP2P] onMainNodeStateChanged: pos={}, reason={}, isActive={}, isOutput={}, initialLoadComplete={}",
             blockEntity.blockPos, reason, isActive, isOutput, initialLoadComplete)
@@ -137,6 +138,7 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
     override fun onTunnelNetworkChange() {
         val level = blockEntity.level ?: return
         if (level.isClientSide) return
+        if (KineticBridgeRegistry.serverStopping) return
 
         LOGGER.info("[StressP2P] onTunnelNetworkChange: pos={}, isOutput={}, isActive={}, freq={}, initialLoadComplete={}",
             blockEntity.blockPos, isOutput, isActive, frequency, initialLoadComplete)
@@ -201,6 +203,13 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         LOGGER.info("[StressP2P] unregisterKineticBridge: pos={}, isOutput={}, inputPos={}, kineticPos={}",
             blockEntity.blockPos, isOutput, inputPos, kineticPos)
 
+        if (KineticBridgeRegistry.serverStopping) {
+            KineticBridgeRegistry.unregister(inputPos, kineticPos)
+            registeredInputPos = null
+            registeredKineticPos = null
+            return
+        }
+
         // CRITICAL: Remove edges from registry BEFORE calling handleRemoved.
         // handleRemoved triggers Create's BFS (via RotationPropagatorMixin) which
         // checks getRemotePositions(). If edges still exist, the BFS traverses
@@ -238,6 +247,7 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
     internal fun reRegisterBridge() {
         val level = blockEntity.level ?: return
         if (level.isClientSide) return
+        if (KineticBridgeRegistry.serverStopping) return
 
         val oldInputPos = registeredInputPos
         val oldKineticPos = registeredKineticPos
@@ -325,6 +335,7 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
      */
     private fun scheduleDeferredInitialRegistration() {
         val level = blockEntity.level as? ServerLevel ?: return
+        if (KineticBridgeRegistry.serverStopping) return
         val server = level.server
         val scheduledAtTick = server.tickCount
         val isInput = !this.isOutput
@@ -481,6 +492,7 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
      * the ME grid is fully online (findInputTunnelPos returns null).
      */
     private fun scheduleRetry() {
+        if (KineticBridgeRegistry.serverStopping) return
         if (retryAttemptsRemaining <= 0) {
             retryAttemptsRemaining = MAX_RETRY_ATTEMPTS
         }
