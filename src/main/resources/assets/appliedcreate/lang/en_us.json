@@ -25,7 +25,6 @@
     "item.appliedcreate.stress_storage_cell_256m": "256M Stress Storage Cell",
 
     "item.appliedcreate.stress_p2p_tunnel": "Stress P2P Tunnel",
-    "block.appliedcreate.stress_p2p_companion": "Stress P2P Companion",
     "block.appliedcreate.me_blueprint_cannon": "ME Blueprint Cannon",
 
     "gui.appliedcreate.slot.upgrades": "Upgrade Cards",
@@ -67,8 +66,6 @@
     "gui.appliedcreate.me_blueprint_cannon.materials": "Material Checklist",
     "gui.appliedcreate.me_blueprint_cannon.noMaterials": "No materials required",
 
-    "appliedcreate.stress_p2p.companion.present": "Companion: Present \u2714",
-    "appliedcreate.stress_p2p.companion.missing": "Companion: Missing \u2718",
     "appliedcreate.me_gearbox.multiplier": "Stress Multiplier",
 
     "item.appliedcreate.creative_stress_cell": "Creative Stress Cell",

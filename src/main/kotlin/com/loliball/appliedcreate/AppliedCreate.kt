@@ -18,8 +18,6 @@ import com.loliball.appliedcreate.gui.BrassPatternProviderMenu
 import com.loliball.appliedcreate.item.BrassPatternProviderUpgradeItem
 import com.loliball.appliedcreate.item.MechanicalCraftingPartItem
 import com.loliball.appliedcreate.item.StressP2PPartItem
-import com.loliball.appliedcreate.kinetic.StressP2PCompanionBlock
-import com.loliball.appliedcreate.kinetic.StressP2PCompanionBlockEntity
 import com.loliball.appliedcreate.part.AndesitePatternProviderPart
 import com.loliball.appliedcreate.part.BrassPatternProviderPart
 import com.loliball.appliedcreate.p2p.StressP2PTunnelPart
@@ -155,18 +153,6 @@ class AppliedCreate {
             ) { partItem -> StressP2PTunnelPart(partItem) }
         }
 
-        // ── Stress P2P Companion Block ──
-        val STRESS_P2P_COMPANION_BLOCK: RegistryObject<Block> = BLOCKS.register("stress_p2p_companion") {
-            StressP2PCompanionBlock()
-        }
-
-        val STRESS_P2P_COMPANION_ITEM: RegistryObject<Item> = ITEMS.register("stress_p2p_companion") {
-            BlockItem(STRESS_P2P_COMPANION_BLOCK.get(), Item.Properties())
-        }
-
-        @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-        lateinit var STRESS_P2P_COMPANION_BE: RegistryObject<BlockEntityType<StressP2PCompanionBlockEntity>>
-
         // ── ME Blueprint Cannon ──
         val ME_BLUEPRINT_CANNON_BLOCK: RegistryObject<Block> = BLOCKS.register("me_blueprint_cannon") {
             MEBlueprintCannonBlock(BlockBehaviour.Properties.of().strength(3.5f).noOcclusion())
@@ -184,12 +170,6 @@ class AppliedCreate {
         // First init block: register things that self-reference (lateinit vars)
         // Note: RegistryObject.get() lambdas only run at registry time, not here.
         init {
-            STRESS_P2P_COMPANION_BE = BLOCK_ENTITY_TYPES.register("stress_p2p_companion") {
-                BlockEntityType.Builder.of(
-                    { pos, state -> StressP2PCompanionBlockEntity(STRESS_P2P_COMPANION_BE.get(), pos, state) },
-                    STRESS_P2P_COMPANION_BLOCK.get()
-                ).build(null)
-            }
             ME_BLUEPRINT_CANNON_BE = BLOCK_ENTITY_TYPES.register("me_blueprint_cannon") {
                 BlockEntityType.Builder.of(
                     { pos, state -> MEBlueprintCannonBlockEntity(ME_BLUEPRINT_CANNON_BE.get(), pos, state) },
@@ -377,7 +357,6 @@ class AppliedCreate {
                     output.accept(BRASS_PATTERN_PROVIDER_PART_ITEM.get())
                     output.accept(BRASS_PATTERN_PROVIDER_UPGRADE_ITEM.get())
                     output.accept(STRESS_P2P_TUNNEL_PART_ITEM.get())
-                    // Companion block hidden from creative tab — auto-placed by P2P tunnel
                     // output.accept(ME_BLUEPRINT_CANNON_ITEM.get())  // [HIDDEN] ME蓝图加农炮暂时隐藏
                     output.accept(KINETIC_ENERGY_ACCEPTOR_ITEM.get())
                     output.accept(ME_GEARBOX_ITEM.get())
@@ -613,11 +592,6 @@ class AppliedCreate {
                     wnd, inv, host
                 )
             }
-
-            // Register stress value for companion block
-            com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
-                STRESS_P2P_COMPANION_BLOCK.get(), { 0.0 }
-            )
 
             // Register stress value for kinetic energy acceptor
             com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(

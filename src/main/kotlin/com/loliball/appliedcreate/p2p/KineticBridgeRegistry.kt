@@ -10,8 +10,7 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * Global registry for virtual kinetic edges bridged through AE2 P2P tunnels.
  *
- * Replaces the former StressP2PNetwork + companion block system.
- * Instead of placing physical companion blocks, we register virtual edges between
+ * Instead of placing physical blocks, we register virtual edges between
  * kinetic blocks adjacent to paired P2P tunnels. The RotationPropagatorMixin
  * uses this registry to make Create's propagation BFS traverse these virtual edges.
  *

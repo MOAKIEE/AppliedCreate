@@ -25,7 +25,6 @@
     "item.appliedcreate.stress_storage_cell_256m": "256M\u5e94\u529b\u5b58\u50a8\u5143\u4ef6",
 
     "item.appliedcreate.stress_p2p_tunnel": "\u5e94\u529bP2P\u901a\u9053",
-    "block.appliedcreate.stress_p2p_companion": "\u5e94\u529bP2P\u4f34\u4fa3\u65b9\u5757",
     "block.appliedcreate.me_blueprint_cannon": "ME\u84dd\u56fe\u52a0\u519c\u70ae",
 
     "gui.appliedcreate.slot.upgrades": "\u5347\u7ea7\u5361",
@@ -67,8 +66,6 @@
     "gui.appliedcreate.me_blueprint_cannon.materials": "\u6750\u6599\u6e05\u5355",
     "gui.appliedcreate.me_blueprint_cannon.noMaterials": "\u65e0\u9700\u6750\u6599",
 
-    "appliedcreate.stress_p2p.companion.present": "\u4f34\u4fa3\u65b9\u5757: \u5df2\u8fde\u63a5 \u2714",
-    "appliedcreate.stress_p2p.companion.missing": "\u4f34\u4fa3\u65b9\u5757: \u7f3a\u5931 \u2718",
     "appliedcreate.me_gearbox.multiplier": "\u5e94\u529b\u500d\u7387",
 
     "item.appliedcreate.creative_stress_cell": "\u521b\u9020\u5e94\u529b\u5143\u4ef6",

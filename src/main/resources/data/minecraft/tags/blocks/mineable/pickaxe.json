@@ -5,7 +5,6 @@
         "appliedcreate:brass_pattern_provider",
         "appliedcreate:kinetic_energy_acceptor",
         "appliedcreate:me_blueprint_cannon",
-        "appliedcreate:me_gearbox",
-        "appliedcreate:stress_p2p_companion"
+        "appliedcreate:me_gearbox"
     ]
 }
