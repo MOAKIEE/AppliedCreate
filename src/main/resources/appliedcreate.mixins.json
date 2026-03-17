@@ -3,10 +3,11 @@
   "minVersion": "0.8",
   "package": "com.loliball.appliedcreate.mixin",
   "compatibilityLevel": "JAVA_21",
+  "priority": 900,
   "mixins": [
     "RotationPropagatorMixin"
   ],
   "injectors": {
-    "defaultRequire": 1
+    "defaultRequire": 0
   }
 }

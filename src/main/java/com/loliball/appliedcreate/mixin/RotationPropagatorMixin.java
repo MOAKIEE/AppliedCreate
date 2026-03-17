@@ -9,32 +9,20 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Mixin into Create's RotationPropagator to support virtual kinetic edges
- * through AE2 P2P tunnels without requiring physical companion blocks.
- *
- * Three injection points:
- * 1. getPotentialNeighbourLocations — add remote kinetic positions as virtual neighbors
- * 2. isConnected — recognize virtual edges as valid connections
- * 3. getRotationSpeedModifier — return 1:1 ratio for virtual edges
- */
 @Mixin(value = RotationPropagator.class, remap = false)
 public abstract class RotationPropagatorMixin {
 
     /**
-     * Inject at TAIL of getPotentialNeighbourLocations to add virtual bridge targets.
-     * The method returns a LinkedList<BlockPos> that already contains 6 adjacent positions
-     * plus any custom positions from addPropagationLocations.
-     * We add our bridged remote positions so RotationPropagator's BFS can traverse them.
+     * Append virtual bridge endpoints to the neighbour list in-place.
+     * We avoid setReturnValue() so other mods' @Inject(RETURN) handlers
+     * (e.g. Create Connected) can still run without the callback chain being cancelled.
      */
     @Inject(
             method = "getPotentialNeighbourLocations(Lcom/simibubi/create/content/kinetics/base/KineticBlockEntity;)Ljava/util/List;",
-            at = @At("TAIL"),
-            cancellable = true
+            at = @At("RETURN")
     )
     private static void appliedcreate$addBridgedLocations(
             KineticBlockEntity be,
@@ -42,22 +30,15 @@ public abstract class RotationPropagatorMixin {
     ) {
         Set<BlockPos> remotePositions = KineticBridgeRegistry.INSTANCE.getRemotePositions(be.getBlockPos());
         if (remotePositions != null && !remotePositions.isEmpty()) {
-            // Defensively copy the list in case Create returns an unmodifiable list
-            List<BlockPos> result = new ArrayList<>(cir.getReturnValue());
+            List<BlockPos> result = cir.getReturnValue();
             for (BlockPos remote : remotePositions) {
                 if (!result.contains(remote)) {
                     result.add(remote);
                 }
             }
-            cir.setReturnValue(result);
         }
     }
 
-    /**
-     * Inject at HEAD of isConnected to recognize virtual bridge edges.
-     * If KineticBridgeRegistry says these two positions are bridged, return true immediately
-     * without running Create's normal connection checks.
-     */
     @Inject(
             method = "isConnected(Lcom/simibubi/create/content/kinetics/base/KineticBlockEntity;Lcom/simibubi/create/content/kinetics/base/KineticBlockEntity;)Z",
             at = @At("HEAD"),
@@ -70,14 +51,9 @@ public abstract class RotationPropagatorMixin {
     ) {
         if (KineticBridgeRegistry.INSTANCE.areBridged(from.getBlockPos(), to.getBlockPos())) {
             cir.setReturnValue(true);
-            return;
         }
     }
 
-    /**
-     * Inject at HEAD of getRotationSpeedModifier to return 1:1 ratio for virtual edges.
-     * This ensures bridged kinetic blocks transmit rotation at the same speed.
-     */
     @Inject(
             method = "getRotationSpeedModifier(Lcom/simibubi/create/content/kinetics/base/KineticBlockEntity;Lcom/simibubi/create/content/kinetics/base/KineticBlockEntity;)F",
             at = @At("HEAD"),
@@ -90,7 +66,6 @@ public abstract class RotationPropagatorMixin {
     ) {
         if (KineticBridgeRegistry.INSTANCE.areBridged(from.getBlockPos(), to.getBlockPos())) {
             cir.setReturnValue(1.0f);
-            return;
         }
     }
 }
