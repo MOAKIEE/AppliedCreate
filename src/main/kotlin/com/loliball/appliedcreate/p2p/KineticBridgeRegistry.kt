@@ -45,9 +45,7 @@ object KineticBridgeRegistry {
      */
     fun getRemotePositions(kineticPos: BlockPos): Set<BlockPos>? {
         val result = edges[kineticPos]
-        if (result != null && result.isNotEmpty()) {
-            LOGGER.info("[DIAG] getRemotePositions: pos={}, found {} remotes: {}", kineticPos, result.size, result)
-        }
+        LOGGER.info("[DIAG] getRemotePositions: pos={}, result={}, edgesKeySet={}", kineticPos, result, edges.keys)
         return result
     }
 
@@ -238,5 +236,6 @@ object KineticBridgeRegistry {
 
     private fun addEdge(from: BlockPos, to: BlockPos) {
         edges.getOrPut(from) { ConcurrentHashMap.newKeySet() }.add(to)
+        LOGGER.info("[DIAG] addEdge: from={}, to={}, fromHash={}, edgesNow={}", from, to, from.hashCode(), edges.keys)
     }
 }

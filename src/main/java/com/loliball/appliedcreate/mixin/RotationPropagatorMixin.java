@@ -51,6 +51,8 @@ public abstract class RotationPropagatorMixin {
             KineticBlockEntity be,
             CallbackInfoReturnable<List<BlockPos>> cir
     ) {
+        appliedcreate$LOGGER.info("[DIAG] getPotentialNeighbourLocations called: pos={}, originalSize={}",
+                be.getBlockPos(), cir.getReturnValue().size());
         Set<BlockPos> remotePositions = KineticBridgeRegistry.INSTANCE.getRemotePositions(be.getBlockPos());
         if (remotePositions != null && !remotePositions.isEmpty()) {
             appliedcreate$LOGGER.info("[DIAG] getPotentialNeighbourLocations RETURN: pos={}, found {} bridge remotes: {}",
