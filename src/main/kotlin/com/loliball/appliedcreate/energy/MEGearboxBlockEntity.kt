@@ -10,6 +10,7 @@ import com.loliball.appliedcreate.storage.StressKey
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import com.simibubi.create.foundation.utility.CreateLang
+import com.simibubi.create.infrastructure.config.AllConfigs
 import net.minecraft.ChatFormatting
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
@@ -41,14 +42,13 @@ class MEGearboxBlockEntity(
     companion object {
         /** Default RPM for export mode */
         const val DEFAULT_SPEED = 32
-        /** Min/Max RPM */
-        const val MIN_SPEED = 1
-        const val MAX_SPEED = 256
+        /** Max RPM, read from Create's config (defaults to 256) */
+        fun getMaxSpeed(): Int = AllConfigs.server().kinetics.maxRotationSpeed.get()
         const val DEFAULT_STRESS = 64.0f
         const val MIN_STRESS = 0.0f
         const val MAX_STRESS = 65536.0f
-        /** Base stress units transferred to/from ME per tick at 256 RPM */
-        const val BASE_STRESS_TRANSFER_PER_256_RPM = 16384L
+        /** Base stress units transferred to/from ME per tick at max RPM */
+        const val BASE_STRESS_TRANSFER_PER_MAX_RPM = 16384L
     }
 
     enum class Mode {
@@ -63,7 +63,8 @@ class MEGearboxBlockEntity(
 
     var configuredSpeed: Int = DEFAULT_SPEED
         set(value) {
-            val clamped = value.coerceIn(MIN_SPEED, MAX_SPEED)
+            val maxSpeed = getMaxSpeed()
+            val clamped = value.coerceIn(-maxSpeed, maxSpeed).let { if (it == 0) 1 else it }
             if (field != clamped) {
                 field = clamped
                 onConfigChanged()
@@ -163,7 +164,7 @@ class MEGearboxBlockEntity(
 
     private fun getTransferRate(rpm: Float): Long {
         val stressRatio = configuredStress / DEFAULT_STRESS
-        return (BASE_STRESS_TRANSFER_PER_256_RPM * stressRatio * (rpm / 256.0)).toLong()
+        return (BASE_STRESS_TRANSFER_PER_MAX_RPM * stressRatio * (rpm / getMaxSpeed())).toLong()
     }
 
     // -- Tick: Transfer stress between ME and kinetic networks --
@@ -191,7 +192,7 @@ class MEGearboxBlockEntity(
     ) {
         val rpm = abs(speed)
         val stressNeeded = if (rpm == 0f) {
-            getTransferRate(configuredSpeed.toFloat())
+            getTransferRate(abs(configuredSpeed.toFloat()))
         } else {
             getTransferRate(rpm)
         }
@@ -259,7 +260,8 @@ class MEGearboxBlockEntity(
             Mode.EXPORT
         }
         configuredSpeed = compound.getInt("GearboxSpeed").let {
-            if (it == 0) DEFAULT_SPEED else it.coerceIn(MIN_SPEED, MAX_SPEED)
+            val maxSpeed = getMaxSpeed()
+            if (it == 0) DEFAULT_SPEED else it.coerceIn(-maxSpeed, maxSpeed)
         }
         configuredStress = if (compound.contains("GearboxStress")) {
             compound.getFloat("GearboxStress").coerceIn(MIN_STRESS, MAX_STRESS)
