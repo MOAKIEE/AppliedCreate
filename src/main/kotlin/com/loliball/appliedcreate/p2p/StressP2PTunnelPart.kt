@@ -31,9 +31,15 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
     private var registeredKineticPos: BlockPos? = null
     private var initialLoadComplete = false
     private var reconcileScheduled = false
+    private var retryCount = 0
 
     companion object {
         private val LOGGER = LogManager.getLogger("appliedcreate/StressP2P")
+
+        /** Max retries when kinetic block not yet placed adjacent to an active tunnel. */
+        private const val MAX_KINETIC_RETRIES = 20
+        /** Ticks between retries (ramps: attempt * RETRY_INTERVAL_TICKS). */
+        private const val RETRY_INTERVAL_TICKS = 5
 
         private val MODELS = P2PModels(
             ResourceLocation(AppliedCreate.MOD_ID, "part/p2p/p2p_tunnel_stress")
@@ -120,6 +126,7 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         val server = level.server
 
         reconcileScheduled = true
+        retryCount = 0
         val scheduledAtTick = server.tickCount
 
         LOGGER.info("[DIAG] scheduleReconcile: pos={}, isOutput={}, tick={}",
@@ -179,6 +186,26 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
             KineticBridgeRegistry.registerEndpoint(level, desiredInputPos, desiredKineticPos)
             registeredInputPos = desiredInputPos
             registeredKineticPos = desiredKineticPos
+            retryCount = 0
+        } else if (desiredActive && desiredInputPos != null && desiredKineticPos == null) {
+            // Tunnel is active and attuned, but kinetic block not yet placed adjacent.
+            // Retry with linear backoff until the block appears or we exhaust retries.
+            if (retryCount < MAX_KINETIC_RETRIES) {
+                retryCount++
+                val delayTicks = retryCount * RETRY_INTERVAL_TICKS
+                val server = level.server
+                val baseTick = server.tickCount
+                LOGGER.info("[DIAG] reconcileNow: kinetic block missing, scheduling retry {}/{} in {} ticks",
+                    retryCount, MAX_KINETIC_RETRIES, delayTicks)
+                scheduleForNextTick(server, baseTick + delayTicks - 1) {
+                    reconcileNow()
+                }
+            } else {
+                LOGGER.info("[DIAG] reconcileNow: kinetic block missing, retries exhausted ({}/{})",
+                    retryCount, MAX_KINETIC_RETRIES)
+            }
+        } else {
+            retryCount = 0
         }
     }
 
