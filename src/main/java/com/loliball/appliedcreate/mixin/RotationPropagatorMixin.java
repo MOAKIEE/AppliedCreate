@@ -5,68 +5,48 @@ import com.simibubi.create.content.kinetics.RotationPropagator;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 @Mixin(value = RotationPropagator.class, remap = false)
 public abstract class RotationPropagatorMixin {
 
-    @Unique
-    private static final Logger appliedcreate$LOGGER = LogManager.getLogger("appliedcreate/RotationPropagatorMixin");
-
-    static {
-        LogManager.getLogger("appliedcreate/RotationPropagatorMixin")
-                .info("[DIAG] RotationPropagatorMixin static initializer executed — mixin class loaded into RotationPropagator");
-    }
-
-    @Inject(
-            method = "handleAdded(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lcom/simibubi/create/content/kinetics/base/KineticBlockEntity;)V",
-            at = @At("HEAD")
-    )
-    private static void appliedcreate$onHandleAdded(
-            Level level,
-            BlockPos pos,
-            KineticBlockEntity addedTE,
-            CallbackInfo ci
-    ) {
-        appliedcreate$LOGGER.info("[DIAG] handleAdded fired: pos={}, be={}", pos, addedTE.getClass().getSimpleName());
-    }
-
+    /**
+     * When Create's BFS queries potential neighbour locations for a kinetic block,
+     * append any virtual bridge endpoints registered through P2P tunnels.
+     *
+     * We mutate the returned list in-place rather than calling setReturnValue(),
+     * so that subsequent @Inject(RETURN) handlers from other mods (e.g. Create Connected)
+     * can still see and process our additions without the callback chain being cancelled.
+     */
     @Inject(
             method = "getPotentialNeighbourLocations(Lcom/simibubi/create/content/kinetics/base/KineticBlockEntity;)Ljava/util/List;",
-            at = @At("RETURN"),
-            cancellable = true
+            at = @At("RETURN")
     )
     private static void appliedcreate$addBridgedLocations(
             KineticBlockEntity be,
             CallbackInfoReturnable<List<BlockPos>> cir
     ) {
-        appliedcreate$LOGGER.info("[DIAG] getPotentialNeighbourLocations called: pos={}, originalSize={}",
-                be.getBlockPos(), cir.getReturnValue().size());
         Set<BlockPos> remotePositions = KineticBridgeRegistry.INSTANCE.getRemotePositions(be.getBlockPos());
         if (remotePositions != null && !remotePositions.isEmpty()) {
-            appliedcreate$LOGGER.info("[DIAG] getPotentialNeighbourLocations RETURN: pos={}, found {} bridge remotes: {}",
-                    be.getBlockPos(), remotePositions.size(), remotePositions);
-            List<BlockPos> result = new ArrayList<>(cir.getReturnValue());
+            List<BlockPos> result = cir.getReturnValue();
             for (BlockPos remote : remotePositions) {
                 if (!result.contains(remote)) {
                     result.add(remote);
                 }
             }
-            cir.setReturnValue(result);
         }
     }
 
+    /**
+     * Intercept isConnected to report virtual bridge edges as connected.
+     */
     @Inject(
             method = "isConnected(Lcom/simibubi/create/content/kinetics/base/KineticBlockEntity;Lcom/simibubi/create/content/kinetics/base/KineticBlockEntity;)Z",
             at = @At("HEAD"),
@@ -78,12 +58,13 @@ public abstract class RotationPropagatorMixin {
             CallbackInfoReturnable<Boolean> cir
     ) {
         if (KineticBridgeRegistry.INSTANCE.areBridged(from.getBlockPos(), to.getBlockPos())) {
-            appliedcreate$LOGGER.info("[DIAG] isConnected: bridge match from={} to={}, returning true",
-                    from.getBlockPos(), to.getBlockPos());
             cir.setReturnValue(true);
         }
     }
 
+    /**
+     * Return speed modifier of 1.0 for virtual bridge edges (1:1 ratio).
+     */
     @Inject(
             method = "getRotationSpeedModifier(Lcom/simibubi/create/content/kinetics/base/KineticBlockEntity;Lcom/simibubi/create/content/kinetics/base/KineticBlockEntity;)F",
             at = @At("HEAD"),
@@ -95,8 +76,6 @@ public abstract class RotationPropagatorMixin {
             CallbackInfoReturnable<Float> cir
     ) {
         if (KineticBridgeRegistry.INSTANCE.areBridged(from.getBlockPos(), to.getBlockPos())) {
-            appliedcreate$LOGGER.info("[DIAG] getRotationSpeedModifier: bridge match from={} to={}, returning 1.0f",
-                    from.getBlockPos(), to.getBlockPos());
             cir.setReturnValue(1.0f);
         }
     }

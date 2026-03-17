@@ -12,7 +12,6 @@ import net.minecraft.core.BlockPos
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.TickTask
 import net.minecraft.server.level.ServerLevel
-import org.apache.logging.log4j.LogManager
 
 /**
  * Stress P2P Tunnel Part — transmits Create rotational stress through AE2 P2P tunnels.
@@ -34,8 +33,6 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
     private var retryCount = 0
 
     companion object {
-        private val LOGGER = LogManager.getLogger("appliedcreate/StressP2P")
-
         /** Max retries when kinetic block not yet placed adjacent to an active tunnel. */
         private const val MAX_KINETIC_RETRIES = 20
         /** Ticks between retries (ramps: attempt * RETRY_INTERVAL_TICKS). */
@@ -62,13 +59,9 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         super.addToWorld()
         initialLoadComplete = false
         reconcileScheduled = false
-        LOGGER.info("[DIAG] addToWorld: pos={}, side={}, isOutput={}", blockEntity.blockPos, side, isOutput)
     }
 
     override fun removeFromWorld() {
-        LOGGER.info("[DIAG] removeFromWorld: pos={}, isOutput={}, registered=({}, {})",
-            blockEntity.blockPos, isOutput, registeredInputPos, registeredKineticPos)
-
         // Immediate unregister — part is being destroyed, no debounce.
         unregisterIfRegistered()
         super.removeFromWorld()
@@ -79,9 +72,6 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         val level = blockEntity.level ?: return
         if (level.isClientSide) return
         if (KineticBridgeRegistry.serverStopping) return
-
-        LOGGER.info("[DIAG] onMainNodeStateChanged: pos={}, reason={}, isActive={}, initialLoadComplete={}, isOutput={}",
-            blockEntity.blockPos, reason, isActive, initialLoadComplete, isOutput)
 
         if (!initialLoadComplete) {
             if (isActive) {
@@ -99,9 +89,6 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         val level = blockEntity.level ?: return
         if (level.isClientSide) return
         if (KineticBridgeRegistry.serverStopping) return
-
-        LOGGER.info("[DIAG] onTunnelNetworkChange: pos={}, initialLoadComplete={}, isOutput={}",
-            blockEntity.blockPos, initialLoadComplete, isOutput)
 
         if (!initialLoadComplete) return
 
@@ -129,9 +116,6 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         retryCount = 0
         val scheduledAtTick = server.tickCount
 
-        LOGGER.info("[DIAG] scheduleReconcile: pos={}, isOutput={}, tick={}",
-            blockEntity.blockPos, isOutput, scheduledAtTick)
-
         scheduleForNextTick(server, scheduledAtTick) {
             reconcileNow()
         }
@@ -141,7 +125,6 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         reconcileScheduled = false
 
         if (blockEntity.isRemoved) {
-            LOGGER.info("[DIAG] reconcileNow: pos={}, blockEntity removed, unregistering", blockEntity.blockPos)
             unregisterIfRegistered()
             return
         }
@@ -161,28 +144,20 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
             desiredKineticPos = null
         }
 
-        LOGGER.info("[DIAG] reconcileNow: pos={}, isOutput={}, desired=(input={}, kinetic={}), registered=(input={}, kinetic={})",
-            blockEntity.blockPos, isOutput, desiredInputPos, desiredKineticPos, registeredInputPos, registeredKineticPos)
-
         val currentInputPos = registeredInputPos
         val currentKineticPos = registeredKineticPos
 
         if (currentInputPos != null && currentKineticPos != null) {
             if (currentInputPos != desiredInputPos || currentKineticPos != desiredKineticPos) {
-                LOGGER.info("[DIAG] reconcileNow: unregistering old (input={}, kinetic={})",
-                    currentInputPos, currentKineticPos)
                 KineticBridgeRegistry.unregisterEndpoint(level, currentInputPos, currentKineticPos)
                 registeredInputPos = null
                 registeredKineticPos = null
             } else {
-                LOGGER.info("[DIAG] reconcileNow: already registered correctly, skipping")
                 return
             }
         }
 
         if (desiredInputPos != null && desiredKineticPos != null) {
-            LOGGER.info("[DIAG] reconcileNow: registering new (input={}, kinetic={})",
-                desiredInputPos, desiredKineticPos)
             KineticBridgeRegistry.registerEndpoint(level, desiredInputPos, desiredKineticPos)
             registeredInputPos = desiredInputPos
             registeredKineticPos = desiredKineticPos
@@ -195,14 +170,9 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
                 val delayTicks = retryCount * RETRY_INTERVAL_TICKS
                 val server = level.server
                 val baseTick = server.tickCount
-                LOGGER.info("[DIAG] reconcileNow: kinetic block missing, scheduling retry {}/{} in {} ticks",
-                    retryCount, MAX_KINETIC_RETRIES, delayTicks)
                 scheduleForNextTick(server, baseTick + delayTicks - 1) {
                     reconcileNow()
                 }
-            } else {
-                LOGGER.info("[DIAG] reconcileNow: kinetic block missing, retries exhausted ({}/{})",
-                    retryCount, MAX_KINETIC_RETRIES)
             }
         } else {
             retryCount = 0

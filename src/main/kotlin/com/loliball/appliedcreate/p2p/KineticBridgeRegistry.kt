@@ -44,9 +44,7 @@ object KineticBridgeRegistry {
      * Called by RotationPropagatorMixin to add virtual neighbors.
      */
     fun getRemotePositions(kineticPos: BlockPos): Set<BlockPos>? {
-        val result = edges[kineticPos]
-        LOGGER.info("[DIAG] getRemotePositions: pos={}, result={}, edgesKeySet={}", kineticPos, result, edges.keys)
-        return result
+        return edges[kineticPos]
     }
 
     /**
@@ -54,11 +52,7 @@ object KineticBridgeRegistry {
      * Called by RotationPropagatorMixin to validate connections.
      */
     fun areBridged(posA: BlockPos, posB: BlockPos): Boolean {
-        val result = edges[posA]?.contains(posB) == true
-        if (result) {
-            LOGGER.info("[DIAG] areBridged: posA={}, posB={} -> true", posA, posB)
-        }
-        return result
+        return edges[posA]?.contains(posB) == true
     }
 
     /**
@@ -92,8 +86,6 @@ object KineticBridgeRegistry {
             val currentEdges = edges[kineticPos]
             val allPartnersPresent = existingPartners.all { currentEdges?.contains(it) == true }
             if (allPartnersPresent && existingPartners.isNotEmpty()) {
-                LOGGER.info("[DIAG] registerEndpoint: tunnel={}, kinetic={}, already fully registered with {} partners, skipping",
-                    inputTunnelPos, kineticPos, existingPartners.size)
                 return
             }
         }
@@ -103,9 +95,6 @@ object KineticBridgeRegistry {
             addEdge(kineticPos, partnerPos)
             addEdge(partnerPos, kineticPos)
         }
-
-        LOGGER.info("[DIAG] registerEndpoint: tunnel={}, kinetic={}, edges to {} partners: {}",
-            inputTunnelPos, kineticPos, existingPartners.size, existingPartners)
 
         // Trigger Create re-propagation AFTER edges exist
         if (existingPartners.isNotEmpty() && !serverStopping) {
@@ -128,16 +117,11 @@ object KineticBridgeRegistry {
 
         val partners = endpoints.filter { it != kineticPos }
 
-        LOGGER.info("[DIAG] unregisterEndpoint: tunnel={}, kinetic={}, {} partners: {}",
-            inputTunnelPos, kineticPos, partners.size, partners)
-
         // Phase 1: Tear down WHILE edges still exist
         // This lets Create's handleRemoved BFS traverse the bridge to zero the far side
         if (partners.isNotEmpty() && !serverStopping) {
             val be = level.getBlockEntity(kineticPos) as? KineticBlockEntity
             if (be != null && be.getTheoreticalSpeed() != 0f) {
-                LOGGER.info("[DIAG] unregisterEndpoint: handleRemoved on kinetic={} (speed={})",
-                    kineticPos, be.getTheoreticalSpeed())
                 RotationPropagator.handleRemoved(level, kineticPos, be)
                 if (be.hasSource()) {
                     be.removeSource()
@@ -148,8 +132,6 @@ object KineticBridgeRegistry {
             for (partnerPos in partners) {
                 val partnerBE = level.getBlockEntity(partnerPos) as? KineticBlockEntity ?: continue
                 if (partnerBE.getTheoreticalSpeed() != 0f) {
-                    LOGGER.info("[DIAG] unregisterEndpoint: handleRemoved on partner={} (speed={})",
-                        partnerPos, partnerBE.getTheoreticalSpeed())
                     RotationPropagator.handleRemoved(level, partnerPos, partnerBE)
                     if (partnerBE.hasSource()) {
                         partnerBE.removeSource()
@@ -170,8 +152,6 @@ object KineticBridgeRegistry {
         if (endpoints.isEmpty()) {
             tunnelEndpoints.remove(inputTunnelPos)
         }
-
-        LOGGER.info("[DIAG] unregisterEndpoint: removed {} edges for kinetic={}", removedEdges.size, kineticPos)
 
         // Phase 3: Re-propagate remaining endpoints + the removed endpoint's local network
         if (!serverStopping) {
@@ -197,7 +177,6 @@ object KineticBridgeRegistry {
     fun triggerRepropagation(level: Level, inputTunnelPos: BlockPos) {
         val endpoints = tunnelEndpoints[inputTunnelPos] ?: return
         val snapshot = endpoints.toList()
-        LOGGER.info("[DIAG] triggerRepropagation: tunnel={}, {} endpoints: {}", inputTunnelPos, snapshot.size, snapshot)
 
         val kineticEntries = snapshot.mapNotNull { pos ->
             val be = level.getBlockEntity(pos) as? KineticBlockEntity ?: return@mapNotNull null
@@ -236,6 +215,5 @@ object KineticBridgeRegistry {
 
     private fun addEdge(from: BlockPos, to: BlockPos) {
         edges.getOrPut(from) { ConcurrentHashMap.newKeySet() }.add(to)
-        LOGGER.info("[DIAG] addEdge: from={}, to={}, fromHash={}, edgesNow={}", from, to, from.hashCode(), edges.keys)
     }
 }
