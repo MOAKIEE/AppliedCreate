@@ -546,7 +546,7 @@ class AppliedCreate {
             KineticBridgeRegistry.resetShutdownFlag()
         }
 
-        LOGGER.info("Applied Create loaded")
+        LOGGER.info("Applied Create loaded (commit: {})", BuildInfo.GIT_COMMIT)
 
         try {
             val rpClass = Class.forName("com.simibubi.create.content.kinetics.RotationPropagator")

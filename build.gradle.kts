@@ -95,6 +95,37 @@ dependencies {
     annotationProcessor("org.spongepowered:mixin:0.8.5:processor")
 }
 
+// Generate BuildInfo.kt with git commit hash at compile time
+val generateBuildInfo = tasks.register("generateBuildInfo") {
+    val outputDir = layout.buildDirectory.dir("generated/sources/buildinfo/com/loliball/appliedcreate")
+    val gitHash = providers.exec {
+        commandLine("git", "rev-parse", "--short", "HEAD")
+    }.standardOutput.asText.map { it.trim() }
+
+    outputs.dir(outputDir)
+    inputs.property("gitHash", gitHash)
+
+    doLast {
+        val dir = outputDir.get().asFile
+        dir.mkdirs()
+        dir.resolve("BuildInfo.kt").writeText(
+            """
+            package com.loliball.appliedcreate
+            
+            object BuildInfo {
+                const val GIT_COMMIT = "${gitHash.get()}"
+            }
+            """.trimIndent() + "\n"
+        )
+    }
+}
+
+sourceSets.main.get().kotlin.srcDir(layout.buildDirectory.dir("generated/sources/buildinfo"))
+
+tasks.named("compileKotlin") {
+    dependsOn(generateBuildInfo)
+}
+
 tasks.named<Jar>("jar") {
     manifest {
         attributes(
