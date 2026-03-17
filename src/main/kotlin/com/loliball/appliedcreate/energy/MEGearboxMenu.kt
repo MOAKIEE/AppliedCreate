@@ -67,7 +67,7 @@ class MEGearboxMenu(
             currentMode = gearbox.mode
             currentConfiguredSpeed = gearbox.configuredSpeed
             currentConfiguredStress = gearbox.configuredStress.toInt()
-            currentSpeed = gearbox.speed.toDouble()
+            currentSpeed = abs(gearbox.configuredSpeed).toDouble()
             currentStress = if (gearbox.mode == MEGearboxBlockEntity.Mode.EXPORT) {
                 (gearbox.calculateAddedStressCapacity() * abs(gearbox.speed)).toDouble()
             } else {
