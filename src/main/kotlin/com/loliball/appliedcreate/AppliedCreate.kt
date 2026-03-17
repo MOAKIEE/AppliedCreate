@@ -547,6 +547,16 @@ class AppliedCreate {
         }
 
         LOGGER.info("Applied Create loaded")
+
+        try {
+            val rpClass = Class.forName("com.simibubi.create.content.kinetics.RotationPropagator")
+            val methods = rpClass.declaredMethods.map { it.name }
+            val hasMixinMethods = methods.any { it.contains("appliedcreate") }
+            LOGGER.info("[DIAG] Mixin verification: RotationPropagator class loaded, methods contain 'appliedcreate': {}", hasMixinMethods)
+            LOGGER.info("[DIAG] RotationPropagator methods: {}", methods)
+        } catch (e: Exception) {
+            LOGGER.info("[DIAG] Mixin verification FAILED: {}", e.message)
+        }
     }
 
     private fun onCommonSetup(event: FMLCommonSetupEvent) {
