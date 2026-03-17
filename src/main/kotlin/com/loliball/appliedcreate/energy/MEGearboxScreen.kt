@@ -23,7 +23,7 @@ class MEGearboxScreen(
         modeToggle = widgets.addButton("modeToggle", getModeText(menu.currentMode), Runnable { menu.requestToggleMode() })
 
         speedInput = widgets.addTextField("speedInput")
-        speedInput.setMaxLength(5)
+        speedInput.setMaxLength(7)
         speedInput.setValue(menu.currentConfiguredSpeed.toString())
         speedInput.setResponder { text -> onSpeedChanged(text) }
 
@@ -35,7 +35,8 @@ class MEGearboxScreen(
 
     private fun onSpeedChanged(text: String) {
         val value = text.toIntOrNull() ?: return
-        if (value in MEGearboxBlockEntity.MIN_SPEED..MEGearboxBlockEntity.MAX_SPEED) {
+        val maxSpeed = MEGearboxBlockEntity.getMaxSpeed()
+        if (value in -maxSpeed..maxSpeed && value != 0) {
             menu.requestSetSpeed(value)
         }
     }

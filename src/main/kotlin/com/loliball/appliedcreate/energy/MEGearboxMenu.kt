@@ -54,7 +54,8 @@ class MEGearboxMenu(
     }
 
     private fun handleSetSpeed(value: Int) {
-        gearbox.configuredSpeed = value.coerceIn(MEGearboxBlockEntity.MIN_SPEED, MEGearboxBlockEntity.MAX_SPEED)
+        val maxSpeed = MEGearboxBlockEntity.getMaxSpeed()
+        gearbox.configuredSpeed = value.coerceIn(-maxSpeed, maxSpeed).let { if (it == 0) 1 else it }
     }
 
     private fun handleSetStress(value: Int) {
@@ -66,7 +67,7 @@ class MEGearboxMenu(
             currentMode = gearbox.mode
             currentConfiguredSpeed = gearbox.configuredSpeed
             currentConfiguredStress = gearbox.configuredStress.toInt()
-            currentSpeed = abs(gearbox.speed).toDouble()
+            currentSpeed = gearbox.speed.toDouble()
             currentStress = if (gearbox.mode == MEGearboxBlockEntity.Mode.EXPORT) {
                 (gearbox.calculateAddedStressCapacity() * abs(gearbox.speed)).toDouble()
             } else {
