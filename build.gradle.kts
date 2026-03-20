@@ -58,6 +58,15 @@ repositories {
         url = uri("https://modmaven.dev")
     }
     maven {
+        name = "Jared's maven"
+        url = uri("https://maven.blamejared.com/")
+    }
+    maven {
+        name = "CurseMaven"
+        url = uri("https://www.cursemaven.com")
+        content { includeGroup("curse.maven") }
+    }
+    maven {
         name = "Registrate"
         url = uri("https://maven.ithundxr.dev/snapshots")
         content { includeGroup("com.tterrag.registrate") }
@@ -75,6 +84,13 @@ dependencies {
     compileOnly("net.createmod.ponder:ponder-neoforge:${project.extra["ponder_version"]}")
     // Registrate is bundled inside Create's jar-in-jar — needs explicit compileOnly for Kotlin to see it
     compileOnly("com.tterrag.registrate:Registrate:${project.extra["registrate_version"]}")
+
+    // JEI — compile against API only, users install JEI themselves
+    compileOnly("mezz.jei:jei-${project.extra["minecraft_version"]}-common-api:${project.extra["jei_version"]}")
+    compileOnly("mezz.jei:jei-${project.extra["minecraft_version"]}-neoforge-api:${project.extra["jei_version"]}")
+
+    // AE2 JEI Integration — bridge for AE2 key types in JEI (IngredientConverters API)
+    compileOnly("curse.maven:ae2-jei-integration-1074338:7727898")
 }
 
 tasks.named<Jar>("jar") {
@@ -136,6 +152,8 @@ publishMods {
         requires("create")
         requires("applied-energistics-2")
         requires("kotlin-for-forge")
+        optional("jei")
+        optional("ae2-jei-integration")
     }
 
     modrinth {
@@ -146,5 +164,7 @@ publishMods {
         requires("create")
         requires("ae2")
         requires("kotlin-for-forge")
+        optional("jei")
+        optional("ae2-jei-integration")
     }
 }

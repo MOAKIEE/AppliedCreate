@@ -40,6 +40,18 @@ license="${mod_license}"
     versionRange="${ae2_version_range}"
     ordering="AFTER"
     side="BOTH"
+[[dependencies.${mod_id}]]
+    modId="jei"
+    type="OPTIONAL"
+    versionRange="[19,)"
+    ordering="AFTER"
+    side="CLIENT"
+[[dependencies.${mod_id}]]
+    modId="ae2jeiintegration"
+    type="OPTIONAL"
+    versionRange="[1.0,)"
+    ordering="AFTER"
+    side="CLIENT"
 
 [[mixins]]
     config = "appliedcreate.mixins.json"
