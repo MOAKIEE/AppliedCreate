@@ -57,8 +57,11 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
     companion object {
         private val LOGGER = LoggerFactory.getLogger("AppliedCreate/StressP2P")
 
-        /** Max number of tick-deferred retries for registration when grid isn't ready */
-        private const val MAX_RETRY_ATTEMPTS = 5
+        /** Max number of tick-deferred retries for registration when grid/kinetic block isn't ready */
+        private const val MAX_RETRY_ATTEMPTS = 20
+
+        /** Ticks between retries (ramps: attempt * RETRY_INTERVAL_TICKS for linear backoff) */
+        private const val RETRY_INTERVAL_TICKS = 5
 
         private val MODELS = P2PModels(
             ResourceLocation.fromNamespaceAndPath(AppliedCreate.MOD_ID, "part/p2p/p2p_tunnel_stress")
@@ -129,7 +132,7 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
 
         // Runtime state changes (after initial boot)
         if (isActive) {
-            registerKineticBridge()
+            reRegisterBridge()
         } else {
             unregisterKineticBridge()
         }
@@ -174,8 +177,9 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
 
         val be = level.getBlockEntity(kineticPos)
         if (be !is KineticBlockEntity) {
-            LOGGER.info("[StressP2P] registerKineticBridge: pos={}, kineticPos={} — no KineticBlockEntity adjacent",
+            LOGGER.info("[StressP2P] registerKineticBridge: pos={}, kineticPos={} — no KineticBlockEntity adjacent, scheduling retry",
                 blockEntity.blockPos, kineticPos)
+            scheduleRetry()
             return
         }
 
@@ -257,6 +261,23 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         LOGGER.info("[StressP2P] reRegisterBridge: pos={}, isOutput={}, old=[{}, {}], new=[{}, {}]",
             blockEntity.blockPos, isOutput, oldInputPos, oldKineticPos, newInputPos, newKineticPos)
 
+        // For input tunnels: check if any outputs are still connected.
+        // After ME network split, the input tunnel may still have valid old/new pos
+        // but no outputs exist in this grid — the bridge should be torn down.
+        if (!isOutput && oldInputPos != null && oldKineticPos != null) {
+            val hasOutputs = getOutputs().isNotEmpty()
+            if (!hasOutputs) {
+                val endpoints = KineticBridgeRegistry.getEndpoints(oldInputPos)
+                val hasRemoteEndpoints = endpoints.any { it != oldKineticPos }
+                if (hasRemoteEndpoints) {
+                    LOGGER.info("[StressP2P] reRegisterBridge: input pos={} — no outputs in grid but remote endpoints exist, unregistering",
+                        blockEntity.blockPos)
+                    unregisterKineticBridge()
+                    return
+                }
+            }
+        }
+
         if (oldInputPos == newInputPos && oldKineticPos == newKineticPos) {
             return
         }
@@ -293,6 +314,13 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
                     val endpointBE = level.getBlockEntity(endpointPos) as? KineticBlockEntity ?: continue
                     RotationPropagator.handleAdded(level, endpointPos, endpointBE)
                 }
+                return
+            } else {
+                LOGGER.info("[StressP2P] reRegisterBridge: pos={}, kineticPos={} — no KineticBlockEntity adjacent, scheduling retry",
+                    blockEntity.blockPos, newKineticPos)
+                registeredInputPos = null
+                registeredKineticPos = null
+                scheduleRetry()
                 return
             }
         } else if (isOutput) {
@@ -500,10 +528,19 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         val server = level.server
         retryAttemptsRemaining--
         val attemptsLeft = retryAttemptsRemaining
-        val scheduledAtTick = server.tickCount
-        scheduleForNextTick(server, scheduledAtTick) {
+        // Linear backoff: later retries wait longer (attempt 19 waits 5 ticks, attempt 0 waits 100 ticks)
+        val delayTicks = (MAX_RETRY_ATTEMPTS - attemptsLeft) * RETRY_INTERVAL_TICKS
+        val targetTick = server.tickCount + delayTicks
+        LOGGER.info("[StressP2P] scheduleRetry: pos={}, attemptsLeft={}, delayTicks={}",
+            blockEntity.blockPos, attemptsLeft, delayTicks)
+        server.tell(TickTask(targetTick) {
+            if (server.tickCount < targetTick) {
+                // Server hasn't reached target tick yet — re-enqueue
+                server.tell(TickTask(targetTick) { doRetryAttempt(attemptsLeft) })
+                return@TickTask
+            }
             doRetryAttempt(attemptsLeft)
-        }
+        })
     }
 
     /**
