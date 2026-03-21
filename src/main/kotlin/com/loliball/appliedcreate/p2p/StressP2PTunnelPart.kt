@@ -150,6 +150,8 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
             return
         }
 
+        retryAttemptsRemaining = MAX_RETRY_ATTEMPTS
+
         reRegisterBridge()
 
         for (output in getOutputs()) {
@@ -258,8 +260,21 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         val newInputPos = findInputTunnelPos()
         val newKineticPos = blockEntity.blockPos.relative(this.side)
 
-        LOGGER.info("[StressP2P] reRegisterBridge: pos={}, isOutput={}, old=[{}, {}], new=[{}, {}]",
-            blockEntity.blockPos, isOutput, oldInputPos, oldKineticPos, newInputPos, newKineticPos)
+        LOGGER.info("[StressP2P] reRegisterBridge: pos={}, isOutput={}, isActive={}, old=[{}, {}], new=[{}, {}]",
+            blockEntity.blockPos, isOutput, isActive, oldInputPos, oldKineticPos, newInputPos, newKineticPos)
+
+        // If tunnel is not active (grid offline), only unregister — don't attempt re-registration.
+        // This prevents race condition during grid split where onTunnelNetworkChange fires
+        // on output tunnels after they've been deactivated, causing them to re-register
+        // a bridge that should have been torn down.
+        if (!isActive) {
+            if (oldInputPos != null && oldKineticPos != null) {
+                LOGGER.info("[StressP2P] reRegisterBridge: pos={} — not active, unregistering only",
+                    blockEntity.blockPos)
+                unregisterKineticBridge()
+            }
+            return
+        }
 
         // For input tunnels: check if any outputs are still connected.
         // After ME network split, the input tunnel may still have valid old/new pos
@@ -521,8 +536,10 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
      */
     private fun scheduleRetry() {
         if (KineticBridgeRegistry.serverStopping) return
+        // 如果重试次数已耗尽，不再调度新的重试（防止无限循环）
         if (retryAttemptsRemaining <= 0) {
-            retryAttemptsRemaining = MAX_RETRY_ATTEMPTS
+            LOGGER.info("[StressP2P] scheduleRetry: pos={} — retry attempts exhausted, giving up", blockEntity.blockPos)
+            return
         }
         val level = blockEntity.level as? ServerLevel ?: return
         val server = level.server
