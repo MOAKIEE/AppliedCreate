@@ -9,9 +9,10 @@ import appeng.parts.p2p.P2PTunnelPart
 import com.loliball.appliedcreate.AppliedCreate
 import com.simibubi.create.content.kinetics.RotationPropagator
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity
-import net.minecraft.core.Direction
 import net.minecraft.core.BlockPos
+import net.minecraft.core.Direction
 import net.minecraft.resources.ResourceLocation
+import net.minecraft.world.level.BlockGetter
 import net.minecraft.server.TickTask
 import net.minecraft.server.level.ServerLevel
 import org.slf4j.LoggerFactory
@@ -132,6 +133,7 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
 
         // Runtime state changes (after initial boot)
         if (isActive) {
+            retryAttemptsRemaining = MAX_RETRY_ATTEMPTS
             reRegisterBridge()
         } else {
             unregisterKineticBridge()
@@ -158,6 +160,18 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
             LOGGER.info("[StressP2P] onTunnelNetworkChange: propagating to output at pos={}",
                 output.blockEntity.blockPos)
             output.reRegisterBridge()
+        }
+    }
+
+    override fun onNeighborChanged(level: BlockGetter, pos: BlockPos, neighbor: BlockPos) {
+        super.onNeighborChanged(level, pos, neighbor)
+        if (level is ServerLevel && initialLoadComplete && !KineticBridgeRegistry.serverStopping) {
+            val kineticPos = blockEntity.blockPos.relative(this.side)
+            if (neighbor == kineticPos) {
+                LOGGER.info("[StressP2P] onNeighborChanged: pos={}, neighbor={}, isOutput={}", blockEntity.blockPos, neighbor, isOutput)
+                retryAttemptsRemaining = MAX_RETRY_ATTEMPTS
+                reRegisterBridge()
+            }
         }
     }
 
@@ -545,19 +559,14 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         val server = level.server
         retryAttemptsRemaining--
         val attemptsLeft = retryAttemptsRemaining
-        // Linear backoff: later retries wait longer (attempt 19 waits 5 ticks, attempt 0 waits 100 ticks)
         val delayTicks = (MAX_RETRY_ATTEMPTS - attemptsLeft) * RETRY_INTERVAL_TICKS
-        val targetTick = server.tickCount + delayTicks
         LOGGER.info("[StressP2P] scheduleRetry: pos={}, attemptsLeft={}, delayTicks={}",
             blockEntity.blockPos, attemptsLeft, delayTicks)
-        server.tell(TickTask(targetTick) {
-            if (server.tickCount < targetTick) {
-                // Server hasn't reached target tick yet — re-enqueue
-                server.tell(TickTask(targetTick) { doRetryAttempt(attemptsLeft) })
-                return@TickTask
-            }
+        val scheduledAtTick = server.tickCount
+        val targetTick = scheduledAtTick + delayTicks
+        scheduleAtTick(server, targetTick) {
             doRetryAttempt(attemptsLeft)
-        })
+        }
     }
 
     /**
@@ -572,8 +581,21 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
     private fun scheduleForNextTick(server: net.minecraft.server.MinecraftServer, scheduledAtTick: Int, callback: () -> Unit) {
         server.tell(TickTask(scheduledAtTick + 1) {
             if (server.tickCount <= scheduledAtTick) {
-                // Still the same tick — re-enqueue
                 scheduleForNextTick(server, scheduledAtTick, callback)
+                return@TickTask
+            }
+            callback()
+        })
+    }
+
+    /**
+     * Bounce-enqueue until server.tickCount >= [targetTick].
+     * Prevents haveTime()-induced immediate execution of future TickTasks.
+     */
+    private fun scheduleAtTick(server: net.minecraft.server.MinecraftServer, targetTick: Int, callback: () -> Unit) {
+        server.tell(TickTask(targetTick) {
+            if (server.tickCount < targetTick) {
+                scheduleAtTick(server, targetTick, callback)
                 return@TickTask
             }
             callback()
