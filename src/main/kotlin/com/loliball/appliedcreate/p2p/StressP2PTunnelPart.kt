@@ -14,7 +14,7 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.level.BlockGetter
 import net.minecraft.server.TickTask
 import net.minecraft.server.level.ServerLevel
-import org.slf4j.LoggerFactory
+import net.minecraft.world.level.BlockGetter
 
 /**
  * Stress P2P Tunnel Part — transmits Create rotational stress through AE2 P2P tunnels.
@@ -109,6 +109,16 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         // Also schedule reconcile on all outputs — their inputPos may have changed
         for (output in getOutputs()) {
             output.scheduleReconcile()
+        }
+    }
+
+    override fun onNeighborChanged(level: BlockGetter, pos: BlockPos, neighbor: BlockPos) {
+        super.onNeighborChanged(level, pos, neighbor)
+        if (level is ServerLevel && initialLoadComplete && !KineticBridgeRegistry.serverStopping) {
+            val kineticPos = blockEntity.blockPos.relative(this.side)
+            if (neighbor == kineticPos) {
+                scheduleReconcile()
+            }
         }
     }
 
