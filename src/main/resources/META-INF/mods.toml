@@ -40,6 +40,12 @@ description='''A bridge between Create and Applied Energistics 2 — stress stor
     versionRange="[15.0,)"
     ordering="AFTER"
     side="BOTH"
+[[dependencies.appliedcreate]]
+    modId="jei"
+    mandatory=false
+    versionRange="[15,)"
+    ordering="AFTER"
+    side="CLIENT"
 
 [[mixins]]
 config="appliedcreate.mixins.json"

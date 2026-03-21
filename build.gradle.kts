@@ -92,6 +92,10 @@ dependencies {
 
     implementation(fg.deobf("appeng:appliedenergistics2-forge:${project.extra["ae2_version"]}"))
 
+    // JEI — compile against API only, users install JEI themselves
+    compileOnly(fg.deobf("mezz.jei:jei-${project.extra["minecraft_version"]}-common-api:${project.extra["jei_version"]}"))
+    compileOnly(fg.deobf("mezz.jei:jei-${project.extra["minecraft_version"]}-forge-api:${project.extra["jei_version"]}"))
+
     annotationProcessor("org.spongepowered:mixin:0.8.5:processor")
 }
 
@@ -163,6 +167,7 @@ publishMods {
         requires("create")
         requires("applied-energistics-2")
         requires("kotlin-for-forge")
+        optional("jei")
     }
 
     modrinth {
@@ -173,5 +178,6 @@ publishMods {
         requires("create")
         requires("ae2")
         requires("kotlin-for-forge")
+        optional("jei")
     }
 }
