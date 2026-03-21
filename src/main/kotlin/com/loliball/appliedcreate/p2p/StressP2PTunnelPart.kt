@@ -55,6 +55,14 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
      *  if AE2 toggles active/inactive multiple times during startup. */
     private var didInitialReconcile = false
 
+    /** Whether the deferred initial registration has actually executed.
+     *  During world load, [initialLoadComplete] is set to true when the grid boots,
+     *  but the actual registration is scheduled for a future tick via [scheduleForNextTick].
+     *  Other callbacks (like [onNeighborChanged]) MUST NOT register bridges until this
+     *  deferred registration has completed, or they'll inject virtual edges before Create's
+     *  first-tick attachKinetics() finishes — corrupting stress accounting. */
+    private var deferredRegistrationDone = false
+
     companion object {
         private val LOGGER = LoggerFactory.getLogger("AppliedCreate/StressP2P")
 
@@ -86,6 +94,7 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         LOGGER.info("[StressP2P] addToWorld: pos={}, side={}, isOutput={}", blockEntity.blockPos, side, isOutput)
         initialLoadComplete = false
         didInitialReconcile = false
+        deferredRegistrationDone = false
 
         // Do NOT register virtual edges here — Create's first-tick attachKinetics()
         // would traverse them and corrupt stress accounting. Registration is deferred
@@ -165,7 +174,7 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
 
     override fun onNeighborChanged(level: BlockGetter, pos: BlockPos, neighbor: BlockPos) {
         super.onNeighborChanged(level, pos, neighbor)
-        if (level is ServerLevel && initialLoadComplete && !KineticBridgeRegistry.serverStopping) {
+        if (level is ServerLevel && initialLoadComplete && deferredRegistrationDone && !KineticBridgeRegistry.serverStopping) {
             val kineticPos = blockEntity.blockPos.relative(this.side)
             if (neighbor == kineticPos) {
                 LOGGER.info("[StressP2P] onNeighborChanged: pos={}, neighbor={}, isOutput={}", blockEntity.blockPos, neighbor, isOutput)
@@ -398,6 +407,7 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         val isInput = !this.isOutput
         scheduleForNextTick(server, scheduledAtTick) {
             if (blockEntity.isRemoved) return@scheduleForNextTick
+            deferredRegistrationDone = true
             registerKineticBridge()
             // Only the input tunnel schedules propagation after registration
             if (isInput) {
