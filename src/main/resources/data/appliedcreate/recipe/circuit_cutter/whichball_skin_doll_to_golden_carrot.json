@@ -12,7 +12,7 @@
     }
   },
   "result": {
-    "item": "minecraft:golden_carrot",
+    "id": "minecraft:golden_carrot",
     "count": 8
   }
 }
