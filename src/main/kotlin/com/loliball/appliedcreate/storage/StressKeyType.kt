@@ -26,9 +26,9 @@ class StressKeyType private constructor() : AEKeyType(
         return StressKey.INSTANCE
     }
 
-    override fun getAmountPerOperation(): Int = 256
+    override fun getAmountPerOperation(): Int = 1024 * 16
 
-    override fun getAmountPerByte(): Int = 128
+    override fun getAmountPerByte(): Int = 1024 * 1024
 
     override fun getUnitSymbol(): String = "SU"
 }
