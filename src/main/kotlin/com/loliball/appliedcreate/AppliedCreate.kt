@@ -5,6 +5,7 @@ import com.loliball.appliedcreate.cannon.MEBlueprintCannonBlock
 import com.loliball.appliedcreate.cannon.MEBlueprintCannonBlockEntity
 import com.loliball.appliedcreate.cannon.MEBlueprintCannonMenu
 import com.loliball.appliedcreate.cannon.ConfigureMECannonPayload
+import com.loliball.appliedcreate.config.ACConfig
 import com.loliball.appliedcreate.spatial.SpatialAssemblerBlock
 import com.loliball.appliedcreate.spatial.SpatialAssemblerBlockEntity
 import com.loliball.appliedcreate.spatial.SpatialAssemblerMenu
@@ -64,6 +65,8 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.level.block.state.BlockBehaviour
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.fml.common.Mod
+import net.neoforged.fml.ModLoadingContext
+import net.neoforged.fml.config.ModConfig
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent
 import net.neoforged.fml.loading.FMLEnvironment
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent
@@ -508,6 +511,11 @@ class AppliedCreate {
     init {
         val bus: IEventBus = MOD_BUS
 
+        ModLoadingContext.get().getActiveContainer().registerConfig(
+            ModConfig.Type.SERVER,
+            ACConfig.SPEC
+        )
+
         // Registrate handles block/item/blockentity registration via its own event listeners
         REGISTRATE.registerEventListeners(bus)
 
@@ -645,15 +653,15 @@ class AppliedCreate {
 
             // Register stress value for kinetic energy acceptor
             BlockStressValues.IMPACTS.register(
-                KINETIC_ENERGY_ACCEPTOR_BLOCK.get(), { KineticEnergyAcceptorBlockEntity.BASE_STRESS_SU / 256.0 }
+                KINETIC_ENERGY_ACCEPTOR_BLOCK.get(), { KineticEnergyAcceptorBlockEntity.getBaseStressSu() / 256.0 }
             )
 
             // Register stress values for ME Gearbox
             BlockStressValues.IMPACTS.register(
-                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.DEFAULT_STRESS.toDouble() }
+                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.getDefaultStress().toDouble() }
             )
             BlockStressValues.CAPACITIES.register(
-                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.DEFAULT_STRESS.toDouble() }
+                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.getDefaultStress().toDouble() }
             )
 
             // [HIDDEN] Blueprint Cannon upgrade cards

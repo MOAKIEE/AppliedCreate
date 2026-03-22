@@ -52,6 +52,24 @@ license="${mod_license}"
     versionRange="[1.0,)"
     ordering="AFTER"
     side="CLIENT"
+[[dependencies.${mod_id}]]
+    modId="configured"
+    type="OPTIONAL"
+    versionRange="[2.6.0,)"
+    ordering="AFTER"
+    side="BOTH"
+[[dependencies.${mod_id}]]
+    modId="extendedae"
+    type="OPTIONAL"
+    versionRange="[1.0,)"
+    ordering="AFTER"
+    side="BOTH"
+[[dependencies.${mod_id}]]
+    modId="advanced_ae"
+    type="OPTIONAL"
+    versionRange="[1.0,)"
+    ordering="AFTER"
+    side="BOTH"
 
 [[mixins]]
     config = "appliedcreate.mixins.json"

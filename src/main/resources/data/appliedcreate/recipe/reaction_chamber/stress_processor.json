@@ -1,0 +1,41 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "advanced_ae"
+    }
+  ],
+  "type": "advanced_ae:reaction",
+  "input_energy": 30000,
+  "input_fluid": {
+    "amount": 200,
+    "ingredient": {
+      "fluid": "minecraft:water"
+    }
+  },
+  "input_items": [
+    {
+      "amount": 4,
+      "ingredient": {
+        "item": "appliedcreate:stress_circuit_board"
+      }
+    },
+    {
+      "amount": 4,
+      "ingredient": {
+        "item": "create:cinder_flour"
+      }
+    },
+    {
+      "amount": 4,
+      "ingredient": {
+        "item": "ae2:printed_silicon"
+      }
+    }
+  ],
+  "output": {
+    "#": 4,
+    "#t": "ae2:i",
+    "id": "appliedcreate:stress_processor"
+  }
+}

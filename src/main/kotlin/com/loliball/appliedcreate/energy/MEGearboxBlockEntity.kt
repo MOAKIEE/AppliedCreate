@@ -6,6 +6,7 @@ import appeng.api.orientation.BlockOrientation
 import appeng.api.networking.GridFlags
 import appeng.api.storage.StorageHelper
 import com.loliball.appliedcreate.AppliedCreate
+import com.loliball.appliedcreate.config.ACConfig
 import com.loliball.appliedcreate.storage.StressKey
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
@@ -40,14 +41,11 @@ class MEGearboxBlockEntity(
 ) : NetworkedGeneratingKineticBlockEntity(type, pos, state) {
 
     companion object {
-        /** Default RPM for export mode */
-        const val DEFAULT_SPEED = 32
-        /** Max RPM, read from Create's config (defaults to 256) */
+        fun getDefaultSpeed(): Int = ACConfig.SERVER.meGearboxDefaultSpeed.get()
         fun getMaxSpeed(): Int = AllConfigs.server().kinetics.maxRotationSpeed.get()
-        const val DEFAULT_STRESS = 64.0f
+        fun getDefaultStress(): Float = ACConfig.SERVER.meGearboxDefaultStress.get().toFloat()
         const val MIN_STRESS = 0.0f
-        const val MAX_STRESS = 65536.0f
-        /** Base stress units transferred to/from ME per tick at max RPM */
+        fun getMaxStress(): Float = ACConfig.SERVER.meGearboxMaxStress.get().toFloat()
         const val BASE_STRESS_TRANSFER_PER_MAX_RPM = 16384L
     }
 
@@ -61,7 +59,7 @@ class MEGearboxBlockEntity(
     /** Whether ME network actually has stress to supply in EXPORT mode */
     private var hasStressSupply = false
 
-    var configuredSpeed: Int = DEFAULT_SPEED
+    var configuredSpeed: Int = getDefaultSpeed()
         set(value) {
             val maxSpeed = getMaxSpeed()
             val clamped = value.coerceIn(-maxSpeed, maxSpeed).let { if (it == 0) 1 else it }
@@ -71,9 +69,9 @@ class MEGearboxBlockEntity(
             }
         }
 
-    var configuredStress: Float = DEFAULT_STRESS
+    var configuredStress: Float = getDefaultStress()
         set(value) {
-            val clamped = value.coerceIn(MIN_STRESS, MAX_STRESS)
+            val clamped = value.coerceIn(MIN_STRESS, getMaxStress())
             if (field != clamped) {
                 field = clamped
                 onConfigChanged()
@@ -163,7 +161,7 @@ class MEGearboxBlockEntity(
     }
 
     private fun getTransferRate(rpm: Float): Long {
-        val stressRatio = configuredStress / DEFAULT_STRESS
+        val stressRatio = configuredStress / getDefaultStress()
         return (BASE_STRESS_TRANSFER_PER_MAX_RPM * stressRatio * (rpm / getMaxSpeed())).toLong()
     }
 
@@ -261,12 +259,12 @@ class MEGearboxBlockEntity(
         }
         configuredSpeed = compound.getInt("GearboxSpeed").let {
             val maxSpeed = getMaxSpeed()
-            if (it == 0) DEFAULT_SPEED else it.coerceIn(-maxSpeed, maxSpeed)
+            if (it == 0) getDefaultSpeed() else it.coerceIn(-maxSpeed, maxSpeed)
         }
         configuredStress = if (compound.contains("GearboxStress")) {
-            compound.getFloat("GearboxStress").coerceIn(MIN_STRESS, MAX_STRESS)
+            compound.getFloat("GearboxStress").coerceIn(MIN_STRESS, getMaxStress())
         } else {
-            DEFAULT_STRESS
+            getDefaultStress()
         }
     }
 
