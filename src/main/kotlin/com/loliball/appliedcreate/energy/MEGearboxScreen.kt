@@ -43,7 +43,7 @@ class MEGearboxScreen(
 
     private fun onStressChanged(text: String) {
         val value = text.toIntOrNull() ?: return
-        if (value in MEGearboxBlockEntity.MIN_STRESS.toInt()..MEGearboxBlockEntity.MAX_STRESS.toInt()) {
+        if (value in MEGearboxBlockEntity.MIN_STRESS.toInt()..MEGearboxBlockEntity.getMaxStress().toInt()) {
             menu.requestSetStress(value)
         }
     }

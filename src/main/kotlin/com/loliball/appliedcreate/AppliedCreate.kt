@@ -46,9 +46,12 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockBehaviour
+import com.loliball.appliedcreate.config.ACConfig
 import net.minecraftforge.common.extensions.IForgeMenuType
 import net.minecraftforge.eventbus.api.IEventBus
+import net.minecraftforge.fml.ModLoadingContext
 import net.minecraftforge.fml.common.Mod
+import net.minecraftforge.fml.config.ModConfig
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent
 import net.minecraftforge.fml.loading.FMLEnvironment
 import net.minecraftforge.network.NetworkHooks
@@ -476,6 +479,8 @@ class AppliedCreate {
         MENU_TYPES.register(bus)
         CREATIVE_TABS.register(bus)
 
+        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ACConfig.SPEC)
+
         // Register network packets
         var packetId = 0
         CHANNEL.registerMessage(
@@ -595,15 +600,15 @@ class AppliedCreate {
 
             // Register stress value for kinetic energy acceptor
             com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
-                KINETIC_ENERGY_ACCEPTOR_BLOCK.get(), { KineticEnergyAcceptorBlockEntity.BASE_STRESS_SU / 256.0 }
+                KINETIC_ENERGY_ACCEPTOR_BLOCK.get(), { KineticEnergyAcceptorBlockEntity.getBaseStressSu() / 256.0 }
             )
 
             // Register stress values for ME Gearbox
             com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
-                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.DEFAULT_STRESS.toDouble() }
+                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.getDefaultStress().toDouble() }
             )
             com.simibubi.create.api.stress.BlockStressValues.CAPACITIES.register(
-                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.DEFAULT_STRESS.toDouble() }
+                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.getDefaultStress().toDouble() }
             )
 
             // Register ME Gearbox menu opener

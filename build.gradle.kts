@@ -168,6 +168,9 @@ publishMods {
         requires("applied-energistics-2")
         requires("kotlin-for-forge")
         optional("jei")
+        optional("configured")
+        optional("extended-ae")
+        optional("advanced-ae")
     }
 
     modrinth {
@@ -179,5 +182,8 @@ publishMods {
         requires("ae2")
         requires("kotlin-for-forge")
         optional("jei")
+        optional("configured")
+        optional("extended-ae")
+        optional("advanced-ae")
     }
 }

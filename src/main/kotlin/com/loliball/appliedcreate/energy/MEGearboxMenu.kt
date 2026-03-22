@@ -27,7 +27,7 @@ class MEGearboxMenu(
 
     @JvmField
     @field:GuiSync(1)
-    var currentConfiguredSpeed: Int = MEGearboxBlockEntity.DEFAULT_SPEED
+    var currentConfiguredSpeed: Int = MEGearboxBlockEntity.getDefaultSpeed()
 
     @JvmField
     @field:GuiSync(2)
@@ -39,7 +39,7 @@ class MEGearboxMenu(
 
     @JvmField
     @field:GuiSync(4)
-    var currentConfiguredStress: Int = MEGearboxBlockEntity.DEFAULT_STRESS.toInt()
+    var currentConfiguredStress: Int = MEGearboxBlockEntity.getDefaultStress().toInt()
 
     init {
         registerClientAction(ACTION_TOGGLE_MODE, ::handleToggleMode)
@@ -59,7 +59,7 @@ class MEGearboxMenu(
     }
 
     private fun handleSetStress(value: Int) {
-        gearbox.configuredStress = value.toFloat().coerceIn(MEGearboxBlockEntity.MIN_STRESS, MEGearboxBlockEntity.MAX_STRESS)
+        gearbox.configuredStress = value.toFloat().coerceIn(MEGearboxBlockEntity.MIN_STRESS, MEGearboxBlockEntity.getMaxStress())
     }
 
     override fun broadcastChanges() {

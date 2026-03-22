@@ -4,6 +4,7 @@ import appeng.api.networking.energy.IPassiveEnergyGenerator
 import appeng.api.orientation.BlockOrientation
 import com.google.common.collect.ImmutableList
 import com.loliball.appliedcreate.AppliedCreate
+import com.loliball.appliedcreate.config.ACConfig
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
@@ -32,9 +33,9 @@ class KineticEnergyAcceptorBlockEntity(
 ) : NetworkedKineticBlockEntity(type, pos, state) {
 
     companion object {
-        const val AE_PER_256_RPM = 640.0
-        const val BASE_STRESS_SU = 16384
-        const val MAX_MULTIPLIER = 16
+        fun getAePer256Rpm(): Double = ACConfig.SERVER.keaAePer256Rpm.get()
+        fun getBaseStressSu(): Int = ACConfig.SERVER.keaBaseStressSu.get()
+        fun getMaxMultiplier(): Int = ACConfig.SERVER.keaMaxMultiplier.get()
     }
 
     private var aeValue: Double = 0.0
@@ -65,7 +66,7 @@ class KineticEnergyAcceptorBlockEntity(
         super.addBehaviours(behaviours)
         val label = Component.translatable("appliedcreate.kinetic_energy_acceptor.multiplier")
         stressMultiplier = AcceptorScrollValueBehaviour(label, this, AcceptorValueBoxTransform())
-        stressMultiplier.between(0, MAX_MULTIPLIER)
+        stressMultiplier.between(0, getMaxMultiplier())
         stressMultiplier.withFormatter { v -> "${v}x" }
         stressMultiplier.value = 1
         stressMultiplier.withCallback { _ ->
@@ -92,7 +93,7 @@ class KineticEnergyAcceptorBlockEntity(
     }
 
     override fun calculateStressApplied(): Float {
-        val impact = (BASE_STRESS_SU / 256f) * getMultiplier()
+        val impact = (getBaseStressSu() / 256f) * getMultiplier()
         this.lastStressApplied = impact
         return impact
     }
@@ -100,7 +101,7 @@ class KineticEnergyAcceptorBlockEntity(
     override fun tick() {
         super.tick()
 
-        val newAE = AE_PER_256_RPM * getMultiplier() * (abs(speed.toInt()) / 256.0)
+        val newAE = getAePer256Rpm() * getMultiplier() * (abs(speed.toInt()) / 256.0)
         if (newAE.compareTo(aeValue) != 0) {
             aeValue = newAE
             mainNode.ifPresent { grid, node -> grid.tickManager.wakeDevice(node) }
