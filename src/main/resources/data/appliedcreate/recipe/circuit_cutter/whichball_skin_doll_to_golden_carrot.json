@@ -11,8 +11,8 @@
       "item": "appliedcreate:whichball_skin_doll"
     }
   },
-  "result": {
-    "id": "minecraft:golden_carrot",
-    "count": 8
+  "output": {
+    "count": 8,
+    "id": "minecraft:golden_carrot"
   }
 }
