@@ -1,10 +1,12 @@
 package com.loliball.appliedcreate.energy
 
 import appeng.api.config.Actionable
+import appeng.api.ids.AEComponents
 import appeng.api.networking.security.IActionSource
 import appeng.api.orientation.BlockOrientation
 import appeng.api.networking.GridFlags
 import appeng.api.storage.StorageHelper
+import appeng.util.SettingsFrom
 import com.loliball.appliedcreate.AppliedCreate
 import com.loliball.appliedcreate.config.ACConfig
 import com.loliball.appliedcreate.storage.StressKey
@@ -16,8 +18,10 @@ import net.minecraft.ChatFormatting
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.core.HolderLookup
+import net.minecraft.core.component.DataComponentMap
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.chat.Component
+import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
 import java.util.EnumSet
@@ -327,6 +331,36 @@ class MEGearboxBlockEntity(
             .forGoggles(tooltip, 1)
 
         return true
+    }
+
+    fun exportSettings(mode: SettingsFrom, builder: DataComponentMap.Builder, player: Player?) {
+        if (mode == SettingsFrom.MEMORY_CARD) {
+            builder.set(AEComponents.EXPORTED_SETTINGS_SOURCE, AppliedCreate.ME_GEARBOX_BLOCK.get().name)
+
+            val data = mutableMapOf<String, String>()
+            data["mode"] = this.mode.ordinal.toString()
+            data["configuredSpeed"] = configuredSpeed.toString()
+            data["configuredStress"] = configuredStress.toString()
+            builder.set(AEComponents.EXPORTED_SETTINGS, data)
+        }
+    }
+
+    fun importSettings(mode: SettingsFrom, input: DataComponentMap, player: Player?) {
+        if (mode == SettingsFrom.MEMORY_CARD) {
+            val data = input.get(AEComponents.EXPORTED_SETTINGS)
+            if (data != null) {
+                data["mode"]?.toIntOrNull()?.let {
+                    this.mode = Mode.values().getOrElse(it) { Mode.EXPORT }
+                }
+                data["configuredSpeed"]?.toIntOrNull()?.let {
+                    configuredSpeed = it
+                }
+                data["configuredStress"]?.toFloatOrNull()?.let {
+                    configuredStress = it
+                }
+                onConfigChanged()
+            }
+        }
     }
 
 }

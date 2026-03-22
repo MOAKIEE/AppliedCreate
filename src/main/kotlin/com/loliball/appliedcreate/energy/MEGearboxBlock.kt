@@ -6,8 +6,14 @@ import com.simibubi.create.content.equipment.wrench.IWrenchable
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock
 import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel
 import com.simibubi.create.foundation.block.IBE
+import appeng.api.implementations.items.IMemoryCard
+import appeng.api.implementations.items.MemoryCardMessages
+import appeng.api.ids.AEComponents
+import appeng.items.tools.MemoryCardItem
 import appeng.menu.MenuOpener
 import appeng.menu.locator.MenuLocators
+import appeng.util.InteractionUtil
+import appeng.util.SettingsFrom
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.world.InteractionHand
@@ -83,8 +89,6 @@ class MEGearboxBlock : DirectionalKineticBlock(
 
     override fun useItemOn(stack: ItemStack, state: BlockState, level: Level, pos: BlockPos, player: Player, hand: InteractionHand, hit: BlockHitResult): ItemInteractionResult {
         if (AllItems.WRENCH.isIn(stack)) {
-            // Handle wrench rotation directly here because returning PASS_TO_DEFAULT_BLOCK_INTERACTION
-            // would fall through to useWithoutItem() which opens the GUI instead of rotating.
             val context = UseOnContext(level, player, hand, stack, hit)
             val result = if (player.isShiftKeyDown) {
                 onSneakWrenched(state, context)
@@ -98,9 +102,41 @@ class MEGearboxBlock : DirectionalKineticBlock(
             }
         }
 
+        val be = level.getBlockEntity(pos) as? MEGearboxBlockEntity
+            ?: return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
+
+        if (stack.item is IMemoryCard) {
+            val memoryCard = stack.item as IMemoryCard
+            if (level.isClientSide) {
+                return ItemInteractionResult.sidedSuccess(true)
+            }
+
+            if (InteractionUtil.isInAlternateUseMode(player)) {
+                val builder = net.minecraft.core.component.DataComponentMap.builder()
+                be.exportSettings(SettingsFrom.MEMORY_CARD, builder, player)
+                val settings = builder.build()
+
+                if (!settings.isEmpty) {
+                    MemoryCardItem.clearCard(stack)
+                    stack.applyComponents(settings)
+                    memoryCard.notifyUser(player, MemoryCardMessages.SETTINGS_SAVED)
+                }
+            } else {
+                val savedName = stack.get(AEComponents.EXPORTED_SETTINGS_SOURCE)
+                val beName = AppliedCreate.ME_GEARBOX_BLOCK.get().name
+
+                if (savedName != null && savedName == beName) {
+                    be.importSettings(SettingsFrom.MEMORY_CARD, stack.components, player)
+                    memoryCard.notifyUser(player, MemoryCardMessages.SETTINGS_LOADED)
+                } else {
+                    MemoryCardItem.importGenericSettingsAndNotify(be, stack.components, player)
+                }
+            }
+            return ItemInteractionResult.sidedSuccess(false)
+        }
+
         if (level.isClientSide) return ItemInteractionResult.SUCCESS
 
-        val be = level.getBlockEntity(pos) ?: return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
         MenuOpener.open(AppliedCreate.ME_GEARBOX_MENU.get(), player, MenuLocators.forBlockEntity(be))
 
         return ItemInteractionResult.SUCCESS
