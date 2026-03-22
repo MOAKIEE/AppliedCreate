@@ -1,5 +1,6 @@
 package com.loliball.appliedcreate.energy
 
+import appeng.api.config.Actionable
 import appeng.api.networking.energy.IPassiveEnergyGenerator
 import appeng.api.orientation.BlockOrientation
 import com.google.common.collect.ImmutableList
@@ -45,21 +46,6 @@ class KineticEnergyAcceptorBlockEntity(
     init {
         mainNode.setVisualRepresentation(AppliedCreate.KINETIC_ENERGY_ACCEPTOR_ITEM.get())
         mainNode.setIdlePowerUsage(0.0)
-
-        val passiveGenerator = object : IPassiveEnergyGenerator {
-            override fun getRate(): Double = aeValue
-
-            override fun setSuppressed(suppressed: Boolean) {}
-
-            override fun isSuppressed(): Boolean {
-                return this@KineticEnergyAcceptorBlockEntity.level == null
-                    || this@KineticEnergyAcceptorBlockEntity.level!!.isClientSide
-                    || abs(speed) == 0f
-                    || getMultiplier() == 0
-            }
-        }
-
-        mainNode.addService(IPassiveEnergyGenerator::class.java, passiveGenerator)
     }
 
     override fun addBehaviours(behaviours: MutableList<BlockEntityBehaviour>) {
@@ -105,6 +91,10 @@ class KineticEnergyAcceptorBlockEntity(
         if (newAE.compareTo(aeValue) != 0) {
             aeValue = newAE
             mainNode.ifPresent { grid, node -> grid.tickManager.wakeDevice(node) }
+        }
+
+        if (newAE != 0.0) {
+            mainNode.grid?.energyService?.injectPower(newAE, Actionable.MODULATE)
         }
     }
 
