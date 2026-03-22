@@ -11,6 +11,7 @@ import appeng.helpers.patternprovider.PatternProviderLogicHost
 import appeng.menu.ISubMenu
 import appeng.menu.MenuOpener
 import appeng.menu.locator.MenuLocator
+import appeng.util.SettingsFrom
 import com.loliball.appliedcreate.AppliedCreate
 import com.loliball.appliedcreate.logic.MechanicalCraftingPatternLogic
 import net.minecraft.core.BlockPos
@@ -121,6 +122,20 @@ class AndesitePatternProviderBlockEntity(pos: BlockPos, state: BlockState) :
 
     private fun getPushDirection(): PushDirection {
         return blockState.getValue(com.loliball.appliedcreate.block.AndesitePatternProviderBlock.PUSH_DIRECTION)
+    }
+
+    override fun exportSettings(mode: SettingsFrom, output: CompoundTag, player: Player?) {
+        super.exportSettings(mode, output, player)
+        if (mode == SettingsFrom.MEMORY_CARD) {
+            this.logic.exportSettings(output)
+        }
+    }
+
+    override fun importSettings(mode: SettingsFrom, input: CompoundTag, player: Player?) {
+        super.importSettings(mode, input, player)
+        if (mode == SettingsFrom.MEMORY_CARD) {
+            this.logic.importSettings(input, player)
+        }
     }
 
     companion object {

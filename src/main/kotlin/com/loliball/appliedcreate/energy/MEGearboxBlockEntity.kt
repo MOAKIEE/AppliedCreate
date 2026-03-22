@@ -5,6 +5,7 @@ import appeng.api.networking.security.IActionSource
 import appeng.api.orientation.BlockOrientation
 import appeng.api.networking.GridFlags
 import appeng.api.storage.StorageHelper
+import appeng.util.SettingsFrom
 import com.loliball.appliedcreate.AppliedCreate
 import com.loliball.appliedcreate.config.ACConfig
 import com.loliball.appliedcreate.storage.StressKey
@@ -17,6 +18,7 @@ import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.chat.Component
+import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
 import java.util.EnumSet
@@ -264,6 +266,34 @@ class MEGearboxBlockEntity(
             compound.getFloat("GearboxStress").coerceIn(MIN_STRESS, getMaxStress())
         } else {
             getDefaultStress()
+        }
+    }
+
+    fun exportSettings(settingsFrom: SettingsFrom, output: CompoundTag, player: Player?) {
+        if (settingsFrom == SettingsFrom.MEMORY_CARD) {
+            output.putString("GearboxMode", this.mode.name)
+            output.putInt("GearboxSpeed", configuredSpeed)
+            output.putFloat("GearboxStress", configuredStress)
+        }
+    }
+
+    fun importSettings(settingsFrom: SettingsFrom, input: CompoundTag, player: Player?) {
+        if (settingsFrom == SettingsFrom.MEMORY_CARD) {
+            if (input.contains("GearboxMode")) {
+                val modeName = input.getString("GearboxMode")
+                this.mode = try {
+                    Mode.valueOf(modeName)
+                } catch (e: IllegalArgumentException) {
+                    Mode.EXPORT
+                }
+            }
+            if (input.contains("GearboxSpeed")) {
+                configuredSpeed = input.getInt("GearboxSpeed")
+            }
+            if (input.contains("GearboxStress")) {
+                configuredStress = input.getFloat("GearboxStress")
+            }
+            onConfigChanged()
         }
     }
 

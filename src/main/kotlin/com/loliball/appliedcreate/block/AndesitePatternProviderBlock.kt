@@ -16,10 +16,14 @@ import net.minecraft.world.level.block.state.StateDefinition
 import net.minecraft.world.level.block.state.properties.EnumProperty
 import net.minecraft.world.level.material.MapColor
 import net.minecraft.world.phys.BlockHitResult
+import appeng.api.implementations.items.IMemoryCard
+import appeng.api.implementations.items.MemoryCardMessages
 import appeng.block.crafting.PushDirection
+import appeng.items.tools.MemoryCardItem
 import appeng.menu.locator.MenuLocators
 import appeng.util.InteractionUtil
 import appeng.util.Platform
+import appeng.util.SettingsFrom
 
 class AndesitePatternProviderBlock : Block(
     Properties.of()
@@ -51,11 +55,40 @@ class AndesitePatternProviderBlock : Block(
         hand: InteractionHand,
         hit: BlockHitResult
     ): InteractionResult {
+        val heldItem = player.getItemInHand(hand)
+        
+        if (!heldItem.isEmpty && heldItem.item is IMemoryCard) {
+            val memoryCard = heldItem.item as IMemoryCard
+            val blockEntity = level.getBlockEntity(pos) as? AndesitePatternProviderBlockEntity
+                ?: return InteractionResult.FAIL
+            
+            val name = this.descriptionId
+            
+            if (InteractionUtil.isInAlternateUseMode(player)) {
+                val data = net.minecraft.nbt.CompoundTag()
+                blockEntity.exportSettings(SettingsFrom.MEMORY_CARD, data, player)
+                if (!data.isEmpty) {
+                    memoryCard.setMemoryCardContents(heldItem, name, data)
+                    memoryCard.notifyUser(player, MemoryCardMessages.SETTINGS_SAVED)
+                }
+            } else {
+                val storedName = memoryCard.getSettingsName(heldItem)
+                val data = memoryCard.getData(heldItem)
+                
+                if (name == storedName) {
+                    blockEntity.importSettings(SettingsFrom.MEMORY_CARD, data, player)
+                    memoryCard.notifyUser(player, MemoryCardMessages.SETTINGS_LOADED)
+                } else {
+                    MemoryCardItem.importGenericSettingsAndNotify(blockEntity, data, player)
+                }
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide)
+        }
+        
         if (InteractionUtil.isInAlternateUseMode(player)) {
             return InteractionResult.PASS
         }
 
-        val heldItem = player.getItemInHand(hand)
         if (!heldItem.isEmpty && InteractionUtil.canWrenchRotate(heldItem)) {
             setSide(level, pos, hit.direction)
             return InteractionResult.sidedSuccess(level.isClientSide)

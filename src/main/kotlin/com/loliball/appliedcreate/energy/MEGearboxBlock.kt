@@ -6,8 +6,13 @@ import com.simibubi.create.content.equipment.wrench.WrenchItem
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock
 import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel
 import com.simibubi.create.foundation.block.IBE
+import appeng.api.implementations.items.IMemoryCard
+import appeng.api.implementations.items.MemoryCardMessages
+import appeng.items.tools.MemoryCardItem
 import appeng.menu.MenuOpener
 import appeng.menu.locator.MenuLocators
+import appeng.util.InteractionUtil
+import appeng.util.SettingsFrom
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.world.InteractionHand
@@ -56,6 +61,34 @@ class MEGearboxBlock : DirectionalKineticBlock(
         player: Player, hand: InteractionHand, hit: BlockHitResult
     ): InteractionResult {
         val stack = player.getItemInHand(hand)
+
+        if (!stack.isEmpty && stack.item is IMemoryCard) {
+            val memoryCard = stack.item as IMemoryCard
+            val blockEntity = level.getBlockEntity(pos) as? MEGearboxBlockEntity
+                ?: return InteractionResult.FAIL
+
+            val name = this.descriptionId
+
+            if (InteractionUtil.isInAlternateUseMode(player)) {
+                val data = net.minecraft.nbt.CompoundTag()
+                blockEntity.exportSettings(SettingsFrom.MEMORY_CARD, data, player)
+                if (!data.isEmpty) {
+                    memoryCard.setMemoryCardContents(stack, name, data)
+                    memoryCard.notifyUser(player, MemoryCardMessages.SETTINGS_SAVED)
+                }
+            } else {
+                val storedName = memoryCard.getSettingsName(stack)
+                val data = memoryCard.getData(stack)
+
+                if (name == storedName) {
+                    blockEntity.importSettings(SettingsFrom.MEMORY_CARD, data, player)
+                    memoryCard.notifyUser(player, MemoryCardMessages.SETTINGS_LOADED)
+                } else {
+                    MemoryCardItem.importGenericSettingsAndNotify(blockEntity, data, player)
+                }
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide)
+        }
 
         if (stack.item is WrenchItem) {
             val context = UseOnContext(level, player, hand, stack, hit)
