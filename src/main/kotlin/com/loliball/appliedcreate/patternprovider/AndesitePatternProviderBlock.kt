@@ -1,5 +1,6 @@
 package com.loliball.appliedcreate.patternprovider
 
+import com.loliball.appliedcreate.AppliedCreate
 import com.loliball.appliedcreate.patternprovider.AndesitePatternProviderBlockEntity
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
@@ -8,6 +9,7 @@ import net.minecraft.world.InteractionResult
 import net.minecraft.world.ItemInteractionResult
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
+import net.minecraft.network.chat.Component
 import net.minecraft.world.Containers
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.Block
@@ -19,10 +21,16 @@ import net.minecraft.world.level.block.state.StateDefinition
 import net.minecraft.world.level.block.state.properties.EnumProperty
 import net.minecraft.world.level.material.MapColor
 import net.minecraft.world.phys.BlockHitResult
+import appeng.api.implementations.items.IMemoryCard
+import appeng.api.implementations.items.MemoryCardMessages
+import appeng.api.ids.AEComponents
 import appeng.block.crafting.PushDirection
+import appeng.items.tools.MemoryCardItem
 import appeng.menu.locator.MenuLocators
 import appeng.util.InteractionUtil
 import appeng.util.Platform
+import appeng.util.SettingsFrom
+import net.minecraft.core.component.DataComponentMap
 
 class AndesitePatternProviderBlock : Block(
     Properties.of()
@@ -54,6 +62,47 @@ class AndesitePatternProviderBlock : Block(
         hand: InteractionHand,
         hit: BlockHitResult
     ): ItemInteractionResult {
+        // Handle memory card
+        if (stack.item is IMemoryCard) {
+            val memoryCard = stack.item as IMemoryCard
+            if (level.isClientSide) {
+                return ItemInteractionResult.sidedSuccess(true)
+            }
+
+            if (InteractionUtil.isInAlternateUseMode(player)) {
+                val builder = DataComponentMap.builder()
+                val pushDirection = state.getValue(PUSH_DIRECTION)
+                builder.set(AEComponents.EXPORTED_SETTINGS_SOURCE, Component.literal("andesite_pattern_provider"))
+                val data = mutableMapOf<String, String>()
+                data["pushDirection"] = pushDirection.name
+                builder.set(AEComponents.EXPORTED_SETTINGS, data)
+
+                MemoryCardItem.clearCard(stack)
+                stack.applyComponents(builder.build())
+                memoryCard.notifyUser(player, MemoryCardMessages.SETTINGS_SAVED)
+            } else {
+                val savedName = stack.get(AEComponents.EXPORTED_SETTINGS_SOURCE)
+                val beName = Component.literal("andesite_pattern_provider")
+
+                if (savedName != null && savedName == beName) {
+                    val data = stack.get(AEComponents.EXPORTED_SETTINGS)
+                    if (data != null) {
+                        data["pushDirection"]?.let { dirName ->
+                            try {
+                                val newDirection = PushDirection.valueOf(dirName)
+                                level.setBlockAndUpdate(pos, state.setValue(PUSH_DIRECTION, newDirection))
+                            } catch (_: IllegalArgumentException) {
+                            }
+                        }
+                    }
+                    memoryCard.notifyUser(player, MemoryCardMessages.SETTINGS_LOADED)
+                } else {
+                    memoryCard.notifyUser(player, MemoryCardMessages.INVALID_MACHINE)
+                }
+            }
+            return ItemInteractionResult.sidedSuccess(false)
+        }
+
         if (InteractionUtil.isInAlternateUseMode(player)) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
         }
