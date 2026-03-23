@@ -12,10 +12,10 @@ import net.minecraft.world.item.ItemStack
 import net.minecraft.world.Containers
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.ListTag
-import net.minecraft.nbt.StringTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.nbt.SnbtPrinterTagVisitor
+import net.minecraft.nbt.TagParser
+import com.mojang.brigadier.StringReader
 import net.minecraft.network.chat.Component
-import appeng.api.ids.AEItemIds
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.EntityBlock
@@ -29,12 +29,15 @@ import net.minecraft.world.phys.BlockHitResult
 import appeng.api.implementations.items.IMemoryCard
 import appeng.api.implementations.items.MemoryCardMessages
 import appeng.api.ids.AEComponents
+import appeng.api.crafting.PatternDetailsHelper
 import appeng.block.crafting.PushDirection
+import appeng.core.definitions.AEItems
 import appeng.items.tools.MemoryCardItem
 import appeng.menu.locator.MenuLocators
 import appeng.util.InteractionUtil
 import appeng.util.Platform
 import appeng.util.SettingsFrom
+import appeng.util.inv.AppEngInternalInventory
 import net.minecraft.core.component.DataComponentMap
 
 class AndesitePatternProviderBlock : Block(
@@ -82,7 +85,7 @@ class AndesitePatternProviderBlock : Block(
                 builder.set(AEComponents.EXPORTED_SETTINGS_SOURCE, Component.literal("andesite_pattern_provider"))
                 val data = mutableMapOf<String, String>()
                 data["pushDirection"] = pushDirection.name
-                
+
                 if (blockEntity != null) {
                     val patternsNbt = ListTag()
                     val patternInv = blockEntity.logic.getPatternInv()
@@ -96,10 +99,10 @@ class AndesitePatternProviderBlock : Block(
                         }
                     }
                     if (patternsNbt.isNotEmpty()) {
-                        data["patterns"] = patternsNbt.toString()
+                        data["patterns"] = SnbtPrinterTagVisitor().visit(patternsNbt)
                     }
                 }
-                
+
                 builder.set(AEComponents.EXPORTED_SETTINGS, data)
 
                 MemoryCardItem.clearCard(stack)
@@ -119,9 +122,9 @@ class AndesitePatternProviderBlock : Block(
                             } catch (_: IllegalArgumentException) {
                             }
                         }
-                        
+
                         if (blockEntity != null && data.containsKey("patterns")) {
-                            loadPatternsFromMemoryCard(blockEntity, data, player, level)
+                            importPatternsFromMemoryCard(blockEntity, data, player, level)
                         }
                     }
                     memoryCard.notifyUser(player, MemoryCardMessages.SETTINGS_LOADED)
@@ -205,7 +208,7 @@ class AndesitePatternProviderBlock : Block(
             level.setBlockAndUpdate(pos, currentState.setValue(PUSH_DIRECTION, newPushDirection))
         }
 
-        private fun loadPatternsFromMemoryCard(
+        private fun importPatternsFromMemoryCard(
             blockEntity: AndesitePatternProviderBlockEntity,
             data: Map<String, String>,
             player: Player,
@@ -213,42 +216,81 @@ class AndesitePatternProviderBlock : Block(
         ) {
             val patternsStr = data["patterns"] ?: return
             val patternsNbt = try {
-                net.minecraft.nbt.TagParser.parseTag(patternsStr)
+                val parser = TagParser(StringReader(patternsStr))
+                parser.readValue()
             } catch (_: Exception) {
                 return
             }
             if (patternsNbt !is ListTag) return
 
-            val blankPatternItem = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(AEItemIds.BLANK_PATTERN)
             val patternInv = blockEntity.logic.getPatternInv()
+            clearPatternInventory(patternInv, player)
 
-            for (i in 0 until patternsNbt.size()) {
+            val blankPatternsAvailable = if (player.abilities.instabuild) Int.MAX_VALUE
+            else player.inventory.countItem(AEItems.BLANK_PATTERN.asItem())
+            var blankPatternsUsed = 0
+
+            for (i in 0 until patternsNbt.size) {
                 val patternData = patternsNbt.getCompound(i)
                 val slot = patternData.getInt("slot")
                 if (slot < 0 || slot >= patternInv.size()) continue
-
-                if (!patternInv.getStackInSlot(slot).isEmpty) continue
 
                 val itemNbt = patternData.getCompound("item")
                 val patternStack = ItemStack.parse(level.registryAccess(), itemNbt).orElse(ItemStack.EMPTY)
                 if (patternStack.isEmpty) continue
 
-                val blankSlot = findBlankPatternSlot(player, blankPatternItem)
-                if (blankSlot == -1) continue
+                val pattern = PatternDetailsHelper.decodePattern(patternStack, level)
+                if (pattern == null) continue
 
-                player.inventory.removeItem(blankSlot, 1)
-                patternInv.setItemDirect(slot, patternStack)
+                blankPatternsUsed++
+                if (blankPatternsAvailable >= blankPatternsUsed) {
+                    patternInv.setItemDirect(slot, pattern.getDefinition().toStack())
+                }
+            }
+
+            if (blankPatternsUsed > 0 && !player.abilities.instabuild) {
+                var remaining = blankPatternsUsed
+                for (i in 0 until player.inventory.containerSize) {
+                    if (remaining <= 0) break
+                    val stack = player.inventory.getItem(i)
+                    if (stack.`is`(AEItems.BLANK_PATTERN.asItem())) {
+                        val toRemove = minOf(remaining, stack.count)
+                        player.inventory.removeItem(i, toRemove)
+                        remaining -= toRemove
+                    }
+                }
             }
         }
 
-        private fun findBlankPatternSlot(player: Player, blankPatternItem: net.minecraft.world.item.Item): Int {
-            for (i in 0 until player.inventory.containerSize) {
-                val stack = player.inventory.getItem(i)
-                if (stack.item == blankPatternItem && stack.count > 0) {
-                    return i
+        private fun clearPatternInventory(patternInv: appeng.api.inventories.InternalInventory, player: Player) {
+            if (player.abilities.instabuild) {
+                for (i in 0 until patternInv.size()) {
+                    patternInv.setItemDirect(i, ItemStack.EMPTY)
                 }
+                return
             }
-            return -1
+
+            var blankPatternCount = 0
+            for (i in 0 until patternInv.size()) {
+                val pattern = patternInv.getStackInSlot(i)
+                if (pattern.isEmpty) continue
+
+                if (pattern.`is`(AEItems.CRAFTING_PATTERN.asItem()) ||
+                    pattern.`is`(AEItems.PROCESSING_PATTERN.asItem()) ||
+                    pattern.`is`(AEItems.SMITHING_TABLE_PATTERN.asItem()) ||
+                    pattern.`is`(AEItems.STONECUTTING_PATTERN.asItem()) ||
+                    pattern.`is`(AEItems.BLANK_PATTERN.asItem())) {
+                    blankPatternCount += pattern.count
+                } else {
+                    player.inventory.placeItemBackInInventory(pattern)
+                }
+                patternInv.setItemDirect(i, ItemStack.EMPTY)
+            }
+
+            if (blankPatternCount > 0) {
+                val blankStack = ItemStack(AEItems.BLANK_PATTERN.asItem(), blankPatternCount)
+                player.inventory.placeItemBackInInventory(blankStack)
+            }
         }
     }
 }
