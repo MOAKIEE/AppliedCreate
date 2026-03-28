@@ -155,8 +155,6 @@ publishMods {
         optional("jei")
         optional("ae2-jei-integration")
         optional("configured")
-        optional("extendedae")
-        optional("advanced-ae")
     }
 
     modrinth {
@@ -170,7 +168,5 @@ publishMods {
         optional("jei")
         optional("ae2-jei-integration")
         optional("configured")
-        optional("extendedae")
-        optional("advanced-ae")
     }
 }
