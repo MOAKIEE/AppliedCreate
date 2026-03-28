@@ -169,8 +169,6 @@ publishMods {
         requires("kotlin-for-forge")
         optional("jei")
         optional("configured")
-        optional("extended-ae")
-        optional("advanced-ae")
     }
 
     modrinth {
@@ -183,7 +181,5 @@ publishMods {
         requires("kotlin-for-forge")
         optional("jei")
         optional("configured")
-        optional("extended-ae")
-        optional("advanced-ae")
     }
 }
