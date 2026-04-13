@@ -98,29 +98,16 @@ class MechanicalCraftingPatternLogic(
                 if (crafter in visited) continue
                 if (targetMap[crafter] != current) continue
 
-                val facing = crafter.blockState.getValue(
-                    com.simibubi.create.content.kinetics.base.HorizontalKineticBlock.HORIZONTAL_FACING
-                )
-                val targetDir = MechanicalCrafterBlock.getTargetDirection(crafter.blockState)
-                val pointingName = when (targetDir) {
-                    net.minecraft.core.Direction.UP -> "up"
-                    net.minecraft.core.Direction.DOWN -> "down"
-                    else -> when (facing) {
-                        net.minecraft.core.Direction.SOUTH -> if (targetDir == net.minecraft.core.Direction.EAST) "left" else "right"
-                        net.minecraft.core.Direction.NORTH -> if (targetDir == net.minecraft.core.Direction.WEST) "left" else "right"
-                        net.minecraft.core.Direction.EAST -> if (targetDir == net.minecraft.core.Direction.SOUTH) "left" else "right"
-                        net.minecraft.core.Direction.WEST -> if (targetDir == net.minecraft.core.Direction.NORTH) "left" else "right"
-                        else -> "up"
-                    }
-                }
-                val xOffset = when (pointingName) {
-                    "left" -> 1
-                    "right" -> -1
+                val pointing = crafter.blockState.getValue(MechanicalCrafterBlock.POINTING)
+                // Offsets mirror GroupedItems.mergeOnto(): LEFT→(+1,0) RIGHT→(-1,0) DOWN→(0,+1) UP→(0,-1)
+                val xOffset = when (pointing.name) {
+                    "LEFT" -> 1
+                    "RIGHT" -> -1
                     else -> 0
                 }
-                val yOffset = when (pointingName) {
-                    "down" -> 1
-                    "up" -> -1
+                val yOffset = when (pointing.name) {
+                    "DOWN" -> 1
+                    "UP" -> -1
                     else -> 0
                 }
 
