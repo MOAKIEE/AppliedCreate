@@ -8,8 +8,6 @@ import appeng.api.stacks.KeyCounter
 import appeng.helpers.patternprovider.PatternProviderLogic
 import appeng.helpers.patternprovider.PatternProviderLogicHost
 import com.simibubi.create.content.kinetics.crafter.MechanicalCrafterBlock
-import com.simibubi.create.content.kinetics.base.HorizontalKineticBlock
-import net.minecraft.core.Direction
 import com.simibubi.create.content.kinetics.crafter.MechanicalCrafterBlockEntity
 import com.simibubi.create.content.kinetics.crafter.MechanicalCraftingRecipe
 import com.simibubi.create.content.kinetics.crafter.RecipeGridHandler
@@ -101,29 +99,16 @@ class MechanicalCraftingPatternLogic(
                 if (crafter in visited) continue
                 if (targetMap[crafter] != current) continue
 
-                val facing = crafter.blockState.getValue(
-                    HorizontalKineticBlock.HORIZONTAL_FACING
-                )
-                val targetDir = MechanicalCrafterBlock.getTargetDirection(crafter.blockState)
-                val pointingName = when (targetDir) {
-                    Direction.UP -> "up"
-                    Direction.DOWN -> "down"
-                    else -> when (facing) {
-                        Direction.SOUTH -> if (targetDir == Direction.EAST) "left" else "right"
-                        Direction.NORTH -> if (targetDir == Direction.WEST) "left" else "right"
-                        Direction.EAST -> if (targetDir == Direction.SOUTH) "left" else "right"
-                        Direction.WEST -> if (targetDir == Direction.NORTH) "left" else "right"
-                        else -> "up"
-                    }
-                }
-                val xOffset = when (pointingName) {
-                    "left" -> 1
-                    "right" -> -1
+                val pointing = crafter.blockState.getValue(MechanicalCrafterBlock.POINTING)
+                // Offsets mirror GroupedItems.mergeOnto(): LEFT→(+1,0) RIGHT→(-1,0) DOWN→(0,+1) UP→(0,-1)
+                val xOffset = when (pointing.name) {
+                    "LEFT" -> 1
+                    "RIGHT" -> -1
                     else -> 0
                 }
-                val yOffset = when (pointingName) {
-                    "down" -> 1
-                    "up" -> -1
+                val yOffset = when (pointing.name) {
+                    "DOWN" -> 1
+                    "UP" -> -1
                     else -> 0
                 }
 
