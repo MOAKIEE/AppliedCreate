@@ -11,6 +11,7 @@ import com.simibubi.create.content.kinetics.crafter.MechanicalCrafterBlock
 import com.simibubi.create.content.kinetics.crafter.MechanicalCrafterBlockEntity
 import com.simibubi.create.content.kinetics.crafter.MechanicalCraftingRecipe
 import com.simibubi.create.content.kinetics.crafter.RecipeGridHandler
+import net.createmod.catnip.math.Pointing
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.ItemStack
@@ -101,14 +102,14 @@ class MechanicalCraftingPatternLogic(
 
                 val pointing = crafter.blockState.getValue(MechanicalCrafterBlock.POINTING)
                 // Offsets mirror GroupedItems.mergeOnto(): LEFT→(+1,0) RIGHT→(-1,0) DOWN→(0,+1) UP→(0,-1)
-                val xOffset = when (pointing.name) {
-                    "LEFT" -> 1
-                    "RIGHT" -> -1
+                val xOffset = when (pointing) {
+                    Pointing.LEFT -> 1
+                    Pointing.RIGHT -> -1
                     else -> 0
                 }
-                val yOffset = when (pointing.name) {
-                    "DOWN" -> 1
-                    "UP" -> -1
+                val yOffset = when (pointing) {
+                    Pointing.DOWN -> 1
+                    Pointing.UP -> -1
                     else -> 0
                 }
 
