@@ -7,7 +7,7 @@
         "AGA"
     ],
     "key": {
-        "A": { "item": "create:brass_ingot" },
+        "A": { "tag": "c:ingots/brass" },
         "G": { "item": "create:cogwheel" },
         "C": { "item": "ae2:fluix_glass_cable" },
         "S": { "item": "create:shaft" }

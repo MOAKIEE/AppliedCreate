@@ -2,7 +2,7 @@
   "type": "ae2:inscriber",
   "ingredients": {
     "middle": {
-      "item": "create:brass_ingot"
+      "tag": "c:ingots/brass"
     }
   },
   "mode": "inscribe",
