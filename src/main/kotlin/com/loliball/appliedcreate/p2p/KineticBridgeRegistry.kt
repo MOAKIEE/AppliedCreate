@@ -5,7 +5,6 @@ import com.simibubi.create.content.kinetics.base.KineticBlockEntity
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.Level
-import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -24,8 +23,6 @@ import java.util.concurrent.ConcurrentHashMap
  * must be called from the server thread only.
  */
 object KineticBridgeRegistry {
-
-    private val LOGGER = LoggerFactory.getLogger("AppliedCreate/KineticBridge")
 
     /** Set to true when server is stopping — guards against RotationPropagator calls during shutdown */
     @Volatile
@@ -87,8 +84,6 @@ object KineticBridgeRegistry {
             val currentEdges = edges[kineticPos]
             val allPartnersPresent = existingPartners.all { currentEdges?.contains(it) == true }
             if (allPartnersPresent && existingPartners.isNotEmpty()) {
-                LOGGER.info("[DIAG] registerEndpoint: tunnel={}, kinetic={}, already fully registered with {} partners, skipping",
-                    inputTunnelPos, kineticPos, existingPartners.size)
                 return
             }
         }
@@ -98,9 +93,6 @@ object KineticBridgeRegistry {
             addEdge(kineticPos, partnerPos)
             addEdge(partnerPos, kineticPos)
         }
-
-        LOGGER.info("[DIAG] registerEndpoint: tunnel={}, kinetic={}, edges to {} partners: {}",
-            inputTunnelPos, kineticPos, existingPartners.size, existingPartners)
 
         // Trigger Create re-propagation AFTER edges exist
         if (existingPartners.isNotEmpty() && !serverStopping) {
@@ -123,16 +115,11 @@ object KineticBridgeRegistry {
 
         val partners = endpoints.filter { it != kineticPos }
 
-        LOGGER.info("[DIAG] unregisterEndpoint: tunnel={}, kinetic={}, {} partners: {}",
-            inputTunnelPos, kineticPos, partners.size, partners)
-
         // Phase 1: Tear down WHILE edges still exist
         // This lets Create's handleRemoved BFS traverse the bridge to zero the far side
         if (partners.isNotEmpty() && !serverStopping) {
             val be = level.getBlockEntity(kineticPos) as? KineticBlockEntity
             if (be != null && be.getTheoreticalSpeed() != 0f) {
-                LOGGER.info("[DIAG] unregisterEndpoint: handleRemoved on kinetic={} (speed={})",
-                    kineticPos, be.getTheoreticalSpeed())
                 RotationPropagator.handleRemoved(level, kineticPos, be)
                 if (be.hasSource()) {
                     be.removeSource()
@@ -143,8 +130,6 @@ object KineticBridgeRegistry {
             for (partnerPos in partners) {
                 val partnerBE = level.getBlockEntity(partnerPos) as? KineticBlockEntity ?: continue
                 if (partnerBE.getTheoreticalSpeed() != 0f) {
-                    LOGGER.info("[DIAG] unregisterEndpoint: handleRemoved on partner={} (speed={})",
-                        partnerPos, partnerBE.getTheoreticalSpeed())
                     RotationPropagator.handleRemoved(level, partnerPos, partnerBE)
                     if (partnerBE.hasSource()) {
                         partnerBE.removeSource()
@@ -165,8 +150,6 @@ object KineticBridgeRegistry {
         if (endpoints.isEmpty()) {
             tunnelEndpoints.remove(inputTunnelPos)
         }
-
-        LOGGER.info("[DIAG] unregisterEndpoint: removed {} edges for kinetic={}", removedEdges.size, kineticPos)
 
         // Phase 3: Re-propagate remaining endpoints + the removed endpoint's local network
         if (!serverStopping) {
@@ -192,7 +175,6 @@ object KineticBridgeRegistry {
     fun triggerRepropagation(level: Level, inputTunnelPos: BlockPos) {
         val endpoints = tunnelEndpoints[inputTunnelPos] ?: return
         val snapshot = endpoints.toList()
-        LOGGER.info("[DIAG] triggerRepropagation: tunnel={}, {} endpoints: {}", inputTunnelPos, snapshot.size, snapshot)
 
         val kineticEntries = snapshot.mapNotNull { pos ->
             val be = level.getBlockEntity(pos) as? KineticBlockEntity ?: return@mapNotNull null
@@ -203,7 +185,6 @@ object KineticBridgeRegistry {
 
         // Phase 1: Remove all endpoints from their kinetic networks
         for ((pos, be) in kineticEntries) {
-            LOGGER.info("[KineticBridge] Phase 1 — removing kinetic network at {}", pos)
             RotationPropagator.handleRemoved(level, pos, be)
         }
 
