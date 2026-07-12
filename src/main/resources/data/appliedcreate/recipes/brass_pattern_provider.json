@@ -6,7 +6,7 @@
         "ABA"
     ],
     "key": {
-        "A": { "item": "create:brass_ingot" },
+        "A": { "tag": "forge:ingots/brass" },
         "B": { "item": "create:brass_casing" },
         "C": { "item": "ae2:pattern_provider" }
     },
