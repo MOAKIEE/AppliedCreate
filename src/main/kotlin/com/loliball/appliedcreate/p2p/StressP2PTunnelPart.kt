@@ -7,26 +7,36 @@ import appeng.items.parts.PartModels
 import appeng.parts.p2p.P2PModels
 import appeng.parts.p2p.P2PTunnelPart
 import com.loliball.appliedcreate.AppliedCreate
-import com.simibubi.create.content.kinetics.RotationPropagator
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity
 import net.minecraft.core.BlockPos
-import net.minecraft.core.Direction
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.level.BlockGetter
 import net.minecraft.server.TickTask
 import net.minecraft.server.level.ServerLevel
-import org.slf4j.LoggerFactory
 
+/**
+ * Stress P2P Tunnel Part — transmits Create rotational stress through AE2 P2P tunnels.
+ *
+ * Uses a **debounced reconcile pattern**: all AE2 lifecycle events ([onMainNodeStateChanged],
+ * [onTunnelNetworkChange]) schedule a deferred [reconcileNow] on the next server tick.
+ * This avoids cascading partial-state issues when multiple events fire within a single tick.
+ *
+ * [reconcileNow] computes desired state, diffs against registered state, and calls
+ * [KineticBridgeRegistry.registerEndpoint]/[KineticBridgeRegistry.unregisterEndpoint] atomically.
+ * Exception: [removeFromWorld] unregisters immediately (no next tick to wait for).
+ */
 class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunnelPart>(partItem) {
 
     private var registeredInputPos: BlockPos? = null
     private var registeredKineticPos: BlockPos? = null
-    private var retryAttemptsRemaining = 0
     private var initialLoadComplete = false
+    private var reconcileScheduled = false
+    private var retryCount = 0
 
     companion object {
-        private val LOGGER = LoggerFactory.getLogger("AppliedCreate/StressP2P")
-        private const val MAX_RETRY_ATTEMPTS = 20
+        /** Max retries when kinetic block not yet placed adjacent to an active tunnel. */
+        private const val MAX_KINETIC_RETRIES = 20
+        /** Ticks between retries (ramps: attempt * RETRY_INTERVAL_TICKS). */
         private const val RETRY_INTERVAL_TICKS = 5
 
         private val MODELS = P2PModels(
@@ -44,13 +54,17 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         return MODELS.getModel(this.isPowered, this.isActive)
     }
 
+    // ── Lifecycle events ──
+
     override fun addToWorld() {
         super.addToWorld()
         initialLoadComplete = false
+        reconcileScheduled = false
     }
 
     override fun removeFromWorld() {
-        unregisterKineticBridge()
+        // Immediate unregister — part is being destroyed, no debounce.
+        unregisterIfRegistered()
         super.removeFromWorld()
     }
 
@@ -63,17 +77,13 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         if (!initialLoadComplete) {
             if (isActive) {
                 initialLoadComplete = true
-                scheduleDeferredInitialRegistration()
+                // Schedule reconcile for next tick — lets all tunnels in the group finish their initial boot
+                scheduleReconcile()
             }
             return
         }
 
-        if (isActive) {
-            retryAttemptsRemaining = MAX_RETRY_ATTEMPTS
-            reRegisterBridge()
-        } else {
-            unregisterKineticBridge()
-        }
+        scheduleReconcile()
     }
 
     override fun onTunnelNetworkChange() {
@@ -81,15 +91,13 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         if (level.isClientSide) return
         if (KineticBridgeRegistry.serverStopping) return
 
-        if (!initialLoadComplete) {
-            return
-        }
+        if (!initialLoadComplete) return
 
-        retryAttemptsRemaining = MAX_RETRY_ATTEMPTS
-        reRegisterBridge()
+        scheduleReconcile()
 
+        // Also schedule reconcile on all outputs — their inputPos may have changed
         for (output in getOutputs()) {
-            output.reRegisterBridge()
+            output.scheduleReconcile()
         }
     }
 
@@ -98,134 +106,105 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         if (level is ServerLevel && initialLoadComplete && !KineticBridgeRegistry.serverStopping) {
             val kineticPos = blockEntity.blockPos.relative(this.side)
             if (neighbor == kineticPos) {
-                retryAttemptsRemaining = MAX_RETRY_ATTEMPTS
-                reRegisterBridge()
+                scheduleReconcile()
             }
         }
     }
 
-    private fun registerKineticBridge() {
-        val level = blockEntity.level ?: return
-        if (level.isClientSide) return
+    // ── Debounced reconcile ──
 
-        val inputPos = findInputTunnelPos()
-        if (inputPos == null) {
-            scheduleRetry()
-            return
-        }
+    /**
+     * Schedule a reconcile for the next server tick. Multiple calls within the same tick
+     * are coalesced into a single reconcile (debounce).
+     */
+    internal fun scheduleReconcile() {
+        if (reconcileScheduled) return
+        if (KineticBridgeRegistry.serverStopping) return
+        val level = blockEntity.level as? ServerLevel ?: return
+        val server = level.server
 
-        val kineticPos = blockEntity.blockPos.relative(this.side)
+        reconcileScheduled = true
+        retryCount = 0
+        val scheduledAtTick = server.tickCount
 
-        val be = level.getBlockEntity(kineticPos)
-        if (be !is KineticBlockEntity) {
-            scheduleRetry()
-            return
-        }
-
-        if (registeredInputPos == inputPos && registeredKineticPos == kineticPos) {
-            return
-        }
-
-        KineticBridgeRegistry.register(inputPos, kineticPos)
-        registeredInputPos = inputPos
-        registeredKineticPos = kineticPos
-        retryAttemptsRemaining = 0
-        
-        // Notify Create that a new connection exists
-        RotationPropagator.handleAdded(level, kineticPos, be)
-        val endpoints = KineticBridgeRegistry.getEndpoints(inputPos)
-        for (ep in endpoints) {
-            val epBE = level.getBlockEntity(ep) as? KineticBlockEntity ?: continue
-            RotationPropagator.handleAdded(level, ep, epBE)
+        scheduleForNextTick(server, scheduledAtTick) {
+            reconcileNow()
         }
     }
 
-    private fun unregisterKineticBridge() {
-        val level = blockEntity.level ?: return
-        if (level.isClientSide) return
+    private fun reconcileNow() {
+        reconcileScheduled = false
 
+        if (blockEntity.isRemoved) {
+            unregisterIfRegistered()
+            return
+        }
+
+        val level = blockEntity.level as? ServerLevel ?: return
+        if (KineticBridgeRegistry.serverStopping) return
+
+        val desiredActive = isActive
+        val desiredInputPos = if (desiredActive) findInputTunnelPos() else null
+        val desiredKineticPos: BlockPos?
+
+        if (desiredActive && desiredInputPos != null) {
+            val kPos = blockEntity.blockPos.relative(side)
+            val be = level.getBlockEntity(kPos)
+            desiredKineticPos = if (be is KineticBlockEntity) kPos else null
+        } else {
+            desiredKineticPos = null
+        }
+
+        val currentInputPos = registeredInputPos
+        val currentKineticPos = registeredKineticPos
+
+        if (currentInputPos != null && currentKineticPos != null) {
+            if (currentInputPos != desiredInputPos || currentKineticPos != desiredKineticPos) {
+                KineticBridgeRegistry.unregisterEndpoint(level, currentInputPos, currentKineticPos)
+                registeredInputPos = null
+                registeredKineticPos = null
+            } else {
+                return
+            }
+        }
+
+        if (desiredInputPos != null && desiredKineticPos != null) {
+            KineticBridgeRegistry.registerEndpoint(level, desiredInputPos, desiredKineticPos)
+            registeredInputPos = desiredInputPos
+            registeredKineticPos = desiredKineticPos
+            retryCount = 0
+        } else if (desiredActive && desiredInputPos != null && desiredKineticPos == null) {
+            // Tunnel is active and attuned, but kinetic block not yet placed adjacent.
+            // Retry with linear backoff until the block appears or we exhaust retries.
+            if (retryCount < MAX_KINETIC_RETRIES) {
+                retryCount++
+                val delayTicks = retryCount * RETRY_INTERVAL_TICKS
+                val server = level.server
+                val baseTick = server.tickCount
+                scheduleForNextTick(server, baseTick + delayTicks - 1) {
+                    reconcileNow()
+                }
+            }
+        } else {
+            retryCount = 0
+        }
+    }
+
+    // ── Helpers ──
+
+    private fun unregisterIfRegistered() {
         val inputPos = registeredInputPos ?: return
         val kineticPos = registeredKineticPos ?: return
+        val level = blockEntity.level as? ServerLevel
 
-        if (KineticBridgeRegistry.serverStopping) {
-            KineticBridgeRegistry.unregister(inputPos, kineticPos)
-            registeredInputPos = null
-            registeredKineticPos = null
-            return
-        }
-
-        // CRITICAL FIX: Call handleRemoved BEFORE unregistering the edge from KineticBridgeRegistry.
-        // RotationPropagator.handleRemoved uses getPotentialNeighbourLocations to find
-        // downstream blocks and clear their sources. If we remove the virtual edge first,
-        // it cannot cross the P2P connection, leaving downstream blocks as "ghost sources"
-        // that never stop spinning.
-        val be = level.getBlockEntity(kineticPos) as? KineticBlockEntity
-        if (be != null && be.getTheoreticalSpeed() != 0f) {
-            RotationPropagator.handleRemoved(level, kineticPos, be)
-            if (be.hasSource()) {
-                be.removeSource()
-                be.sendData()
-            }
-        }
-
-        KineticBridgeRegistry.unregister(inputPos, kineticPos)
-
-        val remainingEndpoints = KineticBridgeRegistry.getEndpoints(inputPos)
-        for (partnerPos in remainingEndpoints) {
-            val partnerBE = level.getBlockEntity(partnerPos) as? KineticBlockEntity ?: continue
-            RotationPropagator.handleAdded(level, partnerPos, partnerBE)
-        }
-
-        if (be != null) {
-            RotationPropagator.handleAdded(level, kineticPos, be)
+        if (level != null && !KineticBridgeRegistry.serverStopping) {
+            KineticBridgeRegistry.unregisterEndpoint(level, inputPos, kineticPos)
+        } else {
+            // KineticBridgeRegistry.clear() handles full cleanup on server stop
         }
 
         registeredInputPos = null
         registeredKineticPos = null
-    }
-
-    internal fun reRegisterBridge() {
-        val level = blockEntity.level ?: return
-        if (level.isClientSide) return
-        if (KineticBridgeRegistry.serverStopping) return
-
-        val oldInputPos = registeredInputPos
-        val oldKineticPos = registeredKineticPos
-        val newInputPos = findInputTunnelPos()
-        val newKineticPos = blockEntity.blockPos.relative(this.side)
-
-        if (!isActive) {
-            if (oldInputPos != null && oldKineticPos != null) {
-                unregisterKineticBridge()
-            }
-            return
-        }
-
-        if (!isOutput && oldInputPos != null && oldKineticPos != null) {
-            val hasOutputs = getOutputs().isNotEmpty()
-            if (!hasOutputs) {
-                val endpoints = KineticBridgeRegistry.getEndpoints(oldInputPos)
-                val hasRemoteEndpoints = endpoints.any { it != oldKineticPos }
-                if (hasRemoteEndpoints) {
-                    unregisterKineticBridge()
-                    return
-                }
-            }
-        }
-
-        if (oldInputPos == newInputPos && oldKineticPos == newKineticPos) {
-            return
-        }
-
-        if (oldInputPos != null && oldKineticPos != null) {
-            unregisterKineticBridge()
-        }
-
-        if (newInputPos != null) {
-            registerKineticBridge()
-        } else if (isOutput) {
-            scheduleRetry()
-        }
     }
 
     private fun findInputTunnelPos(): BlockPos? {
@@ -236,34 +215,11 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
         }
     }
 
-    private fun scheduleDeferredInitialRegistration() {
-        val level = blockEntity.level as? ServerLevel ?: return
-        if (KineticBridgeRegistry.serverStopping) return
-        val server = level.server
-        val scheduledAtTick = server.tickCount
-        scheduleForNextTick(server, scheduledAtTick) {
-            if (blockEntity.isRemoved) return@scheduleForNextTick
-            registerKineticBridge()
-        }
-    }
-
-    private fun scheduleRetry() {
-        if (KineticBridgeRegistry.serverStopping) return
-        if (retryAttemptsRemaining <= 0) return
-        
-        val level = blockEntity.level as? ServerLevel ?: return
-        val server = level.server
-        retryAttemptsRemaining--
-        val attemptsLeft = retryAttemptsRemaining
-        val delayTicks = (MAX_RETRY_ATTEMPTS - attemptsLeft) * RETRY_INTERVAL_TICKS
-        
-        val scheduledAtTick = server.tickCount
-        val targetTick = scheduledAtTick + delayTicks
-        scheduleAtTick(server, targetTick) {
-            doRetryAttempt(attemptsLeft)
-        }
-    }
-
+    /**
+     * Schedule a callback for the next server tick.
+     * If the TickTask fires on the same tick it was scheduled (can happen with tick task ordering),
+     * reschedule until we're actually on the next tick.
+     */
     private fun scheduleForNextTick(server: net.minecraft.server.MinecraftServer, scheduledAtTick: Int, callback: () -> Unit) {
         server.tell(TickTask(scheduledAtTick + 1) {
             if (server.tickCount <= scheduledAtTick) {
@@ -272,27 +228,5 @@ class StressP2PTunnelPart(partItem: IPartItem<*>) : P2PTunnelPart<StressP2PTunne
             }
             callback()
         })
-    }
-
-    private fun scheduleAtTick(server: net.minecraft.server.MinecraftServer, targetTick: Int, callback: () -> Unit) {
-        server.tell(TickTask(targetTick) {
-            if (server.tickCount < targetTick) {
-                scheduleAtTick(server, targetTick, callback)
-                return@TickTask
-            }
-            callback()
-        })
-    }
-
-    private fun doRetryAttempt(attemptsLeft: Int) {
-        if (registeredInputPos != null) return
-        if (blockEntity.isRemoved) return
-        
-        val inputPos = findInputTunnelPos()
-        if (inputPos != null) {
-            registerKineticBridge()
-        } else if (attemptsLeft > 0) {
-            scheduleRetry()
-        }
     }
 }
