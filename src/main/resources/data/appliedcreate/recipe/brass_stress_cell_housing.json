@@ -9,7 +9,7 @@
       "item": "create:cinder_flour"
     },
     "c": {
-      "item": "create:brass_ingot"
+      "tag": "c:ingots/brass"
     },
     "d": {
       "tag": "c:ingots/copper"
