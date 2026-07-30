@@ -4,6 +4,7 @@ import appeng.api.networking.IGridNodeListener
 import appeng.api.orientation.BlockOrientation
 import appeng.api.stacks.AEItemKey
 import appeng.api.util.AECableType
+import appeng.api.ids.AEComponents
 import appeng.block.crafting.PushDirection
 import appeng.blockentity.grid.AENetworkedBlockEntity
 import appeng.helpers.patternprovider.PatternProviderLogic
@@ -11,12 +12,12 @@ import appeng.helpers.patternprovider.PatternProviderLogicHost
 import appeng.menu.ISubMenu
 import appeng.menu.MenuOpener
 import appeng.menu.locator.MenuHostLocator
+import appeng.util.SettingsFrom
 import com.loliball.appliedcreate.AppliedCreate
-import com.loliball.appliedcreate.patternprovider.AndesitePatternProviderBlock
-import com.loliball.appliedcreate.patternprovider.MechanicalCraftingPatternLogic
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.core.HolderLookup
+import net.minecraft.core.component.DataComponentMap
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
@@ -70,6 +71,27 @@ class AndesitePatternProviderBlockEntity(pos: BlockPos, state: BlockState) :
     override fun loadTag(data: CompoundTag, registries: HolderLookup.Provider) {
         super.loadTag(data, registries)
         this.logic.readFromNBT(data, registries)
+    }
+
+    override fun exportSettings(mode: SettingsFrom, builder: DataComponentMap.Builder, player: Player?) {
+        super.exportSettings(mode, builder, player)
+        if (mode == SettingsFrom.MEMORY_CARD) {
+            logic.exportSettings(builder)
+            builder.set(AEComponents.EXPORTED_PUSH_DIRECTION, getPushDirection())
+        }
+    }
+
+    override fun importSettings(mode: SettingsFrom, input: DataComponentMap, player: Player?) {
+        super.importSettings(mode, input, player)
+        if (mode == SettingsFrom.MEMORY_CARD) {
+            logic.importSettings(input, player)
+            input.get(AEComponents.EXPORTED_PUSH_DIRECTION)?.let { pushDirection ->
+                level?.setBlockAndUpdate(
+                    blockPos,
+                    blockState.setValue(AndesitePatternProviderBlock.PUSH_DIRECTION, pushDirection)
+                )
+            }
+        }
     }
 
     override fun getCableConnectionType(dir: Direction): AECableType {
