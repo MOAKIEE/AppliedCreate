@@ -99,5 +99,8 @@
     "gui.appliedcreate.MEGearbox.actual_speed": "Actual Speed: %s RPM",
     "gui.appliedcreate.MEGearbox.actual_stress": "Actual Stress: %s SU",
     "gui.appliedcreate.MEGearbox.speed": "Speed: %s RPM",
-    "gui.appliedcreate.MEGearbox.stress": "Stress: %s SU"
+    "gui.appliedcreate.MEGearbox.stress": "Stress: %s SU",
+
+    "resourcePack.appliedcreate.builtin": "Applied Create: Texture Refresh",
+    "resourcePack.appliedcreate.builtin.description": "Author: 虾比事你跌~"
 }

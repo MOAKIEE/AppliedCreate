@@ -99,5 +99,8 @@
     "gui.appliedcreate.MEGearbox.actual_speed": "实际转速: %s RPM",
     "gui.appliedcreate.MEGearbox.actual_stress": "实际应力: %s SU",
     "gui.appliedcreate.MEGearbox.speed": "转速: %s RPM",
-    "gui.appliedcreate.MEGearbox.stress": "应力: %s SU"
+    "gui.appliedcreate.MEGearbox.stress": "应力: %s SU",
+
+    "resourcePack.appliedcreate.builtin": "应用机动：材质焕新",
+    "resourcePack.appliedcreate.builtin.description": "作者：虾比事你跌~"
 }

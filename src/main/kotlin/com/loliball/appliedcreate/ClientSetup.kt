@@ -19,10 +19,15 @@ import appeng.client.gui.implementations.PatternProviderScreen
 import appeng.init.client.InitScreens
 
 import net.minecraft.network.chat.Component
+import net.minecraft.resources.ResourceLocation
+import net.minecraft.server.packs.PackType
+import net.minecraft.server.packs.repository.Pack
+import net.minecraft.server.packs.repository.PackSource
 import net.minecraft.world.entity.player.Inventory
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.api.distmarker.OnlyIn
 import net.neoforged.bus.api.IEventBus
+import net.neoforged.neoforge.event.AddPackFindersEvent
 import net.neoforged.neoforge.client.event.EntityRenderersEvent
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent
@@ -30,9 +35,24 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent
 object ClientSetup {
 
     fun register(bus: IEventBus) {
+        bus.addListener(::onAddPackFinders)
         bus.addListener(::onRegisterMenuScreens)
         bus.addListener(::onRegisterItemColors)
         bus.addListener(::onRegisterRenderers)
+    }
+
+    private fun onAddPackFinders(event: AddPackFindersEvent) {
+        event.addPackFinders(
+            ResourceLocation.fromNamespaceAndPath(
+                AppliedCreate.MOD_ID,
+                "resourcepacks/appliedcreate"
+            ),
+            PackType.CLIENT_RESOURCES,
+            Component.translatable("resourcePack.appliedcreate.builtin"),
+            PackSource.BUILT_IN,
+            false,
+            Pack.Position.TOP
+        )
     }
 
     private fun onRegisterMenuScreens(event: RegisterMenuScreensEvent) {

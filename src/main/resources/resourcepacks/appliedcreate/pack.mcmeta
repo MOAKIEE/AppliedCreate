@@ -1,0 +1,8 @@
+{
+    "pack": {
+        "description": {
+            "translate": "resourcePack.appliedcreate.builtin.description"
+        },
+        "pack_format": 34
+    }
+}
