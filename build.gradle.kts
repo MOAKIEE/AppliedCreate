@@ -149,6 +149,8 @@ publishMods {
         projectId.set(project.extra["curseforge_project_id"] as String)
         projectSlug.set(project.extra["mod_id"] as String)
         minecraftVersions.add(project.extra["minecraft_version"] as String)
+        clientRequired.set(true)
+        serverRequired.set(true)
         requires("create")
         requires("applied-energistics-2")
         requires("kotlin-for-forge")
