@@ -4,7 +4,6 @@ import appeng.menu.AEBaseMenu
 import appeng.menu.guisync.GuiSync
 import net.minecraft.world.entity.player.Inventory
 import net.minecraft.world.inventory.MenuType
-import kotlin.math.abs
 
 class MEGearboxMenu(
     menuType: MenuType<*>,
@@ -16,7 +15,6 @@ class MEGearboxMenu(
     companion object {
         const val ACTION_TOGGLE_MODE = "toggleMode"
         const val ACTION_SET_SPEED = "setSpeed"
-        const val ACTION_SET_STRESS = "setStress"
     }
 
     private val gearbox: MEGearboxBlockEntity = host
@@ -39,14 +37,16 @@ class MEGearboxMenu(
 
     @JvmField
     @field:GuiSync(4)
-    var currentConfiguredStress: Int = MEGearboxBlockEntity.getDefaultStress().toInt()
+    var currentTransferRate: Long = 0
+
+    @JvmField
+    @field:GuiSync(5)
+    var currentActive: Boolean = false
 
     init {
         registerClientAction(ACTION_TOGGLE_MODE, ::handleToggleMode)
         @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
         registerClientAction(ACTION_SET_SPEED, java.lang.Integer::class.java) { value -> handleSetSpeed(value.toInt()) }
-        @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-        registerClientAction(ACTION_SET_STRESS, java.lang.Integer::class.java) { value -> handleSetStress(value.toInt()) }
     }
 
     private fun handleToggleMode() {
@@ -54,25 +54,19 @@ class MEGearboxMenu(
     }
 
     private fun handleSetSpeed(value: Int) {
+        if (gearbox.mode != MEGearboxBlockEntity.Mode.EXPORT) return
         val maxSpeed = MEGearboxBlockEntity.getMaxSpeed()
         gearbox.configuredSpeed = value.coerceIn(-maxSpeed, maxSpeed).let { if (it == 0) 1 else it }
-    }
-
-    private fun handleSetStress(value: Int) {
-        gearbox.configuredStress = value.toFloat().coerceIn(MEGearboxBlockEntity.MIN_STRESS, MEGearboxBlockEntity.getMaxStress())
     }
 
     override fun broadcastChanges() {
         if (isServerSide) {
             currentMode = gearbox.mode
             currentConfiguredSpeed = gearbox.configuredSpeed
-            currentConfiguredStress = gearbox.configuredStress.toInt()
-            currentSpeed = abs(gearbox.configuredSpeed).toDouble()
-            currentStress = if (gearbox.mode == MEGearboxBlockEntity.Mode.EXPORT) {
-                (gearbox.calculateAddedStressCapacity() * abs(gearbox.speed)).toDouble()
-            } else {
-                (gearbox.getStressApplied() * abs(gearbox.speed)).toDouble()
-            }
+            currentSpeed = gearbox.speed.toDouble()
+            currentStress = gearbox.allocatedCapacity()
+            currentTransferRate = gearbox.transferRate
+            currentActive = gearbox.mainNode.isActive
         }
         super.broadcastChanges()
     }
@@ -85,7 +79,4 @@ class MEGearboxMenu(
         sendClientAction(ACTION_SET_SPEED, value)
     }
 
-    fun requestSetStress(value: Int) {
-        sendClientAction(ACTION_SET_STRESS, value)
-    }
 }

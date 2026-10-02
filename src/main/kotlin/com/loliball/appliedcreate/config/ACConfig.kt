@@ -27,12 +27,9 @@ class ACConfig {
             .comment("Default speed (RPM) for ME Gearbox export mode")
             .defineInRange("defaultSpeed", 32, 1, 256)
 
-        val meGearboxDefaultStress = builder
-            .comment("Default stress multiplier for ME Gearbox")
-            .defineInRange("defaultStress", 64.0, 0.0, 65536.0)
-
         val meGearboxMaxStress = builder
-            .comment("Maximum stress multiplier for ME Gearbox")
+            .comment("Automatic ME Gearbox transfer limit in SU per RPM. No per-block multiplier is required.",
+                "One stored stress unit supplies one SU for one tick; this limit does not change conversion efficiency.")
             .defineInRange("maxStress", 65536.0, 1.0, 1000000.0)
 
         val kineticAePer256Rpm = builder

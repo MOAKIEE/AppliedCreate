@@ -15,12 +15,22 @@ base {
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 kotlin.jvmToolchain(21)
 
+// Runtime fixtures are compiled separately and never enter the mod JAR.
+val gameTest by sourceSets.creating {
+    compileClasspath += sourceSets.main.get().output + sourceSets.main.get().compileClasspath
+    runtimeClasspath += output + sourceSets.main.get().runtimeClasspath
+}
+configurations[gameTest.implementationConfigurationName].extendsFrom(configurations.implementation.get())
+configurations[gameTest.compileOnlyConfigurationName].extendsFrom(configurations.compileOnly.get())
+configurations[gameTest.runtimeOnlyConfigurationName].extendsFrom(configurations.runtimeOnly.get())
+
 neoForge {
     version = project.extra["neoforge_version"] as String
 
     mods {
         create(modId) {
             sourceSet(sourceSets.main.get())
+            sourceSet(gameTest)
         }
     }
 
@@ -32,6 +42,12 @@ neoForge {
         }
         create("server") {
             server()
+        }
+        create("gameTestServer") {
+            type = "gameTestServer"
+            sourceSet = gameTest
+            gameDirectory = file("run-gametest")
+            systemProperty("neoforge.enabledGameTestNamespaces", "appliedcreate_stress,appliedcreate_compat")
         }
     }
 }
@@ -74,6 +90,18 @@ repositories {
 }
 
 dependencies {
+    providers.gradleProperty("compat_test_mods_dir").orNull?.let { directory ->
+        add(gameTest.runtimeOnlyConfigurationName, fileTree(directory) { include("*.jar") })
+    }
+    if (providers.gradleProperty("create_test_jar").isPresent) {
+        add(gameTest.runtimeOnlyConfigurationName, files(providers.gradleProperty("create_test_jar").get()))
+    } else {
+        add(gameTest.runtimeOnlyConfigurationName,
+            "com.simibubi.create:create-${project.extra["minecraft_version"]}:${project.extra["create_version"]}") {
+            isTransitive = false
+        }
+    }
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
     implementation("thedarkcolour:kotlinforforge-neoforge:${project.extra["kotlin_for_forge_version"]}")
 
     implementation("org.appliedenergistics:appliedenergistics2:${project.extra["ae2_version"]}")
@@ -91,6 +119,10 @@ dependencies {
 
     // AE2 JEI Integration — bridge for AE2 key types in JEI (IngredientConverters API)
     compileOnly("curse.maven:ae2-jei-integration-1074338:7727898")
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 tasks.named<Jar>("jar") {

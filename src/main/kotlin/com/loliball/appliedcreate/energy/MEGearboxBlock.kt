@@ -29,6 +29,11 @@ import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.phys.BlockHitResult
+import net.minecraft.core.component.DataComponents
+import net.minecraft.nbt.CompoundTag
+import net.minecraft.world.item.component.CustomData
+import net.minecraft.world.level.storage.loot.LootParams
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams
 /**
  * ME Gearbox Block — directional kinetic block with shaft.
  * Dual-network block: joins AE2 ME network and Create kinetic network.
@@ -64,6 +69,22 @@ class MEGearboxBlock : DirectionalKineticBlock(
 
     override fun newBlockEntity(pos: BlockPos, state: BlockState): BlockEntity {
         return MEGearboxBlockEntity(AppliedCreate.ME_GEARBOX_BE.get(), pos, state)
+    }
+
+    override fun getDrops(state: BlockState, builder: LootParams.Builder): MutableList<ItemStack> {
+        val drops = super.getDrops(state, builder)
+        val gearbox = builder.getOptionalParameter(LootContextParams.BLOCK_ENTITY) as? MEGearboxBlockEntity
+            ?: return drops
+        if (gearbox.storedStress() > 0) {
+            // An unaccepted refund remains real stored stress. Preserve it on wrench/break drops.
+            val data = CompoundTag()
+            data.putString("id", "appliedcreate:me_gearbox")
+            gearbox.writeSettingsAndBuffer(data)
+            drops.filter { it.`is`(asItem()) }.forEach {
+                it.set(DataComponents.BLOCK_ENTITY_DATA, CustomData.of(data.copy()))
+            }
+        }
+        return drops
     }
 
     override fun getStateForPlacement(context: BlockPlaceContext): BlockState? {

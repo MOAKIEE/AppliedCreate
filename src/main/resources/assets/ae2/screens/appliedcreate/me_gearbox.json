@@ -2,7 +2,7 @@
   "includes": ["../common/common.json"],
   "generatedBackground": {
     "width": 176,
-    "height": 130
+    "height": 144
   },
   "widgets": {
     "modeToggle": {
@@ -14,12 +14,6 @@
     "speedInput": {
       "left": 60,
       "top": 45,
-      "width": 100,
-      "height": 16
-    },
-    "stressInput": {
-      "left": 60,
-      "top": 69,
       "width": 100,
       "height": 16
     }

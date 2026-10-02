@@ -95,12 +95,15 @@
     "gui.appliedcreate.MEGearbox.mode.export": "Mode: Export (ME → Kinetic)",
     "gui.appliedcreate.MEGearbox.mode.import": "Mode: Import (Kinetic → ME)",
     "gui.appliedcreate.MEGearbox.speed.label": "Speed:",
-    "gui.appliedcreate.MEGearbox.stress.label": "Stress Multiplier:",
     "gui.appliedcreate.MEGearbox.actual_speed": "Actual Speed: %s RPM",
     "gui.appliedcreate.MEGearbox.actual_stress": "Actual Stress: %s SU",
     "gui.appliedcreate.MEGearbox.speed": "Speed: %s RPM",
     "gui.appliedcreate.MEGearbox.stress": "Stress: %s SU",
 
     "resourcePack.appliedcreate.builtin": "Applied Create: Texture Refresh",
-    "resourcePack.appliedcreate.builtin.description": "Author: Xiabi"
+    "resourcePack.appliedcreate.builtin.description": "Author: Xiabi",
+    "gui.appliedcreate.MEGearbox.automatic_import": "Automatically collect surplus",
+    "gui.appliedcreate.MEGearbox.automatic_stress": "Stress: automatic",
+    "gui.appliedcreate.MEGearbox.offline": "ME network offline",
+    "gui.appliedcreate.MEGearbox.transfer": "Transfer: %s SU/t"
 }

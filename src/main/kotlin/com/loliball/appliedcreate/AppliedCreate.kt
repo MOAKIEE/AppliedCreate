@@ -14,6 +14,7 @@ import com.loliball.appliedcreate.energy.KineticEnergyAcceptorBlockEntity
 import com.loliball.appliedcreate.energy.MEGearboxBlock
 import com.loliball.appliedcreate.energy.MEGearboxBlockEntity
 import com.loliball.appliedcreate.energy.MEGearboxMenu
+import com.loliball.appliedcreate.energy.StressNetworkController
 import com.loliball.appliedcreate.misc.BlockFumo
 import com.loliball.appliedcreate.patternprovider.AndesitePatternProviderBlock
 import com.loliball.appliedcreate.patternprovider.BrassPatternProviderBlock
@@ -73,6 +74,7 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent
 import net.neoforged.neoforge.common.NeoForge
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension
 import net.neoforged.neoforge.event.server.ServerStoppingEvent
+import net.neoforged.neoforge.event.tick.ServerTickEvent
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent
 import net.neoforged.neoforge.registries.DeferredHolder
 import net.neoforged.neoforge.registries.DeferredRegister
@@ -580,7 +582,14 @@ class AppliedCreate {
         // Clear kinetic bridge registry on server shutdown to prevent stale data
         NeoForge.EVENT_BUS.addListener { _: ServerStoppingEvent ->
             KineticBridgeRegistry.clear()
+            StressNetworkController.clear()
             LOGGER.debug("Cleared KineticBridgeRegistry on server stop")
+        }
+        NeoForge.EVENT_BUS.addListener { event: ServerTickEvent.Pre ->
+            StressNetworkController.beginTick(event.server)
+        }
+        NeoForge.EVENT_BUS.addListener { event: ServerTickEvent.Post ->
+            StressNetworkController.endTick(event.server)
         }
 
         // Reset shutdown flag when a new server starts (integrated server restart)
@@ -658,10 +667,10 @@ class AppliedCreate {
 
             // Register stress values for ME Gearbox
             BlockStressValues.IMPACTS.register(
-                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.getDefaultStress().toDouble() }
+                ME_GEARBOX_BLOCK.get(), { 0.0 }
             )
             BlockStressValues.CAPACITIES.register(
-                ME_GEARBOX_BLOCK.get(), { MEGearboxBlockEntity.getDefaultStress().toDouble() }
+                ME_GEARBOX_BLOCK.get(), { 0.0 }
             )
 
             // [HIDDEN] Blueprint Cannon upgrade cards

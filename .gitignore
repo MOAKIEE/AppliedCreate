@@ -16,6 +16,7 @@ out/
 # Minecraft run directory
 run/
 runs/
+run-gametest/
 
 # OS
 .DS_Store
@@ -33,4 +34,3 @@ bin/
 
 # Eclipse
 .eclipse/
-
