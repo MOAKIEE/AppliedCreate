@@ -1,7 +1,7 @@
 {
   "includes": ["../common/common.json", "../common/player_inventory.json"],
   "background": {
-    "texture": "guis/ex_pattern_provider.png",
+    "texture": "appliedcreate:textures/gui/brass_pattern_provider.png",
     "srcRect": [0, 0, 176, 245]
   },
   "slots": {
