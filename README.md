@@ -1,5 +1,7 @@
 # Applied Create
 
+> **Repository notice:** This is a separate copy of Applied Create, not the original mod repository. The original mod author is **loliball**. The original repository is private and requires authorized access.
+
 A bridge between [Create](https://modrinth.com/mod/create) and [Applied Energistics 2](https://modrinth.com/mod/ae2) for Minecraft.
 
 Store rotational stress in ME networks, transmit it through P2P tunnels, and automate mechanical crafting with pattern providers.

@@ -1,5 +1,7 @@
 # Applied Create (应用机动)
 
+> **仓库说明：** 本仓库是 Applied Create（应用机动）的独立副本，并非原模组仓库。原模组作者为 **loliball**。原仓库为私有仓库，需要相应权限才能访问。
+
 连接 [Create (机械动力)](https://modrinth.com/mod/create) 与 [Applied Energistics 2 (应用能源2)](https://modrinth.com/mod/ae2) 的桥梁模组。
 
 将旋转应力存储在 ME 网络中，通过 P2P 通道传输，并使用样板供应器自动化动力合成。
