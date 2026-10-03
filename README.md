@@ -1,5 +1,7 @@
 # Applied Create
 
+> **Repository notice:** This is a separate copy of Applied Create, not the original mod repository. The original mod author is **loliball**. The original repository is private and requires authorized access.
+
 A bridge between [Create](https://modrinth.com/mod/create) and [Applied Energistics 2](https://modrinth.com/mod/ae2) for Minecraft.
 
 Store rotational stress in ME networks, transmit it through P2P tunnels, and automate mechanical crafting with pattern providers.
@@ -33,7 +35,7 @@ A bidirectional converter between ME network energy storage and Create's rotatio
 - **Export Mode** (ME → Kinetic): Reads stored stress from the ME network and outputs it as rotation
 - **Import Mode** (Kinetic → ME): Accepts rotational stress from the kinetic network and stores it in ME storage
 
-Toggle mode by right-clicking with an empty hand. Scroll to adjust the stress multiplier. Features a GUI for configuration and supports Jade tooltip display for mode and transfer rate.
+Right-click to open the GUI. Export mode needs only an output RPM; import mode collects automatically. All gearboxes on a kinetic network share an allocation: native generators satisfy machine load first, exporters pay only the deficit, and importers collect only native surplus. Empty networks rotate at zero SU cost. Shared storage and repeated updates cannot duplicate stress.
 
 ### Kinetic Energy Acceptor
 

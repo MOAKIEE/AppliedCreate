@@ -20,46 +20,30 @@ The ME Gearbox is a bidirectional converter between AE2 ME network stress storag
 </Column>
 </Row>
 
-## Key Features
+## Usage
 
-- **Bidirectional Conversion** — Switch between Export (ME → Kinetic) and Import (Kinetic → ME) modes
-- **Configurable Speed** — Set the output rotation speed from 1 to 256 RPM
-- **Configurable Stress Multiplier** — Set the stress multiplier from 0 to 65536 to control capacity/impact
-- **AE2-Style GUI** — Right-click to open a clean AE2-style configuration interface
-- **Goggle Tooltip** — View current mode, stress capacity/impact, and transfer rate with Engineer's Goggles
-- **Requires Channel** — Consumes one ME network channel
+- **Export (ME → Kinetic)**: configure only output RPM. A negative value reverses rotation; the speed limit follows Create's server configuration.
+- **Import (Kinetic → ME)**: select the mode to collect automatically. No speed or multiplier setting is required.
+- Both modes require a powered ME network and an available channel. Right-click to switch modes in the GUI; Engineer's Goggles show allocated stress and actual transfer rate.
 
-## Modes
+## Network-wide allocation
 
-### Export Mode (ME → Kinetic)
+All ME Gearboxes on the same kinetic network share one allocation, accounting for each machine's actual RPM:
 
-The gearbox extracts stress values from ME storage and generates Create rotation:
+- Native generators supply ordinary machines first. Importers collect only the remaining capacity.
+- Exporters withdraw the remaining deficit from ME storage before providing capacity.
+- Multiple gearboxes share the demand or surplus. A shared ME inventory cannot be counted twice. Each gearbox remains subject to the server transfer limit.
+- Machine additions, speed changes, merges and splits trigger allocation before Create publishes the overload result.
+- ME exports are excluded from harvestable native generation, so connecting an exporter to an importer cannot create stored stress.
 
-- Acts as a **stress source** in the kinetic network
-- Output speed is set via the GUI (1–256 RPM)
-- Stress capacity provided equals the configured stress multiplier
-- Stops generating if ME storage runs out of stress
+## Idle rotation and shortages
 
-### Import Mode (Kinetic → ME)
+An unloaded network can rotate with zero SU capacity and consume no stored stress. ME power and a channel are still required. With a load attached, insufficient storage to pay the deficit causes an overload; refilling storage restores operation automatically.
 
-The gearbox consumes Create rotation and inserts stress values into ME storage:
+Providing 1 SU for one tick consumes one stored unit. Repeated updates in the same tick charge only increases beyond each gearbox's already paid allowance. Removing load does not refund capacity already used. Reservations from an unsuccessful joint payment are returned to storage; rejected refunds remain saved with the block.
 
-- Acts as a **stress consumer** in the kinetic network
-- Stress impact equals the configured stress multiplier
-- Transfer rate scales with actual RPM of the connected kinetic network
-- Requires an external kinetic source to function
+## Compatibility
 
-## Setup
+Export capacity fills only the exact deficit. Fractional demand is charged in whole stored units, without exposing the rounding difference as extra capacity. Collection cannot exceed its registered stress load; settlement updates that load to the amount actually stored. Uncollected native surplus, such as when storage is full, never becomes ME inventory.
 
-1. **Place** the ME Gearbox and connect it to your ME network via AE2 cables on the sides
-2. **Connect** a Create shaft or kinetic component to the front/back faces
-3. **Right-click** to open the GUI and configure mode, speed, and stress multiplier
-4. For Export mode, ensure your ME network has stress stored in stress storage cells
-5. For Import mode, ensure a kinetic source is driving the gearbox
-
-## Tips
-
-- The transfer rate displayed in the goggle tooltip shows how much stress (SU/t) is being moved between ME and kinetic networks
-- In Export mode, the gearbox will stop outputting rotation if the ME network runs out of stored stress
-- In Import mode, the gearbox provides a convenient way to buffer kinetic energy into your ME network for later use
-- Stress multiplier affects both the stress capacity/impact in the kinetic network AND the transfer rate to/from ME storage
+Existing saves and memory cards retain mode and output RPM; their old multiplier is ignored. Only loaded native generators that still belong to the kinetic network count as available capacity, preventing collection from stale unloaded summaries. Rotation direction, gear ratios and conflicts between generator speeds continue to follow Create's rules.
